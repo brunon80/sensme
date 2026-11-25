@@ -46,6 +46,11 @@ Layout (rest state):
 - Card content: the channel's backdrop photo (per-channel mapping,
   fallback default), cover-cropped; rounded corners `r 0.012`; every
   card has a light border (2px white 0.7) + soft glow.
+- Globe effect: cards sit on a cylinder (`carousel.globe`: radius
+  0.51 vw, 25° per column, rows tilted 5°, perspective 1.4 H) — side
+  cards angle away and recede in Z, far columns dim slightly; stepping
+  rotates the globe (the 420 ms transform morph interpolates the
+  rotation).
 - Selected card: scale `carousel.selectedScale` 1.12 + stronger white
   glow. Bottom-row cards reflect on the floor.
 - Channel name: centered under the bottom row, `type.title`, white with

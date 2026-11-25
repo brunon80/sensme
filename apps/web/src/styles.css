@@ -21,6 +21,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Globe effect: tiles sit on a cylinder seen from `perspVh` away. */
+  perspective: calc(var(--sensme-layout-carousel-globe-perspVh) * 100vh);
 }
 .tile {
   position: absolute;

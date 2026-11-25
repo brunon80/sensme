@@ -189,7 +189,13 @@ export const tokens = {
       "rowGap": 0.04,
       "selectedScale": 1.12,
       "nameY": 0.66,
-      "tileRadius": 0.012
+      "tileRadius": 0.012,
+      "globe": {
+        "radius": 0.51,
+        "stepDeg": 25,
+        "rowTiltDeg": 5,
+        "perspVh": 1.4
+      }
     },
     "menu": {
       "panelLeft": 0.45,

@@ -100,6 +100,10 @@
   --sensme-layout-carousel-selectedScale: 1.12;
   --sensme-layout-carousel-nameY: 0.66;
   --sensme-layout-carousel-tileRadius: 0.012;
+  --sensme-layout-carousel-globe-radius: 0.51;
+  --sensme-layout-carousel-globe-stepDeg: 25;
+  --sensme-layout-carousel-globe-rowTiltDeg: 5;
+  --sensme-layout-carousel-globe-perspVh: 1.4;
   --sensme-layout-menu-panelLeft: 0.45;
   --sensme-layout-menu-itemLineHeight: 0.088;
   --sensme-type-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;

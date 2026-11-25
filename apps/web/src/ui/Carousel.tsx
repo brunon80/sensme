@@ -38,10 +38,11 @@ export function Carousel({ selected, counts, phase }: Props) {
   }
 
   const t = tokens.layout.carousel;
-  const colStep = (t.card.w + t.colGap) * 100; // vw between column centers
-  // Grid (two rows + row gap) vertically centered on carousel.centerY.
-  const gridH = 2 * t.card.h + t.rowGap;
-  const bottomVh = ((1 - t.centerY) - gridH / 2) * 100;
+  const g = t.globe;
+  // Globe placement: cards sit on a cylinder of radius `globe.radius` (vw);
+  // stepping rotates the globe by `globe.stepDeg` per column.
+  const thetaOf = (col: number) => (col * g.stepDeg * Math.PI) / 180;
+  const bottomVh = ((1 - t.centerY) - (2 * t.card.h + t.rowGap) / 2) * 100;
   const topVh = bottomVh + t.card.h * 100 + t.rowGap * 100;
   const nameBottom = bottomVh - 8; // fully below the bottom row (PSP)
 
@@ -49,13 +50,19 @@ export function Carousel({ selected, counts, phase }: Props) {
     <div className={`carousel ${phase ?? ""}`}>
       {cards.map(({ entry, col, row, sel }) => {
         const empty = counts[entry] === 0;
+        const theta = thetaOf(col);
+        const x = g.radius * Math.sin(theta) * 100; // vw along the globe
+        const z = g.radius * (Math.cos(theta) - 1) * 100; // vw (negative recedes)
+        const rotY = col * g.stepDeg; // face outward on the cylinder
+        const rotX = (row === 1 ? 1 : -1) * g.rowTiltDeg; // rows curve too
+        const dim = 1 - Math.min(2, Math.abs(col)) * 0.12; // far cards darker
         const style = {
           width: `${t.card.w * 100}vw`,
           height: `${t.card.h * 100}vh`,
           bottom: `${row === 0 ? bottomVh : topVh}vh`,
-          transform: `translateX(calc(-50% + ${col * colStep}vw)) scale(${sel ? t.selectedScale : 1})`,
-          opacity: empty ? 0.8 : 1,
-          zIndex: sel ? 30 : 20,
+          transform: `translateX(calc(-50% + ${x}vw)) translateZ(${z}vw) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${sel ? t.selectedScale : 1})`,
+          opacity: (empty ? 0.8 : 1) * dim,
+          zIndex: 30 - Math.abs(col) * 2,
           borderRadius: `${t.tileRadius * 100}vmin`,
         };
         return (
