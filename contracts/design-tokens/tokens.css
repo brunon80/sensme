@@ -9,6 +9,8 @@
   --sensme-color-menuScrim: rgba(8,10,14,0.72);
   --sensme-color-menuPanel: rgba(10,12,18,0.66);
   --sensme-color-rule: rgba(255,255,255,0.55);
+  --sensme-color-barTrack: rgba(255,255,255,0.18);
+  --sensme-color-barFill: #EAF4FF;
   --sensme-color-waterOpacity: 0.55;
   --sensme-color-dotPalette-0: #E06CE0;
   --sensme-color-dotPalette-1: #9A8CF5;
@@ -75,6 +77,9 @@
   --sensme-layout-caption-baselineY: 0.93;
   --sensme-layout-clock-topMargin: 0.05;
   --sensme-layout-clock-rightMargin: 0.05;
+  --sensme-layout-update-cardW: 0.36;
+  --sensme-layout-update-barH: 0.014;
+  --sensme-layout-update-barRadius: 0.007;
   --sensme-layout-np-size: 0.62;
   --sensme-layout-np-centerY: 0.51;
   --sensme-layout-np-slots-0: [object Object];
@@ -104,9 +109,9 @@
   --sensme-type-body-sizeH: 0.048;
   --sensme-type-body-weight: 400;
   --sensme-type-body-px480: 13;
-  --sensme-type-caption-sizeH: 0.044;
+  --sensme-type-caption-sizeH: 0.03;
   --sensme-type-caption-weight: 600;
-  --sensme-type-caption-px480: 12;
+  --sensme-type-caption-px480: 8;
   --sensme-type-small-sizeH: 0.037;
   --sensme-type-small-weight: 400;
   --sensme-type-small-px480: 10;

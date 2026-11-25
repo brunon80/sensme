@@ -206,14 +206,31 @@
 }
 .captions {
   position: absolute;
-  left: 0;
-  right: 0;
-  text-align: center;
+  left: calc(var(--sensme-layout-edgePad) * 100vw);
   top: calc(var(--sensme-layout-caption-baselineY) * 100vh);
+  display: flex;
+  align-items: center;
+  gap: 1.4vw;
   font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
   font-weight: var(--sensme-type-caption-weight);
   color: var(--sensme-color-textSecondary);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+/* Key chip: the button; next to it, plain help text. */
+.cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45vw;
+}
+.cap-key {
+  padding: 0.45vh 0.6vw;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0.7vmin;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--sensme-color-textPrimary);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 .update-icon {
   position: absolute;
@@ -233,6 +250,65 @@
   bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100vh);
   font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
   color: var(--sensme-color-textSecondary);
+}
+
+/* ---- first-run progress card (UI_SPEC §4, R-6 7509) ---- */
+.update-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--sensme-color-menuScrim);
+  animation: fadein calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+  z-index: 45;
+}
+.update-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(var(--sensme-layout-update-cardW) * 100vw);
+  box-sizing: border-box;
+  padding: 3.2vh 2.6vw;
+  text-align: center;
+  background: var(--sensme-color-menuPanel);
+  border: 1px solid var(--sensme-color-tileBorderDim);
+  border-radius: 1.4vmin;
+  backdrop-filter: blur(6px);
+  z-index: 50;
+  animation: fadeUp calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+}
+.update-card-logo {
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh * 1.6);
+  font-weight: var(--sensme-type-title-weight);
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+.update-card-label {
+  margin-top: 1.6vh;
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+}
+.update-bar {
+  height: calc(var(--sensme-layout-update-barH) * 100vh);
+  margin: 2vh 0 1.2vh;
+  background: var(--sensme-color-barTrack);
+  border-radius: calc(var(--sensme-layout-update-barRadius) * 100vmin);
+  overflow: hidden;
+}
+.update-bar-fill {
+  height: 100%;
+  background: var(--sensme-color-barFill);
+  border-radius: inherit;
+  box-shadow: 0 0 10px rgba(234, 244, 255, 0.55);
+  transition: width calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+}
+.update-card-errors {
+  font-size: calc(var(--sensme-type-small-sizeH) * 100vh);
+  color: var(--sensme-color-textTertiary);
+  margin-bottom: 0.8vh;
+}
+.update-card-cancel {
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  color: var(--sensme-color-textTertiary);
 }
 
 /* ---- options menu (UI_SPEC §3) ---- */

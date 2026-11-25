@@ -8,7 +8,7 @@ import { player } from "./engine/player";
 import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
 import { CAROUSEL_ORDER, entryHues, entryTracks, shuffledQueue } from "./ui/channels";
-import { captionFor, detectPlatform } from "./ui/controls";
+import { captionsFor, detectPlatform } from "./ui/controls";
 import { NowPlaying } from "./ui/NowPlaying";
 import { Options, type Settings } from "./ui/Options";
 import { Scene } from "./ui/Scene";
@@ -42,6 +42,8 @@ export default function App() {
   const [transitioning, setTransitioning] = useState(false);
   const menuOpenRef = useRef(menuOpen);
   menuOpenRef.current = menuOpen;
+  // First-run progress card cancel (UI_SPEC §4: ✕ Cancel).
+  const cancelImportRef = useRef(false);
   const queuePosRef = useRef(0);
   queuePosRef.current = queuePos;
 
@@ -126,8 +128,13 @@ export default function App() {
     const files = await pickAudioFiles();
     if (files.length === 0) return;
     setUpdate({ active: true, done: 0, total: files.length, errors: 0 });
-    await importFiles(files, (p: ImportProgress) =>
-      setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors }));
+    cancelImportRef.current = false;
+    await importFiles(
+      files,
+      (p: ImportProgress) =>
+        setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors }),
+      () => cancelImportRef.current,
+    );
     setUpdate((u) => ({ ...u, active: false }));
     const recs = await reload();
     if (recs.length > 0 && screen === "empty") {
@@ -150,6 +157,10 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (menuOpenRef.current) {
         if (e.key === "Escape" || e.key === "x" || e.key === "X") setMenuOpen(false);
+        return;
+      }
+      if (update.active && (e.key === "Escape" || e.key === "x" || e.key === "X")) {
+        cancelImportRef.current = true; // ✕ Cancel (UI_SPEC §4)
         return;
       }
       switch (e.key) {
@@ -178,11 +189,11 @@ export default function App() {
           if (screen === "carousel") {
             if (entryTracks(entry, records).length > 0) enterChannel(entryIndex);
           } else if (pending !== null) confirmPending();
-          else goScreen("carousel");
           break;
         case "Escape":
           if (screen === "carousel") goScreen("nowplaying");
           else if (pending !== null) setPending(null); // cancel candidate
+          else if (screen === "nowplaying" || screen === "boot") goScreen("carousel"); // toggle channels
           break;
         case " ":
           e.preventDefault();
@@ -213,7 +224,7 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, entryIndex, entry, records, current, queue, queuePos, pending, doImport, enterChannel]);
+  }, [screen, entryIndex, entry, records, current, queue, queuePos, pending, update.active, doImport, enterChannel]);
 
   async function toggleFavourite(rec: LibraryRecord, fav: boolean) {
     await updateRecord({ ...rec, favourite: fav });
@@ -253,9 +264,9 @@ export default function App() {
   }, [records]);
 
   const platform = useMemo(detectPlatform, []);
-  const captionText = menuOpen
-    ? ""
-    : captionFor(screen, { playing, pending: pending !== null }, platform);
+  const captionSegs = menuOpen
+    ? []
+    : captionsFor(screen, { playing, pending: pending !== null }, platform);
 
   return (
     <div className="app">
@@ -275,7 +286,30 @@ export default function App() {
 
       {/* furniture (R-2) */}
       {settings.showClock && screen !== "empty" && <div className="clock">{clock}</div>}
-      {update.active && (
+      {update.active && screen === "empty" ? (
+        // First-run progress card (UI_SPEC §4, R-6 7509): dim scene,
+        // centered logo + progress bar + ✕ Cancel.
+        <>
+          <div className="update-scrim" />
+          <div className="update-card">
+            <div className="update-card-logo">SensMe</div>
+            <div className="update-card-label">
+              Updating channels… {update.done}/{update.total}
+            </div>
+            <div className="update-bar">
+              <div
+                className="update-bar-fill"
+                style={{ width: `${(update.done / Math.max(1, update.total)) * 100}%` }}
+              />
+            </div>
+            {update.errors > 0 && (
+              <div className="update-card-errors">({update.errors} failed)</div>
+            )}
+            <div className="update-card-cancel">✕ Cancel</div>
+          </div>
+        </>
+      ) : update.active ? (
+        // Subsequent updates: R-2 top-left indicator + status line.
         <>
           <div className="update-icon">◌</div>
           <div className="status">
@@ -283,8 +317,17 @@ export default function App() {
             {update.errors > 0 ? ` (${update.errors} failed)` : ""}
           </div>
         </>
+      ) : null}
+      {settings.showCaptions && captionSegs.length > 0 && (
+        <div className="captions">
+          {captionSegs.map((c) => (
+            <span className="cap" key={`${c.key}-${c.desc}`}>
+              <span className="cap-key">{c.key}</span>
+              <span className="cap-desc">{c.desc}</span>
+            </span>
+          ))}
+        </div>
       )}
-      {settings.showCaptions && captionText && <div className="captions">{captionText}</div>}
 
       {menuOpen && (
         <Options

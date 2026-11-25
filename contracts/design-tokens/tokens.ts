@@ -20,6 +20,8 @@ export const tokens = {
     "menuScrim": "rgba(8,10,14,0.72)",
     "menuPanel": "rgba(10,12,18,0.66)",
     "rule": "rgba(255,255,255,0.55)",
+    "barTrack": "rgba(255,255,255,0.18)",
+    "barFill": "#EAF4FF",
     "waterOpacity": 0.55,
     "dotPalette": [
       "#E06CE0",
@@ -130,6 +132,11 @@ export const tokens = {
       "topMargin": 0.05,
       "rightMargin": 0.05
     },
+    "update": {
+      "cardW": 0.36,
+      "barH": 0.014,
+      "barRadius": 0.007
+    },
     "np": {
       "size": 0.62,
       "centerY": 0.51,
@@ -202,9 +209,9 @@ export const tokens = {
       "px480": 13
     },
     "caption": {
-      "sizeH": 0.044,
+      "sizeH": 0.03,
       "weight": 600,
-      "px480": 12
+      "px480": 8
     },
     "small": {
       "sizeH": 0.037,

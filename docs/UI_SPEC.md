@@ -48,9 +48,9 @@ Layout (rest state):
   glow. Bottom-row cards reflect on the floor.
 - Channel name: centered under the bottom row, `type.title`, white with
   shadow + floor reflection.
-- Captions bottom-center: `✕ Back  ◯ Select`, `type.caption`. Caption
-  key names adapt to the platform (AGENTS.md §6): desktop keyboards
-  show `Esc Back · Enter Select`; touch/console keeps PSP glyphs.
+- Captions bottom-LEFT, chip style: each control is a bordered key chip
+  followed by plain help text (`[Esc] Back  [Enter] Select`); PSP glyph
+  chips on touch/console. `type.caption`.
 
 Interaction (R-2):
 - ←/→ move one column (±2 entries); ↑/↓ move within the column. Grid
@@ -87,11 +87,11 @@ Layout:
 - Copyright line (when tagged): y 0.92, `type.small`, white 45%.
 - Backdrop: current channel's photo (per-channel mapping), crossfaded
   on channel switch; rippling floor reflection below the waterline.
-- Captions bottom-center: `SELECT Change Channels · START Play/Pause ·
-  L ◀ Prev · R Next ▶ · ♥ Favourites` (R-6 7509), `type.caption`.
-  Key names adapt to the platform: desktop keyboards show
-  `Enter Change Channels · Space Play/Pause · ← Prev · Next → ·
-  F Favourites`; touch/console keeps PSP glyphs (`ui/controls.ts`).
+- Captions bottom-left, chip style (key chip + help text): desktop
+  shows `[Esc] Change Channels [Space] Play/Pause [←] Prev [→] Next
+  [F] Favourites`; touch/console keeps PSP glyph chips
+  (`SELECT`/`START`/`L`/`R`/`♥`). Esc toggles the channel grid from
+  now-playing (and back).
 - Clock + battery top-right (margin 0.05), `type.title`.
 
 Interaction (R-2):

@@ -61,14 +61,18 @@ export interface ImportProgress {
   errors: number;
 }
 
-/** Analyze + persist every file. Returns the number imported. */
+/** Analyze + persist every file. Returns the number imported.
+ * `shouldCancel` (checked before each file) aborts the scan (UI_SPEC §4:
+ * `✕ Cancel` on the first-run progress card). */
 export async function importFiles(
   picked: PickedFile[],
   onProgress: (p: ImportProgress) => void,
+  shouldCancel?: () => boolean,
 ): Promise<number> {
   let done = 0;
   let errors = 0;
   for (const { file, path } of picked) {
+    if (shouldCancel?.()) break;
     onProgress({ done, total: picked.length, current: file.name, errors });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
