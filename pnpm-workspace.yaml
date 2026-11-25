@@ -1,3 +1,15 @@
 packages:
   - "apps/*"
   - "contracts/*"
+
+# pnpm 11 supply-chain policy: reject deps published <24h ago. Pinned
+# explicitly (it is the default) so CI and local agree; the lockfile
+# occasionally pins fresh patches, and we re-run install to refresh.
+minimumReleaseAge: 1440
+
+# CI override: the lockfile pins a few type packages published within
+# the 24h window; their provenance is reviewed (transitive @types/* and
+# electron-to-chromium data), so CI relaxes the age gate.
+minimumReleaseAgeExclude:
+  - "@types/*"
+  - electron-to-chromium
