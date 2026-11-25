@@ -1,0 +1,187 @@
+// GENERATED from tokens.json by generate.mjs — do not edit by hand.
+export const tokens = {
+  "$schema": "./tokens.schema.json",
+  "name": "sensme-design-tokens",
+  "version": "0.1.0",
+  "source": "docs/UI_SPEC.md (refs R-1..R-6, docs/UI_REFERENCES/PROVENANCE.md)",
+  "canvas": {
+    "width": 480,
+    "height": 272,
+    "note": "PSP reference; all layout values are viewport ratios"
+  },
+  "color": {
+    "bgBase": "#0B0D12",
+    "textPrimary": "#FFFFFF",
+    "textSecondary": "rgba(255,255,255,0.72)",
+    "textTertiary": "rgba(255,255,255,0.45)",
+    "tileBorder": "#FFFFFF",
+    "tileBorderDim": "rgba(255,255,255,0.35)",
+    "tileGlow": "rgba(255,255,255,0.55)",
+    "menuScrim": "rgba(8,10,14,0.72)",
+    "menuPanel": "rgba(10,12,18,0.66)",
+    "rule": "rgba(255,255,255,0.55)",
+    "waterOpacity": 0.55,
+    "dotPalette": [
+      "#E06CE0",
+      "#9A8CF5",
+      "#6FA8F0",
+      "#6FC7E8",
+      "#7CC96F",
+      "#E8D26A",
+      "#E89A55",
+      "#E06A6A",
+      "#E87BA8",
+      "#B8D25E",
+      "#5FC2B8",
+      "#E8B455"
+    ],
+    "channelHues": {
+      "energetic": [
+        "#E06A6A",
+        "#E89A55",
+        "#E8D26A"
+      ],
+      "relax": [
+        "#6FC7E8",
+        "#5FC2B8",
+        "#6FA8F0"
+      ],
+      "upbeat": [
+        "#E8D26A",
+        "#B8D25E",
+        "#7CC96F"
+      ],
+      "mellow": [
+        "#6FA8F0",
+        "#9A8CF5",
+        "#6FC7E8"
+      ],
+      "lounge": [
+        "#9A8CF5",
+        "#E06CE0",
+        "#6FA8F0"
+      ],
+      "emotional": [
+        "#7CC96F",
+        "#5FC2B8",
+        "#B8D25E"
+      ],
+      "dance": [
+        "#E06CE0",
+        "#E06A6A",
+        "#E89A55",
+        "#6FA8F0",
+        "#E8D26A"
+      ],
+      "extreme": [
+        "#E06A6A",
+        "#C62828",
+        "#E89A55"
+      ],
+      "morning": [
+        "#E8D26A",
+        "#E8B455",
+        "#FFF6AC"
+      ],
+      "daytime": [
+        "#6FC7E8",
+        "#E8D26A",
+        "#B8D25E"
+      ],
+      "evening": [
+        "#E89A55",
+        "#E06CE0",
+        "#9A8CF5"
+      ],
+      "night": [
+        "#6FA8F0",
+        "#9A8CF5",
+        "#0B0D12"
+      ],
+      "midnight": [
+        "#9A8CF5",
+        "#E06CE0",
+        "#0B0D12"
+      ]
+    }
+  },
+  "layout": {
+    "waterlineY": 0.55,
+    "art": {
+      "size": 0.59,
+      "centerX": 0.28,
+      "bottom": 0.86
+    },
+    "title": {
+      "baselineY": 0.77,
+      "rightMargin": 0.025
+    },
+    "artistAlbum": {
+      "baselineY": 0.85
+    },
+    "copyright": {
+      "baselineY": 0.92
+    },
+    "caption": {
+      "baselineY": 0.955
+    },
+    "clock": {
+      "topMargin": 0.03,
+      "rightMargin": 0.03
+    },
+    "carousel": {
+      "baseline": 0.62,
+      "selected": {
+        "w": 0.26,
+        "h": 0.42
+      },
+      "neighbor": {
+        "w": 0.18,
+        "h": 0.3
+      },
+      "scaleStep": 0.85,
+      "dimStep": 0.18,
+      "tiltDeg": 18,
+      "nameY": 0.68,
+      "tileRadius": 0.02
+    },
+    "menu": {
+      "panelLeft": 0.45,
+      "itemLineHeight": 0.088
+    }
+  },
+  "type": {
+    "family": "'Source Sans 3', 'Noto Sans', system-ui, sans-serif",
+    "title": {
+      "sizeH": 0.059,
+      "weight": 600,
+      "px480": 16
+    },
+    "body": {
+      "sizeH": 0.048,
+      "weight": 400,
+      "px480": 13
+    },
+    "caption": {
+      "sizeH": 0.044,
+      "weight": 600,
+      "px480": 12
+    },
+    "small": {
+      "sizeH": 0.037,
+      "weight": 400,
+      "px480": 10
+    }
+  },
+  "motion": {
+    "carouselStepMs": 260,
+    "enterNowPlayingMs": 380,
+    "channelSwitchMs": 320,
+    "menuOpenMs": 220,
+    "rippleLoopS": 4
+  }
+} as const;
+
+export type Tokens = typeof tokens;
+export const cssVar = (path: string): string =>
+  `--sensme-${path.replace(/\./g, "-")}`;

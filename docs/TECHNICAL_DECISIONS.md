@@ -183,3 +183,25 @@ for mobile battery/CPU.
 
 Consequences: Any future feature needing >11 kHz content (e.g., hiss/air
 analysis) requires a second higher-rate pass — new ADR then.
+
+## ADR-016 — Web-first shell; wasm core; IndexedDB persistence
+Status: accepted — 2026-11-25 (product owner decision)
+
+Decision: Phase 4 ships the web app first: React shell + `sensme-wasm`
+(wasm-bindgen surface over sensme-audio/classify/core models). Audio is
+decoded in wasm from bytes (symphonia is pure Rust); playback uses Web
+Audio; the library persists in IndexedDB storing the same versioned
+feature/classification records as SQLite. Tauri desktop (Phase 5) embeds
+the same React UI with the native rusqlite/rodio backend.
+
+Rationale: One UI implementation proves the PSP fidelity before platform
+packaging exists; the web build is the cheapest to iterate and demo;
+Tauri then reuses it wholesale. rusqlite (bundled C SQLite) does not
+target browsers, so the web shell owns persistence behind the same
+versioned-record contract (classification stays a pure function of
+stored features on every platform).
+
+Consequences: Two persistence backends (SQLite, IndexedDB) with one
+record contract — covered by shared contract tests over exported ts-rs
+types; wasm determinism is gated by running the golden-vector suite on
+wasm32-unknown-unknown in CI.

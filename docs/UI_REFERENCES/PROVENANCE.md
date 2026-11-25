@@ -15,7 +15,7 @@ reimplementations derived from the specs in `docs/UI_SPEC.md`.
 | R-3 | Wikipedia "SensMe" article (rev. 2026-11-21): `en.wikipedia.org/wiki/SensMe` | text + fair-use images | PSP channel list, version history (1.00/1.01/1.50), firmware 6.10 debut |
 | R-4 | PSP XMB screenshot (Wikipedia fair-use, `SensMe_channels_on_PSP.jpg`, 421×237) | image | XMB Music category placement of the SensMe icon (not the app UI itself) |
 | R-5 | Sony official JP site, archived 2012-01-04: `web.archive.org/web/20120104145251/http://www.playstation.com/psp-app/sensme/jp/` | text + same 2 thumbnails | JP naming (おまかせチャンネル), same screens |
-| R-6 | **Product-owner screenshots** (PSP captures) | pending — provided by user | high-resolution captures of every screen; primary source for palette, typography, spacing, animation timing |
+| R-6 | **Product-owner captures** (iPhone photos + Live Photo videos of a real PSP running SensMe channels v1.50), 2026-11-25, 19 photo/video pairs in `references-local/` (never committed) | analyzed | all screens: carousel (Favourites/Extreme/Newly Added/Lounge/Emotional/Dance), now-playing ×8 (incl. placeholder art, dot-grid backdrop), options menu + 3 submenus, update state, XMB context. Rectified 480×272 analysis copies + palette/geometry measurements in the scratch dir; drove `docs/UI_SPEC.md` and `contracts/design-tokens/` |
 
 ## What R-1 thumbnails show (low-res, used for layout only)
 
@@ -30,11 +30,14 @@ reimplementations derived from the specs in `docs/UI_SPEC.md`.
   caption "✕ Dance" bottom-left (back-to-channel context); same bokeh
   background + reflective floor.
 
-## Pending references (needed from R-6)
+## Reference coverage (post R-6)
 
-1. Channel selection at rest + mid-transition (to measure animation).
-2. Now-playing (idle and with track info).
-3. Options menu (△).
-4. Help screen.
-5. "Updating channels… xx/xx" status state.
-6. Empty-channel / no-music state.
+| screen | refs |
+|---|---|
+| Channel carousel | R-1 cp1, R-6 ×6 |
+| Now playing | R-1 cp2, R-6 ×8 (incl. placeholder art + dot-grid backdrop) |
+| Options menu + submenus | R-6 ×4 |
+| Update/analysis state | R-6 ×1 |
+| XMB context (out of scope) | R-4, R-6 ×1 |
+| Help screen | not captured — documented deviation in UI_SPEC §5 |
+| Empty-channel state | not captured — behavior spec from R-2 only |

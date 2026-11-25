@@ -62,46 +62,54 @@ Done gate:
 - [x] Report identifies ≥3 systematic error classes with follow-up issues
       (4 classes, F-1…F-4 in docs/BENCH_FINDINGS.md)
 
-## Phase 4 — Application (desktop first, PSP-faithful UI)
+## Phase 4 — Application (web first, PSP-faithful UI)
 
-Scope: Tauri desktop app implementing the PSP experience.
+Scope: React web app implementing the PSP experience, core compiled to
+wasm. Decided 2026-11-25 (product owner): web ships first; the same React
+UI is embedded by Tauri in Phase 5, so no work is wasted.
 
 Sub-phases (gates between each):
-- **4a Reference research** *(starts in parallel with Phase 3)*: collect PSP
-  screenshots/recordings of every screen into `docs/UI_REFERENCES/` with
-  provenance; measure palette, typography, spacing, animation timings.
-  Gate: every screen has ≥1 high-quality reference; PROVENANCE.md complete.
+- **4a Reference research** *(done)*: PSP photos/recordings captured by
+  product owner into `references-local/` (never committed); provenance +
+  interaction model in `docs/UI_REFERENCES/`.
 - **4b Visual spec**: `docs/UI_SPEC.md` — per-screen layout, tokens,
   interaction flows; `contracts/design-tokens/` generated.
   Gate: spec approved by product owner; tokens package published.
-- **4c Implementation**: channel list → artwork browsing → playback loop;
-  library management UI; analysis progress UI.
-  Gate: full analyze→browse→play loop on Linux.
+- **4c Implementation**: `sensme-wasm` crate (wasm-bindgen surface over
+  the core) + React shell: folder import (File System Access API /
+  directory input), analysis progress, channel carousel → now-playing →
+  Web Audio playback, options menu.
+  Gate: full analyze→browse→play loop in Chromium and Firefox.
 - **4d Fidelity review**: each screen scored against the checklist (layout,
   color, typography, icons, animation timing, behavior).
   Gate: all screens pass review or have explicit, documented deviations.
 
 Done gate:
-- [ ] Windows, Linux, macOS installers build in CI
-- [ ] Playback via rodio/cpal with gapless-tolerant queue
+- [ ] Golden feature vectors identical (±1e-4) to native on
+      `wasm32-unknown-unknown`, enforced in CI
+- [ ] Full analyze→browse→play loop in Chromium and Firefox
+- [ ] Library persists across reloads (IndexedDB) with versioned vectors
 - [ ] Visual regression screenshots committed per screen
 
-## Phase 5 — Cross-platform
+## Phase 5 — Platform-specific shells
 
-Scope: React Native mobile, WASM web.
+Scope: Tauri desktop (reuses the Phase 4 React UI), React Native mobile.
 
 Work items:
-1. UniFFI production bindings (Kotlin/Swift) + RN Turbo Module bridge.
-2. Platform library sources: SAF (Android), security-scoped URLs (iOS).
-3. Background analysis queue (resumable, low-power aware) on mobile.
-4. Platform players (ExoPlayer / AVPlayer) behind a shell-level `Player` interface.
-5. Web: wasm-bindgen core + File System Access API; PSP UI in React.
+1. Tauri shell embedding the same React UI; native backend via Tauri
+   commands → `sensme-core` (rusqlite library, folder scanning).
+2. Desktop playback: rodio/cpal with gapless-tolerant queue.
+3. Windows, Linux, macOS installers built in CI.
+4. UniFFI production bindings (Kotlin/Swift) + RN Turbo Module bridge.
+5. Platform library sources: SAF (Android), security-scoped URLs (iOS).
+6. Background analysis queue (resumable, low-power aware) on mobile.
+7. Platform players (ExoPlayer / AVPlayer) behind a shell-level `Player` interface.
 
 Done gate:
 - [ ] Golden feature vectors identical (±1e-4) on Android device, iOS device, desktop
 - [ ] Full channel→play loop on Android and iOS
-- [ ] UI fidelity review passed on mobile (same checklist as 4d)
-- [ ] Web app analyzes and plays from a local folder
+- [ ] UI fidelity review passed on desktop and mobile (same checklist as 4d)
+- [ ] Installers build in CI for Windows, Linux, macOS
 
 ## Standing quality gates (every commit, all phases)
 
