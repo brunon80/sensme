@@ -63,3 +63,11 @@ distribution if licensing is unclear.
 | `extreme.jpg` | Extreme |
 | `favorite.webp` | Favourites |
 | `shuffle_all.jpg` | Shuffle All |
+
+## Favicon
+
+- `apps/web/public/icon.svg` — SensMe heart-and-note icon supplied by the
+  product owner (2026-11-25) for use as the favicon. **Deviation from
+  AGENTS.md §7** (product-owner decision): this is the SensMe mark, not
+  a clean-room reimplementation. Must be replaced before any public
+  distribution.
