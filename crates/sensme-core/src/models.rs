@@ -143,6 +143,13 @@ pub struct ChannelScores {
     pub weights_version: String,
 }
 
+impl ChannelScores {
+    /// Score for a specific channel.
+    pub fn score_for(&self, channel: Channel) -> f32 {
+        self.scores[Channel::ALL.iter().position(|c| *c == channel).unwrap()]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

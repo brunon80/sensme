@@ -125,9 +125,7 @@ impl Library {
             .query_map(params![path], row_to_track)
             .map_err(|e| CoreError::Storage(e.to_string()))?;
         match rows.next() {
-            Some(r) => r
-                .map(Some)
-                .map_err(|e| CoreError::Storage(e.to_string())),
+            Some(r) => r.map(Some).map_err(|e| CoreError::Storage(e.to_string())),
             None => Ok(None),
         }
     }
@@ -160,7 +158,11 @@ impl Library {
     // --- analyses ---
 
     /// Store (replacing any previous) analysis for a track.
-    pub fn store_analysis(&mut self, track_id: TrackId, fv: &FeatureVector) -> Result<(), CoreError> {
+    pub fn store_analysis(
+        &mut self,
+        track_id: TrackId,
+        fv: &FeatureVector,
+    ) -> Result<(), CoreError> {
         let blob = f32_slice_to_blob(&fv.values);
         self.conn
             .execute(

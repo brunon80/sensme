@@ -22,6 +22,7 @@ thiserror = "2"
 
 sensme-audio = { path = "crates/sensme-audio" }
 sensme-bench = { path = "crates/sensme-bench" }
+sensme-classify = { path = "crates/sensme-classify" }
 sensme-core = { path = "crates/sensme-core" }
 
 [profile.release]

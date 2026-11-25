@@ -11,6 +11,7 @@ anyhow.workspace = true
 clap.workspace = true
 sensme-audio.workspace = true
 sensme-bench.workspace = true
+sensme-classify.workspace = true
 sensme-core.workspace = true
 serde_json.workspace = true
 

@@ -57,7 +57,8 @@ pub fn mfcc(spec: &Spectrogram, sample_rate: usize) -> Vec<[f32; N_COEFFS]> {
         for (c, coeff) in coeffs.iter_mut().enumerate() {
             let mut s = 0.0f32;
             for (m, mel) in mel_energies.iter().enumerate() {
-                s += mel * (std::f32::consts::PI * c as f32 * (m as f32 + 0.5) / N_MEL as f32).cos();
+                s +=
+                    mel * (std::f32::consts::PI * c as f32 * (m as f32 + 0.5) / N_MEL as f32).cos();
             }
             *coeff = s;
         }

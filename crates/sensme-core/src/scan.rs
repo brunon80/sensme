@@ -37,13 +37,14 @@ pub fn scan_directory(lib: &mut Library, root: &Path) -> Result<ScanStats, CoreE
     let mut stats = ScanStats::default();
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
-        let entries = std::fs::read_dir(&dir).map_err(|e| {
-            CoreError::Storage(format!("{}: {e}", dir.display()))
-        })?;
+        let entries = std::fs::read_dir(&dir)
+            .map_err(|e| CoreError::Storage(format!("{}: {e}", dir.display())))?;
         for entry in entries {
             let entry = entry.map_err(|e| CoreError::Storage(e.to_string()))?;
             let path = entry.path();
-            let ft = entry.file_type().map_err(|e| CoreError::Storage(e.to_string()))?;
+            let ft = entry
+                .file_type()
+                .map_err(|e| CoreError::Storage(e.to_string()))?;
             if ft.is_dir() {
                 stack.push(path);
                 continue;
@@ -160,7 +161,10 @@ mod tests {
 
         let mut lib = Library::open_in_memory().unwrap();
         let stats = scan_directory(&mut lib, dir).unwrap();
-        assert_eq!((stats.added, stats.updated, stats.unchanged, stats.skipped), (2, 0, 0, 0));
+        assert_eq!(
+            (stats.added, stats.updated, stats.unchanged, stats.skipped),
+            (2, 0, 0, 0)
+        );
         let tracks = lib.all_tracks().unwrap();
         assert_eq!(tracks.len(), 2);
         assert!(tracks.iter().all(|t| t.duration_ms > 0));

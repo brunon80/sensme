@@ -513,6 +513,7 @@ name = "sensme-classify"
 version = "0.1.0"
 dependencies = [
  "sensme-core",
+ "thiserror",
 ]
 
 [[package]]
@@ -523,6 +524,7 @@ dependencies = [
  "clap",
  "sensme-audio",
  "sensme-bench",
+ "sensme-classify",
  "sensme-core",
  "serde_json",
 ]
