@@ -130,21 +130,52 @@ export const tokens = {
       "topMargin": 0.05,
       "rightMargin": 0.05
     },
+    "np": {
+      "size": 0.5,
+      "bottom": 0.82,
+      "slots": [
+        {
+          "centerX": 0.3,
+          "scale": 1,
+          "opacity": 1
+        },
+        {
+          "centerX": 0.55,
+          "scale": 0.62,
+          "opacity": 0.85
+        },
+        {
+          "centerX": 0.71,
+          "scale": 0.42,
+          "opacity": 0.5
+        }
+      ],
+      "prev": {
+        "centerX": 0.08,
+        "scale": 0.62,
+        "opacity": 0
+      },
+      "next2": {
+        "centerX": 0.8,
+        "scale": 0.3,
+        "opacity": 0
+      }
+    },
     "carousel": {
-      "baseline": 0.62,
+      "baseline": 0.6,
       "selected": {
-        "w": 0.26,
-        "h": 0.42
+        "w": 0.3,
+        "h": 0.21
       },
       "neighbor": {
-        "w": 0.18,
-        "h": 0.3
+        "w": 0.24,
+        "h": 0.17
       },
-      "scaleStep": 0.85,
-      "dimStep": 0.18,
-      "tiltDeg": 18,
-      "nameY": 0.68,
-      "tileRadius": 0.02
+      "scaleStep": 0.86,
+      "dimStep": 0.16,
+      "tiltDeg": 12,
+      "nameY": 0.66,
+      "tileRadius": 0.012
     },
     "menu": {
       "panelLeft": 0.45,

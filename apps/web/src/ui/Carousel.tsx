@@ -19,7 +19,7 @@ function tileImage(entry: CarouselEntry): string {
   const key = entry;
   let url = tileCache.get(key);
   if (!url) {
-    const cv = renderBackdrop(`tile:${key}`, entryHues(entry), 240, 320);
+    const cv = renderBackdrop(`tile:${key}`, entryHues(entry), 320, 224);
     url = cv.toDataURL("image/png");
     tileCache.set(key, url);
   }
@@ -55,7 +55,7 @@ export function Carousel({ selected, counts, phase }: Props) {
         // Tiles beyond the visible ring stay mounted but invisible, so they
         // glide in (opacity + transform transition) instead of popping.
         const visible = ad <= 4;
-        const xVw = d * selW * 0.72 * 100;
+        const xVw = d * selW * 0.66 * 100;
         const tilt = d === 0 ? 0 : d > 0 ? -tokens.layout.carousel.tiltDeg : tokens.layout.carousel.tiltDeg;
         const style = {
           width: `${selW * 100}vw`,
@@ -72,7 +72,12 @@ export function Carousel({ selected, counts, phase }: Props) {
           </div>
         );
       })}
-      <div className="carousel-name">{entryName(CAROUSEL_ORDER[selected]!)}</div>
+      <div className="carousel-name">
+        {entryName(CAROUSEL_ORDER[selected]!)}
+        <span className="carousel-name-reflect" aria-hidden="true">
+          {entryName(CAROUSEL_ORDER[selected]!)}
+        </span>
+      </div>
     </div>
   );
 }

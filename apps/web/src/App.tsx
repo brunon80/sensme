@@ -113,7 +113,8 @@ export default function App() {
 
   const nextIn = useCallback((q: LibraryRecord[]) => {
     const pos = queuePosRef.current;
-    void playAt((pos + 1) % Math.max(1, q.length), q);
+    const np = pos + 1;
+    if (np < q.length) void playAt(np, q); // end of queue: stop, don't loop
   }, [playAt]);
 
   const doImport = useCallback(async () => {
@@ -206,11 +207,15 @@ export default function App() {
 
   async function next() {
     if (queue.length === 0) return;
-    await playAt((queuePos + 1) % queue.length, queue);
+    const np = queuePos + 1;
+    if (np >= queue.length) return; // last track: stop
+    await playAt(np, queue);
   }
   async function prev() {
     if (queue.length === 0) return;
-    await playAt((queuePos + queue.length - 1) % queue.length, queue);
+    const pp = queuePos - 1;
+    if (pp < 0) return; // first track: stop
+    await playAt(pp, queue);
   }
 
   const hues = useMemo(() => entryHues(entry), [entry]);
@@ -239,7 +244,7 @@ export default function App() {
       <Scene sceneKey={entry} hues={hues} />
 
       {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
-      {showNow && <NowPlaying record={current} entry={entry} playing={playing} phase={npPhase} />}
+      {showNow && <NowPlaying queue={queue} pos={queuePos} entry={entry} playing={playing} phase={npPhase} />}
 
       {screen === "empty" && (
         <div className="empty-card">

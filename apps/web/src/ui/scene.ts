@@ -26,7 +26,22 @@ function hashStr(s: string): number {
 
 export type Hues = readonly string[];
 
-/** Render the static backdrop (bokeh field) for a channel's hue set. */
+function hexRGB(hex: string): [number, number, number] {
+  return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+}
+function mixWhite(hex: string, t: number): string {
+  const [r, g, b] = hexRGB(hex);
+  const m = (c: number) => Math.round(c + (255 - c) * t);
+  return `rgb(${m(r)},${m(g)},${m(b)})`;
+}
+function hexA(hex: string, a: number): string {
+  const [r, g, b] = hexRGB(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/** Render the static backdrop for a channel: a bright, luminous scene
+ * (channel-tinted sky gradient + glowing bokeh), reflected on a glossy
+ * floor below the waterline (UI_SPEC §0; PSP references IMG_75xx). */
 export function renderBackdrop(key: string, hues: Hues, w: number, h: number): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = w;
@@ -34,25 +49,37 @@ export function renderBackdrop(key: string, hues: Hues, w: number, h: number): H
   const ctx = cv.getContext("2d")!;
   const rnd = mulberry32(hashStr(key));
   const waterY = Math.round(h * tokens.layout.waterlineY);
+  const base = hues[0] ?? "#6f86a8";
 
-  // Base gradient: near-black at top, slightly lifted toward the waterline.
+  // Bright sky gradient: near-white tint at top, channel colour lower.
   const grad = ctx.createLinearGradient(0, 0, 0, waterY);
-  grad.addColorStop(0, tokens.color.bgBase);
-  grad.addColorStop(1, "#141824");
+  grad.addColorStop(0, mixWhite(base, 0.82));
+  grad.addColorStop(0.6, mixWhite(base, 0.5));
+  grad.addColorStop(1, mixWhite(base, 0.28));
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  // Bokeh dot field (channel-hued, soft, varied sizes).
-  const count = 90;
+  // Large soft light source (sun/stage glow) for luminosity.
+  const gx = w * (0.3 + rnd() * 0.4);
+  const gy = waterY * (0.25 + rnd() * 0.3);
+  const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(w, h) * 0.5);
+  glow.addColorStop(0, "rgba(255,255,255,0.55)");
+  glow.addColorStop(0.5, "rgba(255,255,255,0.12)");
+  glow.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, waterY);
+
+  // Glowing bokeh field (channel-hued, bright, varied sizes).
+  const count = 110;
   for (let i = 0; i < count; i++) {
     const x = rnd() * w;
     const y = rnd() * (waterY - 8);
-    const r = 1.5 + rnd() * rnd() * 14;
+    const r = 2 + rnd() * rnd() * 22;
     const hue = hues[Math.floor(rnd() * hues.length)] ?? "#ffffff";
-    const alpha = 0.06 + rnd() * 0.30;
+    const alpha = 0.12 + rnd() * 0.4;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, hexA(hue, alpha));
-    g.addColorStop(0.7, hexA(hue, alpha * 0.5));
+    g.addColorStop(0, mixWhite(hue, 0.5));
+    g.addColorStop(0.4, hexA(hue, alpha));
     g.addColorStop(1, hexA(hue, 0));
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -60,13 +87,6 @@ export function renderBackdrop(key: string, hues: Hues, w: number, h: number): H
     ctx.fill();
   }
   return cv;
-}
-
-function hexA(hex: string, a: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${a})`;
 }
 
 /**
@@ -85,27 +105,29 @@ export function drawScene(
   // Top: static image.
   ctx.drawImage(backdrop, 0, 0, w, waterY, 0, 0, w, waterY);
 
-  // Water: vertical mirror of the backdrop, sliced into bands with a
-  // horizontal sine offset (cheap ripple), faded and darkened.
+  // Glossy floor: vertical mirror of the backdrop, sliced into bands with a
+  // gentle horizontal ripple. Bright (not blackened) — the PSP floor is a
+  // luminous reflective surface.
   const band = 3;
   const loop = tokens.motion.rippleLoopS;
   const phase = (t % loop) / loop * Math.PI * 2;
   ctx.save();
-  ctx.globalAlpha = tokens.color.waterOpacity;
+  ctx.globalAlpha = 0.6;
   for (let y = 0; y < h - waterY; y += band) {
     const srcY = Math.max(0, waterY - y - band); // mirrored source row
     const depth = y / (h - waterY);
-    const dx = Math.sin(phase + y * 0.12) * (1.5 + depth * 6);
+    const dx = Math.sin(phase + y * 0.1) * (1 + depth * 4);
     ctx.drawImage(backdrop, 0, srcY, w, band, dx, waterY + y, w, band);
   }
   ctx.restore();
-  // Darken toward the bottom + waterline sheen.
+  // Floor sheen: bright near the waterline, gently deepening downward.
   const g = ctx.createLinearGradient(0, waterY, 0, h);
-  g.addColorStop(0, "rgba(0,0,0,0.15)");
-  g.addColorStop(1, "rgba(0,0,0,0.75)");
+  g.addColorStop(0, "rgba(255,255,255,0.18)");
+  g.addColorStop(0.4, "rgba(255,255,255,0.02)");
+  g.addColorStop(1, "rgba(0,0,0,0.28)");
   ctx.fillStyle = g;
   ctx.fillRect(0, waterY, w, h - waterY);
-  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
   ctx.fillRect(0, waterY - 1, w, 2);
 }
 

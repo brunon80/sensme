@@ -1,54 +1,69 @@
-// Now-playing screen (UI_SPEC §2): artwork standing on the water with
-// reflection, right-aligned title block, channel dot grid, captions.
+// Now-playing screen (UI_SPEC §2): a track carousel — current track big at
+// left, next tracks receding to the right, morphing on next/prev. Artwork
+// stands on the water with reflection; right-aligned title block; channel
+// dot grid; captions.
 import { useEffect, useMemo, useState } from "react";
 import { tokens } from "../../../../contracts/design-tokens/tokens";
 import type { LibraryRecord } from "../engine/types";
 import { entryHues, entryName, membershipDots, type CarouselEntry } from "./channels";
 
 interface Props {
-  record: LibraryRecord | null;
+  queue: LibraryRecord[];
+  pos: number;
   entry: CarouselEntry;
   playing: boolean;
   /** Screen-transition phase (UI_SPEC §1). */
   phase?: "enter" | "exit";
 }
 
-export function NowPlaying({ record, entry, playing, phase }: Props) {
-  const [artUrl, setArtUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!record?.artwork) {
-      setArtUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(new Blob([record.artwork.slice().buffer], { type: "image/*" }));
-    setArtUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [record?.id, record?.artwork]);
+interface Slot {
+  centerX: number;
+  scale: number;
+  opacity: number;
+}
 
-  const dots = useMemo(() => (record ? membershipDots(record) : []), [record]);
-  const art = tokens.layout.art;
+function slotFor(k: number): Slot | null {
+  const np = tokens.layout.np;
+  if (k === 0) return np.slots[0]!;
+  if (k === 1) return np.slots[1]!;
+  if (k === 2) return np.slots[2]!;
+  if (k === 3) return np.next2!; // glides in
+  if (k === -1) return np.prev!; // glides out
+  return null;
+}
 
-  const title = record?.title ?? record?.name.replace(/\.[^.]+$/, "") ?? "";
-  const second = [record?.artist, record?.album].filter(Boolean).join(" / ");
+export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
+  const n = queue.length;
+  const current = queue[pos] ?? null;
+  const dots = useMemo(() => (current ? membershipDots(current) : []), [current]);
+
+  const title = current?.title ?? current?.name.replace(/\.[^.]+$/, "") ?? "";
+  const second = [current?.artist, current?.album].filter(Boolean).join(" / ");
+
+  const np = tokens.layout.np;
+  const offsets = [-1, 0, 1, 2, 3];
 
   return (
     <div className={`nowplaying ${phase ?? ""}`}>
-      <div
-        className="artwork"
-        style={{
-          width: `${art.size * 100}vh`,
-          height: `${art.size * 100}vh`,
-          left: `${(art.centerX - art.size / 2) * 100}vw`,
-          bottom: `${(1 - art.bottom) * 100}vh`,
-        }}
-      >
-        {artUrl ? (
-          <img src={artUrl} alt={title} draggable={false} />
-        ) : (
-          <Placeholder entry={entry} />
-        )}
-        <div className="artwork-reflect" />
-      </div>
+      {n > 0 &&
+        offsets.map((k) => {
+          const idx = pos + k;
+          if (idx < 0 || idx >= n) return null; // non-cyclic: clamp at the ends
+          const slot = slotFor(k);
+          if (!slot) return null;
+          const rec = queue[idx]!;
+          return (
+            <TrackCard
+              key={rec.id}
+              record={rec}
+              entry={entry}
+              slot={slot}
+              size={np.size}
+              bottom={np.bottom}
+              z={10 - Math.abs(k)}
+            />
+          );
+        })}
 
       <div className="np-text">
         <div className="np-title">{title}</div>
@@ -68,6 +83,56 @@ export function NowPlaying({ record, entry, playing, phase }: Props) {
       </div>
 
       {playing && <div className="np-playing-tag">▶</div>}
+    </div>
+  );
+}
+
+/** One track card in the now-playing carousel (artwork + reflection). */
+function TrackCard({
+  record,
+  entry,
+  slot,
+  size,
+  bottom,
+  z,
+}: {
+  record: LibraryRecord;
+  entry: CarouselEntry;
+  slot: Slot;
+  size: number;
+  bottom: number;
+  z: number;
+}) {
+  const [artUrl, setArtUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!record.artwork) {
+      setArtUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([record.artwork.slice().buffer], { type: "image/*" }));
+    setArtUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [record.id, record.artwork]);
+
+  return (
+    <div
+      className="np-track"
+      style={{
+        width: `${size * 100}vh`,
+        height: `${size * 100}vh`,
+        left: `${slot.centerX * 100}vw`,
+        bottom: `${(1 - bottom) * 100}vh`,
+        transform: `translateX(-50%) scale(${slot.scale})`,
+        opacity: slot.opacity,
+        zIndex: z,
+      }}
+    >
+      {artUrl ? (
+        <img src={artUrl} alt="" draggable={false} />
+      ) : (
+        <Placeholder entry={entry} />
+      )}
+      {artUrl && <div className="np-track-reflect" style={{ backgroundImage: `url(${artUrl})` }} />}
     </div>
   );
 }
