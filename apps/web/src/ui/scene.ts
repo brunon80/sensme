@@ -28,26 +28,29 @@ export type Hues = readonly string[];
 
 /** Per-channel backdrop photos (user-provided art in `public/bg/`, mapped
  * by file name; see docs/UI_REFERENCES/PROVENANCE.md). Every channel has
- * its own photo; unmapped entries fall back to the default photo. */
+ * its own photo; unmapped entries fall back to the default photo. Paths
+ * are resolved against the document base so they work under the GitHub
+ * Pages project path (`/sensme/`), not just at the site root. */
+const bg = (p: string) => new URL(p, document.baseURI).href;
 export const PHOTO_MAP: Record<string, string> = {
-  relax: "/bg/relax.jpg",
-  energetic: "/bg/energetic.jpg",
-  upbeat: "/bg/upbeat.jpg",
-  mellow: "/bg/mellow.jpg",
-  lounge: "/bg/lounge.jpg",
-  emotional: "/bg/emotional.jpg",
-  dance: "/bg/dance.jpg",
-  extreme: "/bg/extreme.jpg",
-  morning: "/bg/morning.jpg",
-  daytime: "/bg/day.jpg",
-  evening: "/bg/evening.jpg",
-  night: "/bg/night.jpg",
-  midnight: "/bg/midnight.jpg",
-  favourites: "/bg/favorite.webp",
-  shuffle: "/bg/shuffle_all.jpg",
-  newly: "/bg/new_additions.webp",
+  relax: bg("bg/relax.jpg"),
+  energetic: bg("bg/energetic.jpg"),
+  upbeat: bg("bg/upbeat.jpg"),
+  mellow: bg("bg/mellow.jpg"),
+  lounge: bg("bg/lounge.jpg"),
+  emotional: bg("bg/emotional.jpg"),
+  dance: bg("bg/dance.jpg"),
+  extreme: bg("bg/extreme.jpg"),
+  morning: bg("bg/morning.jpg"),
+  daytime: bg("bg/day.jpg"),
+  evening: bg("bg/evening.jpg"),
+  night: bg("bg/night.jpg"),
+  midnight: bg("bg/midnight.jpg"),
+  favourites: bg("bg/favorite.webp"),
+  shuffle: bg("bg/shuffle_all.jpg"),
+  newly: bg("bg/new_additions.webp"),
 };
-export const DEFAULT_PHOTO = "/bg/day.jpg";
+export const DEFAULT_PHOTO = bg("bg/day.jpg");
 export const photoUrlFor = (key: string) => PHOTO_MAP[key] ?? DEFAULT_PHOTO;
 
 /** Photo backdrops (user-provided test art in `public/bg/`): loaded once,
