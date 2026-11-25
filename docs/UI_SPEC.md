@@ -91,6 +91,11 @@ Layout:
   (overlapping, nearer on top), all vertically centered on the current
   card; the previous card glides out left. Non-cyclic: clamped at both
   ends — a one-track channel shows a single card; next at the end stops.
+  Slot X is not hardcoded: each card's center chains from the previous
+  one — `x_k = x_{k−1} + (w_{k−1}+w_k)/2 − np.overlap·w_k`
+  (`np.overlap` 0.3) — so every card shows 70% of its width and the
+  stack overlap is uniform at every depth and aspect ratio (computed
+  in vh; anchor `np.anchorX` 0.23 vw).
 - Track title: right-aligned block, baseline y 0.74, `type.title`,
   white; thin rule under it (R-6 7511).
 - `Artist / Album` line below: y 0.81, `type.body`, white 72%; title

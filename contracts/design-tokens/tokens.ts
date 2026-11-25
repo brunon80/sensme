@@ -140,38 +140,34 @@ export const tokens = {
     "np": {
       "size": 0.62,
       "centerY": 0.51,
+      "overlap": 0.3,
       "slots": [
         {
-          "centerX": 0.23,
           "scale": 1,
           "opacity": 1
         },
         {
-          "centerX": 0.465,
           "scale": 0.55,
           "opacity": 0.95
         },
         {
-          "centerX": 0.6,
           "scale": 0.42,
           "opacity": 0.8
         },
         {
-          "centerX": 0.74,
           "scale": 0.34,
           "opacity": 0.65
         },
         {
-          "centerX": 0.83,
           "scale": 0.28,
           "opacity": 0.5
         },
         {
-          "centerX": 0.91,
           "scale": 0.24,
           "opacity": 0.35
         }
       ],
+      "anchorX": 0.23,
       "prev": {
         "centerX": -0.04,
         "scale": 0.55,

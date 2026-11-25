@@ -19,17 +19,42 @@ interface Props {
 }
 
 interface Slot {
-  centerX: number;
+  centerX: number; // vh units (see slotXs)
   scale: number;
   opacity: number;
 }
 
-function slotFor(k: number, pending: boolean): Slot | null {
+/** Viewport aspect (innerWidth/innerHeight), kept live on resize. Used to
+ * convert vw-based anchors into vh, the unit the card size lives in. */
+function useAspect(): number {
+  const [aspect, setAspect] = useState(() => window.innerWidth / window.innerHeight);
+  useEffect(() => {
+    const on = () => setAspect(window.innerWidth / window.innerHeight);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return aspect;
+}
+
+/** Slot centers (vh) chained from the anchor: each card sits behind the
+ * previous one, overlapping it by `np.overlap` of its own width — the
+ * PSP's stacked look, uniform at every depth and aspect ratio. */
+function slotXs(aspect: number): number[] {
+  const np = tokens.layout.np;
+  const w = np.slots.map((s) => np.size * s.scale); // card widths in vh
+  const xs = [np.anchorX * aspect]; // anchor given in vw
+  for (let k = 1; k < np.slots.length; k++)
+    xs.push(xs[k - 1]! + (w[k - 1]! + w[k]!) / 2 - np.overlap * w[k]!);
+  return xs;
+}
+
+function slotFor(k: number, pending: boolean, xs: number[], aspect: number): Slot | null {
   const np = tokens.layout.np;
   if (k === 0 && pending)
-    return { ...np.slots[0]!, scale: np.pendingScale }; // staged candidate
-  if (k >= 0 && k < np.slots.length) return np.slots[k]!;
-  if (k === -1) return np.prev!; // glides out
+    return { centerX: xs[0]!, scale: np.pendingScale, opacity: 1 }; // staged candidate
+  if (k >= 0 && k < np.slots.length)
+    return { centerX: xs[k]!, scale: np.slots[k]!.scale, opacity: np.slots[k]!.opacity };
+  if (k === -1) return { ...np.prev!, centerX: np.prev!.centerX * aspect }; // glides out
   return null;
 }
 
@@ -42,6 +67,8 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
   const second = [current?.artist, current?.album].filter(Boolean).join(" / ");
 
   const np = tokens.layout.np;
+  const aspect = useAspect();
+  const xs = slotXs(aspect);
   const offsets = [-1, 0, 1, 2, 3, 4, 5];
 
   return (
@@ -50,7 +77,7 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
         offsets.map((k) => {
           const idx = pos + k;
           if (idx < 0 || idx >= n) return null; // non-cyclic: clamp at the ends
-          const slot = slotFor(k, pending ?? false);
+          const slot = slotFor(k, pending ?? false, xs, aspect);
           if (!slot) return null;
           const rec = queue[idx]!;
           return (
@@ -132,7 +159,9 @@ function TrackCard({
         height: `${size * 100}vh`,
         // Position lives INSIDE the transform (left/top stay 0) so slot
         // changes animate; transitioning `left` would teleport the card.
-        transform: `translate(${slot.centerX * 100}vw, ${centerY * 100}vh) translate(-50%, -50%) scale(${slot.scale})`,
+        // X is in vh (the unit card sizes live in) so the stack overlap
+        // is aspect-independent.
+        transform: `translate(${slot.centerX * 100}vh, ${centerY * 100}vh) translate(-50%, -50%) scale(${slot.scale})`,
         opacity: slot.opacity,
         zIndex: z,
       }}
