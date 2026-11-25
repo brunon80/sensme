@@ -14,7 +14,7 @@ minimumReleaseAgeExclude:
   - "@types/*"
   - electron-to-chromium
 
-# pnpm 11 blocks dependency build scripts by default; esbuild needs its
-# postinstall to fetch/link the native binary that Vite builds with.
-onlyBuiltDependencies:
-  - esbuild
+# pnpm 11 blocks dependency build scripts by default (strictDepBuilds);
+# esbuild's postinstall provides the native binary Vite builds with.
+allowBuilds:
+  esbuild: true
