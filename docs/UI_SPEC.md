@@ -96,7 +96,9 @@ Interaction (R-2):
 - Two-step track selection: L/R (or `,`/`.`) stages the next/previous
   candidate — it slides into the big slot at `np.pendingScale` 0.72
   while the outgoing card glides left; playback does NOT start. The
-  caption switches to `START/◯ Confirm · ✕ Cancel`.
+  caption switches to `START/◯ Confirm · ✕ Cancel`. Card morph animates
+  `motion.npStepMs` 460 ms ease (`cubic-bezier 0.25,0.1,0.25,1`); the
+  title/artist block re-fades (`fadeUp`) on every focus change.
 - START/◯ confirms: the candidate scales up to full size and playback
   starts. ✕/Esc cancels the candidate (the current card returns).
 - START/Space with no candidate toggles play/pause; `F` favourites,

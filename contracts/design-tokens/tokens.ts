@@ -214,6 +214,7 @@ export const tokens = {
   },
   "motion": {
     "carouselStepMs": 260,
+    "npStepMs": 460,
     "enterNowPlayingMs": 380,
     "channelSwitchMs": 320,
     "menuOpenMs": 220,

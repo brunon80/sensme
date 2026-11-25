@@ -67,7 +67,8 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
           );
         })}
 
-      <div className="np-text">
+      {/* keyed by track so the title/artist crossfade replays on change */}
+      <div className="np-text" key={current?.id ?? "none"}>
         <div className="np-title">{title}</div>
         <div className="np-rule" />
         {second && <div className="np-second">{second}</div>}
