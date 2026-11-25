@@ -100,9 +100,10 @@ Layout:
   on channel switch; rippling floor reflection below the waterline.
 - Captions bottom-left, chip style (key chip + help text): desktop
   shows `[Esc] Change Channels [Space] Play/Pause [←] Prev [→] Next
-  [F] Favourites`; touch/console keeps PSP glyph chips
-  (`SELECT`/`START`/`L`/`R`/`♥`). Esc toggles the channel grid from
-  now-playing (and back).
+  [F] Favourites [C] Add Music`; touch/console keeps PSP glyph chips
+  (`SELECT`/`START`/`L`/`R`/`♥`/`OPTIONS`). Esc toggles the channel
+  grid from now-playing (and back). The Add Music chip makes the
+  rescan entry point discoverable (Options menu → "Music Scan").
 - Clock + battery top-right (margin 0.05), `type.title`.
 
 Interaction (R-2):
@@ -151,6 +152,12 @@ Reference: R-6 photo 7509 ("Now updating… 1/1"), R-2.
   progress bar + `✕ Cancel` (R-6 7509).
 - Our addition (documented deviation): per-file analysis errors are
   counted and surfaced in the same status line.
+- Our addition: re-import is a **rescan** — files already in the
+  library (same path + size + mtime) are skipped and counted
+  (`(N already in library)`), so adding music to a folder and
+  re-scanning only analyzes what's new/changed. Entry points: `[C]`
+  chip in the captions, Options menu → "Music Scan", `Space` on the
+  empty screen.
 
 ## 5. Help screen
 

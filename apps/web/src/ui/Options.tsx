@@ -37,7 +37,7 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
           <>
             {item("View Settings", () => setPage("view"))}
             {item("Sound Settings", () => setPage("sound"))}
-            {item("Import Music…", onImport)}
+            {item("Music Scan", onImport, "add new music")}
             {item("Favourites Setting", onClearFavourites, "delete all")}
             {item("Block List Settings", onClearBlocked, "delete all")}
             {item("Help", () => setPage("help"))}

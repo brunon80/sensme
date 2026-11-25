@@ -59,21 +59,34 @@ export interface ImportProgress {
   total: number;
   current: string;
   errors: number;
+  /** Files already in the library (unchanged) — skipped, not re-analyzed. */
+  skipped: number;
 }
 
 /** Analyze + persist every file. Returns the number imported.
  * `shouldCancel` (checked before each file) aborts the scan (UI_SPEC §4:
- * `✕ Cancel` on the first-run progress card). */
+ * `✕ Cancel` on the first-run progress card). `isDuplicate` lets the
+ * caller skip files already in the library — making re-import a true
+ * rescan that only adds new/changed tracks. */
 export async function importFiles(
   picked: PickedFile[],
   onProgress: (p: ImportProgress) => void,
   shouldCancel?: () => boolean,
+  isDuplicate?: (path: string, sizeBytes: number, modifiedEpoch: number) => boolean,
 ): Promise<number> {
   let done = 0;
   let errors = 0;
+  let skipped = 0;
   for (const { file, path } of picked) {
     if (shouldCancel?.()) break;
-    onProgress({ done, total: picked.length, current: file.name, errors });
+    const modifiedEpoch = Math.round(file.lastModified / 1000);
+    if (isDuplicate?.(path || file.name, file.size, modifiedEpoch)) {
+      skipped += 1;
+      done += 1;
+      onProgress({ done, total: picked.length, current: file.name, errors, skipped });
+      continue;
+    }
+    onProgress({ done, total: picked.length, current: file.name, errors, skipped });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const { featureVector, classification } = await engine.analyze(file.name, bytes);
@@ -116,7 +129,7 @@ export async function importFiles(
       console.error(`import failed: ${file.name}`, err);
     }
     done += 1;
-    onProgress({ done, total: picked.length, current: file.name, errors });
+    onProgress({ done, total: picked.length, current: file.name, errors, skipped });
     // Yield to the event loop so the PSP UI keeps animating.
     await new Promise((r) => setTimeout(r, 0));
   }

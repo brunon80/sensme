@@ -20,6 +20,7 @@ interface UpdateState {
   done: number;
   total: number;
   errors: number;
+  skipped: number;
 }
 
 export default function App() {
@@ -33,7 +34,7 @@ export default function App() {
   // Two-step track selection (now-playing): L/R stages a candidate at a
   // smaller scale in the big slot; START/◯ confirms (scales up + plays).
   const [pending, setPending] = useState<number | null>(null);
-  const [update, setUpdate] = useState<UpdateState>({ active: false, done: 0, total: 0, errors: 0 });
+  const [update, setUpdate] = useState<UpdateState>({ active: false, done: 0, total: 0, errors: 0, skipped: 0 });
   const [settings, setSettings] = useState<Settings>({ showClock: true, showCaptions: true });
   const [menuOpen, setMenuOpen] = useState(false);
   const [clock, setClock] = useState("");
@@ -127,13 +128,17 @@ export default function App() {
     if (update.active) return;
     const files = await pickAudioFiles();
     if (files.length === 0) return;
-    setUpdate({ active: true, done: 0, total: files.length, errors: 0 });
+    // Rescan semantics: files already in the library (same path + size +
+    // mtime) are skipped, so re-importing only adds new/changed tracks.
+    const seen = new Set(records.map((r) => `${r.path}|${r.sizeBytes}|${r.modifiedEpoch}`));
+    setUpdate({ active: true, done: 0, total: files.length, errors: 0, skipped: 0 });
     cancelImportRef.current = false;
     await importFiles(
       files,
       (p: ImportProgress) =>
-        setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors }),
+        setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: p.skipped }),
       () => cancelImportRef.current,
+      (path, sizeBytes, modifiedEpoch) => seen.has(`${path}|${sizeBytes}|${modifiedEpoch}`),
     );
     setUpdate((u) => ({ ...u, active: false }));
     const recs = await reload();
@@ -295,6 +300,7 @@ export default function App() {
             <div className="update-card-logo">SensMe</div>
             <div className="update-card-label">
               Updating channels… {update.done}/{update.total}
+              {update.skipped > 0 ? ` (${update.skipped} already in library)` : ""}
             </div>
             <div className="update-bar">
               <div
@@ -314,6 +320,7 @@ export default function App() {
           <div className="update-icon">◌</div>
           <div className="status">
             Updating channels… {update.done}/{update.total}
+            {update.skipped > 0 ? ` (${update.skipped} already in library)` : ""}
             {update.errors > 0 ? ` (${update.errors} failed)` : ""}
           </div>
         </>
