@@ -52,11 +52,12 @@ export function Carousel({ selected, counts, phase }: Props) {
         const empty = counts[entry] === 0;
         const theta = thetaOf(col);
         // Inside-the-globe, PSP-faithful (IMG_7504): cards stay
-        // axis-aligned (no rotation). The curvature reads through
-        // position + scale: outer columns recede (smaller) and the
+        // axis-aligned with UNIFORM spacing (never overlap). The arc
+        // opens to the sides: outer columns bow slightly TOWARD the
+        // viewer (shallow z, so they read a touch bigger) and the
         // rows converge toward the vertical center.
-        const x = g.radius * Math.sin(theta) * 100; // vw along the globe
-        const z = g.radius * (Math.cos(theta) - 1) * 100; // vw (negative recedes)
+        const x = col * (t.card.w + t.colGap) * 100; // uniform, no stacking
+        const z = g.depth * (1 - Math.cos(theta)) * 100; // sides nearer
         const vShift = g.rowCurve * (1 - Math.cos(theta)) * 100; // rows bow inward
         const dim = 1 - Math.min(2, Math.abs(col)) * 0.12; // far cards darker
         const style = {
@@ -65,7 +66,7 @@ export function Carousel({ selected, counts, phase }: Props) {
           bottom: `${(row === 0 ? bottomVh + vShift : topVh - vShift)}vh`,
           transform: `translateX(calc(-50% + ${x}vw)) translateZ(${z}vw) scale(${sel ? t.selectedScale : 1})`,
           opacity: (empty ? 0.8 : 1) * dim,
-          zIndex: 30 - Math.abs(col) * 2,
+          zIndex: 30 + Math.abs(col) * 2,
           borderRadius: `${t.tileRadius * 100}vmin`,
         };
         return (

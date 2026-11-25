@@ -191,8 +191,8 @@ export const tokens = {
       "nameY": 0.66,
       "tileRadius": 0.012,
       "globe": {
-        "radius": 0.51,
         "stepDeg": 25,
+        "depth": 0.12,
         "rowCurve": 0.08,
         "perspVh": 1.4
       }

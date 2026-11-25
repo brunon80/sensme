@@ -47,12 +47,13 @@ Layout (rest state):
   fallback default), cover-cropped; rounded corners `r 0.012`; every
   card has a light border (2px white 0.7) + soft glow.
 - Globe effect (INSIDE the globe, PSP-faithful per IMG_7504): cards
-  stay axis-aligned rectangles — no rotation. Curvature reads through
-  position + scale only: outer columns recede on a cylinder
-  (`carousel.globe`: radius 0.51 vw, 25° per column, perspective
-  1.4 H → x = R sin(theta), z = R(cos theta − 1)) and the rows bow
-  toward the vertical center (`rowCurve` 0.08); far columns dim
-  slightly; stepping rotates the globe (420 ms transform morph).
+  stay axis-aligned with UNIFORM spacing (`card.w + colGap`) — they
+  never overlap or stack. The arc opens to the SIDES: outer columns
+  bow slightly TOWARD the viewer (`globe.depth` 0.12, z =
+  depth·(1−cos theta), so edges read a touch bigger) and the rows
+  converge toward the vertical center (`rowCurve` 0.08); perspective
+  1.4 H; far columns dim slightly; stepping rotates the globe
+  (420 ms transform morph).
 - Selected card: scale `carousel.selectedScale` 1.12 + stronger white
   glow. Bottom-row cards reflect on the floor.
 - Channel name: centered under the bottom row, `type.title`, white with
