@@ -130,9 +130,9 @@ function TrackCard({
       style={{
         width: `${size * 100}vh`,
         height: `${size * 100}vh`,
-        left: `${slot.centerX * 100}vw`,
-        top: `${centerY * 100}vh`,
-        transform: `translate(-50%, -50%) scale(${slot.scale})`,
+        // Position lives INSIDE the transform (left/top stay 0) so slot
+        // changes animate; transitioning `left` would teleport the card.
+        transform: `translate(${slot.centerX * 100}vw, ${centerY * 100}vh) translate(-50%, -50%) scale(${slot.scale})`,
         opacity: slot.opacity,
         zIndex: z,
       }}
