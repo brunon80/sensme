@@ -45,6 +45,7 @@ export const PHOTO_MAP: Record<string, string> = {
   midnight: "/bg/midnight.jpg",
   favourites: "/bg/favorite.webp",
   shuffle: "/bg/shuffle_all.jpg",
+  newly: "/bg/new_additions.webp",
 };
 export const DEFAULT_PHOTO = "/bg/day.jpg";
 export const photoUrlFor = (key: string) => PHOTO_MAP[key] ?? DEFAULT_PHOTO;

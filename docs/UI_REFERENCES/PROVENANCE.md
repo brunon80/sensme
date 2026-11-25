@@ -68,6 +68,7 @@ distribution if licensing is unclear.
 | `midnight.jpg` | Midnight |
 | `favorite.webp` | Favourites |
 | `shuffle_all.jpg` | Shuffle All |
+| `new_additions.webp` | Newly Added |
 
 ## Favicon
 
