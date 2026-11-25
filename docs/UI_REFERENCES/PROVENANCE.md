@@ -42,9 +42,24 @@ reimplementations derived from the specs in `docs/UI_SPEC.md`.
 | Help screen | not captured — documented deviation in UI_SPEC §5 |
 | Empty-channel state | not captured — behavior spec from R-2 only |
 
-## Test backdrop photos (not Sony assets)
+## Backdrop photos (not Sony assets)
 
-- `backgrounds/day.jpg` + `backgrounds/relax.jpg` (copies at `apps/web/public/bg/`) —
-  user-provided landscape photo (mountain lake), added 2026-11-25 explicitly
-  for testing the scene backdrop + water reflection. Not shipped product
-  art; replace with clean-room/per-channel art before distribution.
+All shipped in `apps/web/public/bg/`; user-provided photos added
+2026-11-25 explicitly for the scene backdrops (source folder
+`backgrounds/` deleted after copying; large files recompressed with
+ffmpeg for web). Not Sony assets; replace with clean-room art before
+distribution if licensing is unclear.
+
+| File | Used by |
+|---|---|
+| `day.jpg` | default backdrop (unmapped channels: morning/daytime/evening/night/midnight) |
+| `relax.jpg` | Relax |
+| `energetic.jpg` | Energetic |
+| `upbeat.jpg` | Upbeat |
+| `mellow.jpg` | Mellow |
+| `lounge.jpg` | Lounge |
+| `emotional.jpg` | Emotional |
+| `dance.jpg` | Dance |
+| `extreme.jpg` | Extreme |
+| `favorite.webp` | Favourites |
+| `shuffle_all.jpg` | Shuffle All |

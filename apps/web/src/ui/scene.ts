@@ -26,9 +26,22 @@ function hashStr(s: string): number {
 
 export type Hues = readonly string[];
 
-/** Per-channel backdrop photos (user-provided test art in `public/bg/`).
- * Channels without a mapping fall back to the default photo. */
-export const PHOTO_MAP: Record<string, string> = { relax: "/bg/relax.jpg" };
+/** Per-channel backdrop photos (user-provided art in `public/bg/`, mapped
+ * by file name; see docs/UI_REFERENCES/PROVENANCE.md). Channels without a
+ * mapping (morning/daytime/evening/night/midnight) fall back to the
+ * default photo. */
+export const PHOTO_MAP: Record<string, string> = {
+  relax: "/bg/relax.jpg",
+  energetic: "/bg/energetic.jpg",
+  upbeat: "/bg/upbeat.jpg",
+  mellow: "/bg/mellow.jpg",
+  lounge: "/bg/lounge.jpg",
+  emotional: "/bg/emotional.jpg",
+  dance: "/bg/dance.jpg",
+  extreme: "/bg/extreme.jpg",
+  favourites: "/bg/favorite.webp",
+  shuffle: "/bg/shuffle_all.jpg",
+};
 export const DEFAULT_PHOTO = "/bg/day.jpg";
 export const photoUrlFor = (key: string) => PHOTO_MAP[key] ?? DEFAULT_PHOTO;
 
