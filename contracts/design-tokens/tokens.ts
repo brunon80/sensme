@@ -193,7 +193,7 @@ export const tokens = {
       "globe": {
         "radius": 0.51,
         "stepDeg": 25,
-        "rowTiltDeg": 5,
+        "rowCurve": 0.08,
         "perspVh": 1.4
       }
     },
