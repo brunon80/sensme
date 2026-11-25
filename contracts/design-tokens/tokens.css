@@ -92,11 +92,11 @@
   --sensme-layout-np-prev-scale: 0.55;
   --sensme-layout-np-prev-opacity: 0;
   --sensme-layout-np-pendingScale: 0.72;
-  --sensme-layout-carousel-baseline: 0.6;
-  --sensme-layout-carousel-card-w: 0.19;
-  --sensme-layout-carousel-card-h: 0.28;
-  --sensme-layout-carousel-colGap: 0.015;
-  --sensme-layout-carousel-rowGap: 0.015;
+  --sensme-layout-carousel-centerY: 0.5;
+  --sensme-layout-carousel-card-w: 0.18;
+  --sensme-layout-carousel-card-h: 0.26;
+  --sensme-layout-carousel-colGap: 0.035;
+  --sensme-layout-carousel-rowGap: 0.04;
   --sensme-layout-carousel-selectedScale: 1.12;
   --sensme-layout-carousel-nameY: 0.66;
   --sensme-layout-carousel-tileRadius: 0.012;

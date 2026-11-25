@@ -38,9 +38,11 @@ IMG_7510, demo_ref_video (52–58 s).
 Layout (rest state):
 - Static two-row grid of near-square cards — NOT a carousel. Column c
   holds entries 2c (bottom row) and 2c+1 (top row); the grid scrolls
-  horizontally to keep the selected column centered.
-- Card size `carousel.card` (w 0.19 vw, h 0.28 vh), gap 0.015; bottom
-  row bottom edge at `carousel.baseline` 0.60 H.
+  horizontally to keep the selected column centered and is vertically
+  centered on `carousel.centerY` 0.5.
+- Card size `carousel.card` (w 0.18 vw, h 0.26 vh), gaps `colGap`
+  0.035 / `rowGap` 0.04 — sparse enough that the scaled selection
+  never overlaps its neighbors.
 - Card content: the channel's backdrop photo (per-channel mapping,
   fallback default), cover-cropped; rounded corners `r 0.012`; every
   card has a light border (2px white 0.7) + soft glow.

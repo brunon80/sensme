@@ -180,13 +180,13 @@ export const tokens = {
       "pendingScale": 0.72
     },
     "carousel": {
-      "baseline": 0.6,
+      "centerY": 0.5,
       "card": {
-        "w": 0.19,
-        "h": 0.28
+        "w": 0.18,
+        "h": 0.26
       },
-      "colGap": 0.015,
-      "rowGap": 0.015,
+      "colGap": 0.035,
+      "rowGap": 0.04,
       "selectedScale": 1.12,
       "nameY": 0.66,
       "tileRadius": 0.012

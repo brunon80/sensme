@@ -39,9 +39,11 @@ export function Carousel({ selected, counts, phase }: Props) {
 
   const t = tokens.layout.carousel;
   const colStep = (t.card.w + t.colGap) * 100; // vw between column centers
-  const bottomVh = (1 - t.baseline) * 100;
+  // Grid (two rows + row gap) vertically centered on carousel.centerY.
+  const gridH = 2 * t.card.h + t.rowGap;
+  const bottomVh = ((1 - t.centerY) - gridH / 2) * 100;
   const topVh = bottomVh + t.card.h * 100 + t.rowGap * 100;
-  const nameBottom = bottomVh - 3.5; // always under the bottom row (PSP)
+  const nameBottom = bottomVh - 8; // fully below the bottom row (PSP)
 
   return (
     <div className={`carousel ${phase ?? ""}`}>

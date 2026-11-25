@@ -25,7 +25,6 @@
 .tile {
   position: absolute;
   left: 50%;
-  bottom: calc((1 - var(--sensme-layout-carousel-baseline)) * 100vh);
   overflow: visible;
   will-change: transform, opacity;
   transform-origin: center center;
