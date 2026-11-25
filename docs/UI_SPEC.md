@@ -88,9 +88,14 @@ Layout:
 - Clock + battery top-right (margin 0.05), `type.title`.
 
 Interaction (R-2):
-- START/Space toggles play/pause; L/R or `,`/`.` prev/next with
-  artwork slide (260 ms).
-- ↑/`F` add to Favourites (♥ pulse); ↓/`⇧F` remove; hold ↓/`B` block.
+- Two-step track selection: L/R (or `,`/`.`) stages the next/previous
+  candidate — it slides into the big slot at `np.pendingScale` 0.72
+  while the outgoing card glides left; playback does NOT start. The
+  caption switches to `START/◯ Confirm · ✕ Cancel`.
+- START/◯ confirms: the candidate scales up to full size and playback
+  starts. ✕/Esc cancels the candidate (the current card returns).
+- START/Space with no candidate toggles play/pause; `F` favourites,
+  `⇧F` removes.
 - △/`O` or right-click opens options menu (dim scrim, panel slides in
   from right, 220 ms).
 - Per-selection shuffle order (R-2 hint).

@@ -29,6 +29,9 @@ export default function App() {
   const [selection, setSelection] = useState(0);
   const [queue, setQueue] = useState<LibraryRecord[]>([]);
   const [queuePos, setQueuePos] = useState(0);
+  // Two-step track selection (now-playing): L/R stages a candidate at a
+  // smaller scale in the big slot; START/◯ confirms (scales up + plays).
+  const [pending, setPending] = useState<number | null>(null);
   const [update, setUpdate] = useState<UpdateState>({ active: false, done: 0, total: 0, errors: 0 });
   const [settings, setSettings] = useState<Settings>({ showClock: true, showCaptions: true });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -136,6 +139,7 @@ export default function App() {
     const q = rebuildQueue(idx, selection + 1, records);
     setEntryIndex(idx);
     setSelection((s) => s + 1);
+    setPending(null);
     goScreen("nowplaying");
     if (q.length > 0) void playAt(0, q);
   }, [records, selection, playAt, goScreen]);
@@ -172,14 +176,17 @@ export default function App() {
         case "Enter":
           if (screen === "carousel") {
             if (entryTracks(entry, records).length > 0) enterChannel(entryIndex);
-          } else goScreen("carousel");
+          } else if (pending !== null) confirmPending();
+          else goScreen("carousel");
           break;
         case "Escape":
           if (screen === "carousel") goScreen("nowplaying");
+          else if (pending !== null) setPending(null); // cancel candidate
           break;
         case " ":
           e.preventDefault();
           if (screen === "empty") void doImport();
+          else if (pending !== null) confirmPending(); // START confirms candidate
           else if (current) {
             // START: play/pause toggle. From stopped, (re)load the current
             // track's bytes and play it (player.toggle alone can't start).
@@ -205,24 +212,32 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, entryIndex, entry, records, current, queue, queuePos, doImport, enterChannel]);
+  }, [screen, entryIndex, entry, records, current, queue, queuePos, pending, doImport, enterChannel]);
 
   async function toggleFavourite(rec: LibraryRecord, fav: boolean) {
     await updateRecord({ ...rec, favourite: fav });
     await reload();
   }
 
-  async function next() {
+  function next() {
     if (queue.length === 0) return;
-    const np = queuePos + 1;
+    const base = pending ?? queuePos;
+    const np = base + 1;
     if (np >= queue.length) return; // last track: stop
-    await playAt(np, queue);
+    setPending(np);
   }
-  async function prev() {
+  function prev() {
     if (queue.length === 0) return;
-    const pp = queuePos - 1;
+    const base = pending ?? queuePos;
+    const pp = base - 1;
     if (pp < 0) return; // first track: stop
-    await playAt(pp, queue);
+    setPending(pp);
+  }
+  function confirmPending() {
+    if (pending === null) return;
+    const p = pending;
+    setPending(null);
+    void playAt(p, queue); // scales up to full size and starts playing
   }
 
   const hues = useMemo(() => entryHues(entry), [entry]);
@@ -242,16 +257,18 @@ export default function App() {
       ? "✕ Back    ◯ Select"
       : screen === "empty"
         ? "◯ Import Music…    C"
-        : playing
-          ? "SELECT Change Channels · START Pause · L ◀ Prev · R Next ▶ · ♥ Favourites"
-          : "SELECT Change Channels · START Play · L ◀ Prev · R Next ▶ · ♥ Favourites";
+        : pending !== null
+          ? "START/◯ Confirm · ✕ Cancel · L ◀ Prev · R Next ▶"
+          : playing
+            ? "SELECT Change Channels · START Pause · L ◀ Prev · R Next ▶ · ♥ Favourites"
+            : "SELECT Change Channels · START Play · L ◀ Prev · R Next ▶ · ♥ Favourites";
 
   return (
     <div className="app">
       <Scene sceneKey={entry} hues={hues} />
 
       {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
-      {showNow && <NowPlaying queue={queue} pos={queuePos} entry={entry} playing={playing} phase={npPhase} />}
+      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={entry} playing={playing} phase={npPhase} />}
 
       {screen === "empty" && (
         <div className="empty-card">

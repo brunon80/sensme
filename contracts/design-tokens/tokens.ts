@@ -169,7 +169,8 @@ export const tokens = {
         "centerX": -0.04,
         "scale": 0.55,
         "opacity": 0
-      }
+      },
+      "pendingScale": 0.72
     },
     "carousel": {
       "baseline": 0.6,

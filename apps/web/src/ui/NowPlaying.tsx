@@ -10,6 +10,8 @@ import { entryHues, entryName, membershipDots, type CarouselEntry } from "./chan
 interface Props {
   queue: LibraryRecord[];
   pos: number;
+  /** Candidate staged by L/R but not yet confirmed: big slot at pending scale. */
+  pending?: boolean;
   entry: CarouselEntry;
   playing: boolean;
   /** Screen-transition phase (UI_SPEC §1). */
@@ -22,14 +24,16 @@ interface Slot {
   opacity: number;
 }
 
-function slotFor(k: number): Slot | null {
+function slotFor(k: number, pending: boolean): Slot | null {
   const np = tokens.layout.np;
+  if (k === 0 && pending)
+    return { ...np.slots[0]!, scale: np.pendingScale }; // staged candidate
   if (k >= 0 && k < np.slots.length) return np.slots[k]!;
   if (k === -1) return np.prev!; // glides out
   return null;
 }
 
-export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
+export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props) {
   const n = queue.length;
   const current = queue[pos] ?? null;
   const dots = useMemo(() => (current ? membershipDots(current) : []), [current]);
@@ -46,7 +50,7 @@ export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
         offsets.map((k) => {
           const idx = pos + k;
           if (idx < 0 || idx >= n) return null; // non-cyclic: clamp at the ends
-          const slot = slotFor(k);
+          const slot = slotFor(k, pending ?? false);
           if (!slot) return null;
           const rec = queue[idx]!;
           return (
