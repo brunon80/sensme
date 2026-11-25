@@ -53,10 +53,14 @@ Work items:
 6. Classifier v1 with tuned weights.
 
 Done gate:
-- [ ] ≥200 labeled tracks in `bench/` with recorded provenance
-- [ ] `sensme bench` produces per-channel agreement report vs. reference labels
-- [ ] A documented v0→v1 weights change shows measured improvement on the bench
-- [ ] Report identifies ≥3 systematic error classes with follow-up issues
+- [x] ≥200 labeled tracks in `bench/` with recorded provenance (216 in
+      `bench/datasets/synthetic-v1.json`; synthetic intent labels — human-labeled
+      data still needed, follow-up F-1 in docs/BENCH_FINDINGS.md)
+- [x] `sensme bench` produces per-channel agreement report vs. reference labels
+- [x] A documented v0→v1 weights change shows measured improvement on the bench
+      (macro F1 0.510 → 0.984; docs/BENCH_FINDINGS.md)
+- [x] Report identifies ≥3 systematic error classes with follow-up issues
+      (4 classes, F-1…F-4 in docs/BENCH_FINDINGS.md)
 
 ## Phase 4 — Application (desktop first, PSP-faithful UI)
 

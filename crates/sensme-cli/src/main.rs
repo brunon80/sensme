@@ -1,7 +1,7 @@
 //! `sensme` CLI — analysis, classification, and benchmarking entry point.
 //!
-//! `analyze`, `scan`, `classify` and `export` are live; `bench`/`tune` are
-//! explicit stubs until their phase (AGENTS.md §3: no silent placeholders).
+//! All subcommands are live: `analyze`, `scan`, `classify`, `export`,
+//! `bench`, `generate`, `tune`.
 
 use std::path::{Path, PathBuf};
 
@@ -52,8 +52,25 @@ enum Command {
     },
     /// Run a benchmark dataset and print the agreement report
     Bench { dataset: String },
+    /// Generate the deterministic synthetic bench dataset
+    Generate {
+        /// Output JSON path
+        #[arg(short, long, default_value = "bench/datasets/synthetic-v1.json")]
+        out: String,
+        /// Variants per covered channel (8 channels covered)
+        #[arg(long, default_value_t = 27)]
+        per_channel: usize,
+    },
     /// Tune classifier weights against a benchmark dataset
-    Tune { dataset: String },
+    Tune {
+        dataset: String,
+        /// Sweeps over all parameters
+        #[arg(long, default_value_t = 3)]
+        rounds: usize,
+        /// Write tuned weights JSON here
+        #[arg(short, long)]
+        out: Option<String>,
+    },
 }
 
 /// Expand a leading `~` to the user's home directory.
@@ -68,9 +85,6 @@ fn expand_tilde(path: &str) -> std::path::PathBuf {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let err = |phase: &'static str, what: &'static str| {
-        anyhow::anyhow!("not implemented until {phase}: {what}")
-    };
     match cli.command {
         Command::Analyze { path, save, db } => {
             let fv = sensme_audio::analyze_file(&path)?;
@@ -153,8 +167,35 @@ fn main() -> Result<()> {
                 None => println!("{text}"),
             }
         }
-        Command::Bench { dataset } => sensme_bench::run_bench(&dataset).map(|_| ())?,
-        Command::Tune { .. } => return Err(err("phase 3", "weight tuning")),
+        Command::Bench { dataset } => {
+            let report = sensme_bench::run_bench(&dataset)?;
+            println!("{report}");
+        }
+        Command::Generate { out, per_channel } => {
+            if let Some(parent) = Path::new(&out).parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let n = sensme_bench::generate_synthetic_dataset(per_channel, &out)?;
+            println!("wrote {n} tracks to {out}");
+        }
+        Command::Tune {
+            dataset,
+            rounds,
+            out,
+        } => {
+            let res = sensme_bench::run_tune(&dataset, rounds)?;
+            println!("{}", res.baseline.render());
+            println!("== tuned ==");
+            println!("{}", res.tuned.render());
+            println!(
+                "macro F1: {:.3} -> {:.3}",
+                res.baseline.macro_f1, res.tuned.macro_f1
+            );
+            if let Some(path) = out {
+                let json = sensme_bench::weights_to_json(&res.axis_weights, &res.channel_weights)?;
+                std::fs::write(path, json)?;
+            }
+        }
     }
     Ok(())
 }

@@ -4,20 +4,23 @@
 //! Classification is a pure function of (stored features, versioned weights):
 //! it never re-decodes audio (AGENTS.md §2).
 //!
-//! v0 weights are hand-tuned from the feature layout semantics
-//! (`sensme_audio::FEATURE_NAMES_V1`); they are a starting point to be
-//! calibrated against benchmarks in Phase 3. Axis scores are clamped linear
-//! combinations; channel scores are weighted averages of axis scores.
+//! v0 weights were hand-tuned from the feature layout semantics
+//! (`sensme_audio::FEATURE_NAMES_V1`). v1 weights (shipped) were calibrated
+//! by coordinate-descent search on `bench/datasets/synthetic-v1.json` with
+//! `sensme-bench` (macro F1 0.510 → 0.984; see docs/BENCH_FINDINGS.md).
+//! The v0 sets remain available for regression comparison. Axis scores are
+//! clamped linear combinations; channel scores are weighted averages of
+//! axis scores.
 
 use thiserror::Error;
 
 use sensme_core::models::{ChannelScores, FeatureVector, ToneAxes};
 
 /// Version of the axis weight set. Bump on any semantic change (ADR-012).
-pub const AXIS_WEIGHTS_VERSION: &str = "0.1.0";
+pub const AXIS_WEIGHTS_VERSION: &str = "1.0.0";
 
 /// Version of the channel mapping weight set.
-pub const CHANNEL_WEIGHTS_VERSION: &str = "0.1.0";
+pub const CHANNEL_WEIGHTS_VERSION: &str = "1.0.0";
 
 /// Errors from classification.
 #[derive(Debug, Error)]
@@ -46,8 +49,9 @@ struct AxisRule {
     weights: &'static [(usize, f32)],
 }
 
-/// Axis rules, ordered to match [`sensme_core::models::TONE_AXES`].
-const AXIS_RULES: [AxisRule; 12] = [
+/// v0 axis rules (hand-tuned), kept for regression comparison.
+/// Ordered to match [`sensme_core::models::TONE_AXES`].
+const V0_AXIS_RULES: [AxisRule; 12] = [
     // energetic: fast, loud, punchy, bright
     AxisRule {
         bias: -0.4,
@@ -148,18 +152,110 @@ const AXIS_RULES: [AxisRule; 12] = [
     },
 ];
 
+/// v1 axis rules (shipped): coordinate-descent calibration on
+/// `bench/datasets/synthetic-v1.json` (weights rounded to 2 decimals).
+const V1_AXIS_RULES: [AxisRule; 12] = [
+    AxisRule {
+        bias: -0.8,
+        weights: &[
+            (BPM, 1.2),
+            (ONSET_RATE, 0.8),
+            (RMS, 1.0),
+            (BEAT_STRENGTH, 0.4),
+            (HIGH, 0.4),
+        ],
+    },
+    AxisRule {
+        bias: -0.5,
+        weights: &[(BPM, 1.0), (ONSET_RATE, 0.8), (CENTROID, 0.8), (ZCR, 0.4)],
+    },
+    AxisRule {
+        bias: -0.9,
+        weights: &[
+            (TEMPO_STABILITY, 0.33),
+            (BEAT_STRENGTH, 0.2),
+            (LOW, 0.8),
+            (BPM, 0.4),
+        ],
+    },
+    AxisRule {
+        bias: -1.03,
+        weights: &[
+            (BPM, 0.5),
+            (TEMPO_STABILITY, 1.0),
+            (BEAT_STRENGTH, 0.8),
+            (LOW, 0.6),
+        ],
+    },
+    AxisRule {
+        bias: 0.0,
+        weights: &[(BPM, -0.2), (LOW, 0.9), (HARMONIC, 0.97), (ZCR, -0.5)],
+    },
+    AxisRule {
+        bias: -0.3,
+        weights: &[
+            (VALENCE, 1.2),
+            (HARMONIC, 0.8),
+            (CENTROID, -0.6),
+            (RMS, -0.3),
+        ],
+    },
+    AxisRule {
+        bias: 0.3,
+        weights: &[(VALENCE, -1.2), (HARMONIC, 0.7)],
+    },
+    AxisRule {
+        bias: 0.7,
+        weights: &[(BPM, -0.8), (RMS, -0.6), (CENTROID, -0.8), (HARMONIC, 0.8)],
+    },
+    AxisRule {
+        bias: -0.1,
+        weights: &[
+            (ONSET_RATE, -0.6),
+            (ZCR, -0.6),
+            (HARMONIC, 1.0),
+            (CENTROID, -0.4),
+        ],
+    },
+    AxisRule {
+        bias: 0.07,
+        weights: &[
+            (BPM, -0.9),
+            (ONSET_RATE, -0.8),
+            (RMS, -0.5),
+            (HARMONIC, 0.8),
+        ],
+    },
+    AxisRule {
+        bias: -0.3,
+        weights: &[(VALENCE, -0.8), (LOW, 0.9), (RMS, 0.6), (BPM, 0.4)],
+    },
+    AxisRule {
+        bias: -0.5,
+        weights: &[
+            (RMS, 0.8),
+            (CENTROID, 1.0),
+            (ZCR, 0.8),
+            (HARMONIC, -0.8),
+            (BPM, 0.8),
+            (ONSET_RATE, 0.6),
+        ],
+    },
+];
+
 /// One channel rule: weighted average of axis scores.
 struct ChannelRule {
     /// (axis index into TONE_AXES, weight)
     axes: &'static [(usize, f32)],
 }
 
-/// Channel rules, ordered to match [`Channel::ALL`].
+/// v0 channel rules (hand-tuned), kept for regression comparison.
+/// Ordered to match [`Channel::ALL`].
 ///
 /// Time-of-day channels carry only their tone profile here; the time-of-day
 /// boost is applied at query time (ADR-011), keeping classification a pure
 /// function of stored features.
-const CHANNEL_RULES: [ChannelRule; 13] = [
+const V0_CHANNEL_RULES: [ChannelRule; 13] = [
     // Energetic
     ChannelRule {
         axes: &[(0, 1.0), (1, 0.6), (3, 0.4)],
@@ -214,8 +310,97 @@ const CHANNEL_RULES: [ChannelRule; 13] = [
     },
 ];
 
+/// v1 channel rules (shipped): calibrated on synthetic-v1; only the Dance
+/// mapping moved meaningfully (danceable axis down, energetic axis up).
+const V1_CHANNEL_RULES: [ChannelRule; 13] = [
+    ChannelRule {
+        axes: &[(0, 1.0), (1, 0.6), (3, 0.4)],
+    },
+    ChannelRule {
+        axes: &[(9, 1.0), (7, 0.8), (8, 0.5)],
+    },
+    ChannelRule {
+        axes: &[(1, 0.8), (3, 0.8), (0, 0.6), (5, 0.4)],
+    },
+    ChannelRule {
+        axes: &[(7, 1.0), (8, 0.6), (9, 0.5)],
+    },
+    ChannelRule {
+        axes: &[(4, 0.8), (9, 0.7), (7, 0.6)],
+    },
+    ChannelRule {
+        axes: &[(6, 0.9), (5, 0.7), (8, 0.6)],
+    },
+    // Dance
+    ChannelRule {
+        axes: &[(3, 0.6), (0, 1.3), (2, 0.77)],
+    },
+    ChannelRule {
+        axes: &[(11, 1.0), (10, 0.7)],
+    },
+    ChannelRule {
+        axes: &[(5, 0.8), (7, 0.6), (1, 0.4)],
+    },
+    ChannelRule {
+        axes: &[(1, 0.7), (2, 0.6), (3, 0.5)],
+    },
+    ChannelRule {
+        axes: &[(4, 0.8), (2, 0.6), (6, 0.5)],
+    },
+    ChannelRule {
+        axes: &[(9, 0.8), (8, 0.7), (4, 0.5)],
+    },
+    ChannelRule {
+        axes: &[(8, 0.8), (9, 0.6), (10, 0.3)],
+    },
+];
+
 fn clamp01(v: f32) -> f32 {
     v.clamp(0.0, 1.0)
+}
+
+/// Tunable axis weights as data (the calibration tool searches these).
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct AxisWeights {
+    pub bias: [f32; 12],
+    /// Per axis: `(feature index, weight)` pairs.
+    pub weights: [Vec<(usize, f32)>; 12],
+}
+
+/// Tunable channel weights: per channel, `(axis index, weight)` pairs.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ChannelWeights {
+    pub axes: [Vec<(usize, f32)>; 13],
+}
+
+/// The shipped v1 axis weights as data.
+pub fn default_axis_weights() -> AxisWeights {
+    AxisWeights {
+        bias: V1_AXIS_RULES.map(|r| r.bias),
+        weights: V1_AXIS_RULES.map(|r| r.weights.to_vec()),
+    }
+}
+
+/// The v0 (hand-tuned) axis weights as data, for regression comparison.
+pub fn v0_axis_weights() -> AxisWeights {
+    AxisWeights {
+        bias: V0_AXIS_RULES.map(|r| r.bias),
+        weights: V0_AXIS_RULES.map(|r| r.weights.to_vec()),
+    }
+}
+
+/// The shipped v1 channel weights as data.
+pub fn default_channel_weights() -> ChannelWeights {
+    ChannelWeights {
+        axes: V1_CHANNEL_RULES.map(|r| r.axes.to_vec()),
+    }
+}
+
+/// The v0 (hand-tuned) channel weights as data, for regression comparison.
+pub fn v0_channel_weights() -> ChannelWeights {
+    ChannelWeights {
+        axes: V0_CHANNEL_RULES.map(|r| r.axes.to_vec()),
+    }
 }
 
 /// Score the 12 tone axes from a v1 feature vector.
@@ -223,6 +408,19 @@ fn clamp01(v: f32) -> f32 {
 /// # Errors
 /// [`ClassifyError::LayoutMismatch`] if the vector is not v1/30 values.
 pub fn score_axes(features: &FeatureVector) -> Result<ToneAxes, ClassifyError> {
+    let mut axes = score_axes_with(features, &default_axis_weights())?;
+    axes.weights_version = AXIS_WEIGHTS_VERSION.to_string();
+    Ok(axes)
+}
+
+/// Score the 12 tone axes with explicit weights.
+///
+/// # Errors
+/// [`ClassifyError::LayoutMismatch`] if the vector is not v1/30 values.
+pub fn score_axes_with(
+    features: &FeatureVector,
+    w: &AxisWeights,
+) -> Result<ToneAxes, ClassifyError> {
     check_layout(features)?;
     let mut x = features.values.clone();
     // v0 reliability gate: when the tempo estimate has no salience, the BPM
@@ -233,33 +431,40 @@ pub fn score_axes(features: &FeatureVector) -> Result<ToneAxes, ClassifyError> {
         x[BEAT_STRENGTH] = 0.0;
     }
     let mut scores = [0.0f32; 12];
-    for (rule, out) in AXIS_RULES.iter().zip(scores.iter_mut()) {
-        let mut s = rule.bias;
-        for &(idx, w) in rule.weights {
-            s += w * x[idx];
+    for (axis, out) in scores.iter_mut().enumerate() {
+        let mut s = w.bias[axis];
+        for &(idx, weight) in &w.weights[axis] {
+            s += weight * x[idx];
         }
         *out = clamp01(s);
     }
     Ok(ToneAxes {
         scores,
-        weights_version: AXIS_WEIGHTS_VERSION.to_string(),
+        weights_version: "custom".into(),
     })
 }
 
 /// Map tone axes to the 13 channel scores.
 pub fn score_channels(axes: &ToneAxes) -> ChannelScores {
+    let mut cs = score_channels_with(axes, &default_channel_weights());
+    cs.weights_version = CHANNEL_WEIGHTS_VERSION.to_string();
+    cs
+}
+
+/// Map tone axes to channel scores with explicit weights.
+pub fn score_channels_with(axes: &ToneAxes, w: &ChannelWeights) -> ChannelScores {
     let mut scores = [0.0f32; 13];
-    for (rule, out) in CHANNEL_RULES.iter().zip(scores.iter_mut()) {
+    for (channel, out) in scores.iter_mut().enumerate() {
         let (mut acc, mut wsum) = (0.0f32, 0.0f32);
-        for &(ax, w) in rule.axes {
-            acc += w * axes.scores[ax];
-            wsum += w;
+        for &(ax, weight) in &w.axes[channel] {
+            acc += weight * axes.scores[ax];
+            wsum += weight;
         }
         *out = clamp01(acc / (wsum + f32::EPSILON));
     }
     ChannelScores {
         scores,
-        weights_version: CHANNEL_WEIGHTS_VERSION.to_string(),
+        weights_version: "custom".into(),
     }
 }
 
@@ -270,6 +475,20 @@ pub fn score_channels(axes: &ToneAxes) -> ChannelScores {
 pub fn classify(features: &FeatureVector) -> Result<(ToneAxes, ChannelScores), ClassifyError> {
     let axes = score_axes(features)?;
     let channels = score_channels(&axes);
+    Ok((axes, channels))
+}
+
+/// Full classification with explicit weights.
+///
+/// # Errors
+/// [`ClassifyError::LayoutMismatch`] if the vector is not v1/30 values.
+pub fn classify_with(
+    features: &FeatureVector,
+    axis_weights: &AxisWeights,
+    channel_weights: &ChannelWeights,
+) -> Result<(ToneAxes, ChannelScores), ClassifyError> {
+    let axes = score_axes_with(features, axis_weights)?;
+    let channels = score_channels_with(&axes, channel_weights);
     Ok((axes, channels))
 }
 

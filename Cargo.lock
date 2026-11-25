@@ -779,7 +779,12 @@ dependencies = [
 name = "sensme-bench"
 version = "0.1.0"
 dependencies = [
+ "sensme-audio",
+ "sensme-classify",
  "sensme-core",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -787,6 +792,7 @@ name = "sensme-classify"
 version = "0.1.0"
 dependencies = [
  "sensme-core",
+ "serde",
  "thiserror",
 ]
 

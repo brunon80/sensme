@@ -33,3 +33,9 @@ pub fn analyze_file(path: &str) -> Result<sensme_core::models::FeatureVector, Au
     let audio = load_mono(path, ANALYSIS_RATE)?;
     Ok(features::extract(&audio))
 }
+
+/// Extract the versioned feature vector from already-decoded mono audio
+/// (used by the bench dataset generator; same pipeline as [`analyze_file`]).
+pub fn analyze_audio(audio: &Audio) -> sensme_core::models::FeatureVector {
+    features::extract(audio)
+}
