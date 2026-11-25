@@ -140,34 +140,34 @@ export const tokens = {
           "opacity": 1
         },
         {
-          "centerX": 0.52,
-          "scale": 0.36,
-          "opacity": 0.9
+          "centerX": 0.465,
+          "scale": 0.55,
+          "opacity": 0.95
         },
         {
-          "centerX": 0.65,
-          "scale": 0.33,
-          "opacity": 0.75
+          "centerX": 0.6,
+          "scale": 0.42,
+          "opacity": 0.8
         },
         {
-          "centerX": 0.77,
-          "scale": 0.3,
-          "opacity": 0.6
+          "centerX": 0.74,
+          "scale": 0.34,
+          "opacity": 0.65
         },
         {
-          "centerX": 0.89,
-          "scale": 0.27,
-          "opacity": 0.45
+          "centerX": 0.83,
+          "scale": 0.28,
+          "opacity": 0.5
         },
         {
-          "centerX": 1,
-          "scale": 0.25,
-          "opacity": 0.3
+          "centerX": 0.91,
+          "scale": 0.24,
+          "opacity": 0.35
         }
       ],
       "prev": {
-        "centerX": 0,
-        "scale": 0.36,
+        "centerX": -0.04,
+        "scale": 0.55,
         "opacity": 0
       }
     },
