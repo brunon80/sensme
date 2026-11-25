@@ -39,31 +39,56 @@ pub fn classify_features(features: JsValue) -> Result<JsValue, JsError> {
 }
 
 /// Decode + analyze + classify in one call (convenience for import passes).
+/// Returns `{ featureVector, classification }` per the contract types.
 ///
 /// # Errors
 /// As [`analyze_bytes`] and [`classify_features`].
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AnalysisResult {
+    feature_vector: sensme_core::models::FeatureVector,
+    classification: Classification,
+}
+
 #[wasm_bindgen]
 pub fn analyze_and_classify(label: &str, bytes: &[u8]) -> Result<JsValue, JsError> {
     let fv = sensme_audio::analyze_bytes(label, bytes)
         .map_err(|e| JsError::new(&format!("{e}")))?;
     let classification = classify_vector(&fv)?;
-    serde_wasm_bindgen::to_value(&classification).map_err(|e| JsError::new(&e.to_string()))
+    let result = AnalysisResult {
+        feature_vector: fv,
+        classification,
+    };
+    serde_wasm_bindgen::to_value(&result).map_err(|e| JsError::new(&e.to_string()))
 }
 
 /// Contract metadata the shell needs: version pins, feature layout names,
-/// tone axes and channel ids (display order).
+/// tone axes and channel ids (display order). A plain struct so
+/// serde-wasm-bindgen emits a JS object (not a Map).
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ContractMeta {
+    algorithm_version: &'static str,
+    feature_vector_version: u32,
+    axis_weights_version: &'static str,
+    channel_weights_version: &'static str,
+    feature_names: [&'static str; 30],
+    tone_axes: [&'static str; 12],
+    channels: [&'static str; 13],
+}
+
 #[wasm_bindgen]
 pub fn contract_meta() -> JsValue {
-    serde_wasm_bindgen::to_value(&serde_json::json!({
-        "algorithmVersion": sensme_audio::ALGORITHM_VERSION,
-        "featureVectorVersion": sensme_audio::FEATURE_VECTOR_VERSION,
-        "axisWeightsVersion": sensme_classify::AXIS_WEIGHTS_VERSION,
-        "channelWeightsVersion": sensme_classify::CHANNEL_WEIGHTS_VERSION,
-        "featureNames": sensme_audio::features::FEATURE_NAMES_V1,
-        "toneAxes": sensme_core::models::TONE_AXES,
-        "channels": Channel::ALL.iter().map(|c| c.id()).collect::<Vec<_>>(),
-    }))
-    .unwrap_or(JsValue::NULL)
+    let meta = ContractMeta {
+        algorithm_version: sensme_audio::ALGORITHM_VERSION,
+        feature_vector_version: sensme_audio::FEATURE_VECTOR_VERSION,
+        axis_weights_version: sensme_classify::AXIS_WEIGHTS_VERSION,
+        channel_weights_version: sensme_classify::CHANNEL_WEIGHTS_VERSION,
+        feature_names: sensme_audio::features::FEATURE_NAMES_V1,
+        tone_axes: sensme_core::models::TONE_AXES,
+        channels: Channel::ALL.map(|c| c.id()),
+    };
+    serde_wasm_bindgen::to_value(&meta).unwrap_or(JsValue::NULL)
 }
 
 fn classify_vector(fv: &FeatureVector) -> Result<Classification, JsError> {

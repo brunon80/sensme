@@ -1,0 +1,301 @@
+/* Layout and chrome for the PSP-faithful scene. All visual *values* come
+   from --sensme-* tokens (contracts/design-tokens, AGENTS §6). */
+
+.app {
+  position: fixed;
+  inset: 0;
+  font-family: var(--sensme-type-family);
+  color: var(--sensme-color-textPrimary);
+  user-select: none;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- carousel (UI_SPEC §1) ---- */
+.carousel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tile {
+  position: absolute;
+  left: 50%;
+  bottom: calc((1 - var(--sensme-layout-carousel-baseline)) * 100vh);
+  overflow: visible;
+  transition: transform var(--sensme-motion-carouselStepMs) ease-in-out,
+    opacity var(--sensme-motion-carouselStepMs) ease-in-out;
+}
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  border: 2px solid var(--sensme-color-tileBorderDim);
+}
+.tile-sel img {
+  border: 2px solid var(--sensme-color-tileBorder);
+  box-shadow: 0 0 24px var(--sensme-color-tileGlow);
+}
+.tile-reflect {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background-size: cover;
+  transform: scaleY(-1);
+  opacity: 0.28;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.carousel-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  top: var(--sensme-layout-carousel-nameY);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
+  font-weight: var(--sensme-type-title-weight);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* ---- now playing (UI_SPEC §2) ---- */
+.nowplaying {
+  position: absolute;
+  inset: 0;
+}
+.artwork {
+  position: absolute;
+  aspect-ratio: 1;
+}
+.artwork img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+.artwork-reflect {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 55%;
+  background: inherit;
+  opacity: 0.2;
+  transform: scaleY(-1);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), transparent 65%);
+  pointer-events: none;
+}
+.art-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.art-placeholder span {
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh * 3);
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+.np-text {
+  position: absolute;
+  right: calc(var(--sensme-layout-title-rightMargin) * 100vw);
+  top: calc(var(--sensme-layout-title-baselineY) * 100vh - calc(var(--sensme-type-title-sizeH) * 100vh));
+  max-width: 44vw;
+  text-align: right;
+}
+.np-title {
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
+  font-weight: var(--sensme-type-title-weight);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.np-rule {
+  height: 1px;
+  background: var(--sensme-color-rule);
+  margin: 0.4vh 0;
+}
+.np-second {
+  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dotgrid {
+  position: absolute;
+  top: calc(var(--sensme-layout-clock-topMargin) * 100vh + 4vh);
+  right: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2vh;
+}
+.dot {
+  width: 1.6vh;
+  height: 1.6vh;
+  border-radius: 50%;
+}
+.dot-on {
+  box-shadow: 0 0 8px currentColor;
+}
+.np-playing-tag {
+  position: absolute;
+  left: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
+  top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
+  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+}
+
+/* ---- furniture (R-2) ---- */
+.clock {
+  position: absolute;
+  top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
+  right: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
+  font-weight: var(--sensme-type-title-weight);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.captions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  top: calc(var(--sensme-layout-caption-baselineY) * 100vh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  font-weight: var(--sensme-type-caption-weight);
+  color: var(--sensme-color-textSecondary);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.update-icon {
+  position: absolute;
+  left: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
+  top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
+  animation: spin 1.2s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.status {
+  position: absolute;
+  left: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
+  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100vh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+}
+
+/* ---- options menu (UI_SPEC §3) ---- */
+.menu-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--sensme-color-menuScrim);
+  animation: fadein var(--sensme-motion-menuOpenMs) ease-out;
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+}
+.menu-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sensme-layout-menu-panelLeft) * 100vw);
+  right: 0;
+  background: var(--sensme-color-menuPanel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc((var(--sensme-layout-menu-itemLineHeight) - var(--sensme-type-body-sizeH)) * 100vh);
+  animation: slidein var(--sensme-motion-menuOpenMs) ease-out;
+}
+@keyframes slidein {
+  from {
+    transform: translateX(30%);
+  }
+}
+.menu-item {
+  background: none;
+  border: none;
+  color: var(--sensme-color-textSecondary);
+  font-family: inherit;
+  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  cursor: pointer;
+  padding: 0.4vh 1vw;
+}
+.menu-item:hover {
+  color: var(--sensme-color-textPrimary);
+  font-weight: 600;
+}
+.menu-note {
+  font-size: calc(var(--sensme-type-small-sizeH) * 100vh);
+  color: var(--sensme-color-textTertiary);
+  margin-left: 0.6vw;
+}
+.menu-text {
+  max-width: 80%;
+  text-align: center;
+  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+}
+.menu-caption {
+  position: absolute;
+  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100vh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+}
+
+/* ---- empty state ---- */
+.empty-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2vh;
+}
+.empty-logo {
+  font-size: calc(var(--sensme-type-title-sizeH) * 100vh * 2.4);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.empty-sub {
+  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  color: var(--sensme-color-textSecondary);
+}
+.empty-btn {
+  margin-top: 2vh;
+  padding: 1.2vh 2.4vw;
+  font-family: inherit;
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  font-weight: var(--sensme-type-caption-weight);
+  color: var(--sensme-color-textPrimary);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--sensme-color-tileBorderDim);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.empty-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.empty-hint {
+  font-size: calc(var(--sensme-type-small-sizeH) * 100vh);
+  color: var(--sensme-color-textTertiary);
+}

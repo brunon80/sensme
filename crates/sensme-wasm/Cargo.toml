@@ -13,6 +13,6 @@ crate-type = ["cdylib", "rlib"]
 sensme-audio = { workspace = true }
 sensme-classify = { workspace = true }
 sensme-core = { path = "../sensme-core", default-features = false }
+serde = { workspace = true }
 serde-wasm-bindgen.workspace = true
-serde_json.workspace = true
 wasm-bindgen.workspace = true

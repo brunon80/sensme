@@ -892,8 +892,8 @@ dependencies = [
  "sensme-audio",
  "sensme-classify",
  "sensme-core",
+ "serde",
  "serde-wasm-bindgen",
- "serde_json",
  "wasm-bindgen",
 ]
 
