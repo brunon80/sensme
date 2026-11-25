@@ -192,8 +192,9 @@ export const tokens = {
       "tileRadius": 0.012,
       "globe": {
         "stepDeg": 25,
+        "angleDeg": 10,
         "depth": 0.12,
-        "rowCurve": 0.08,
+        "rowCurve": 0.045,
         "perspVh": 1.4
       }
     },
