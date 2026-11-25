@@ -130,3 +130,52 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+    use crate::stft::stft;
+
+    fn tone(freq: f32, secs: usize) -> Vec<f32> {
+        let n = secs * 22_050;
+        (0..n)
+            .map(|i| (std::f32::consts::TAU * freq * i as f32 / 22_050.0).sin() * 0.7)
+            .collect()
+    }
+
+    #[test]
+    fn mfcc_frames_are_finite_and_stats_have_expected_shape() {
+        let s = stft(&tone(300.0, 2), 2048, 512);
+        let frames = mfcc(&s, 22_050);
+        assert_eq!(frames.len(), s.frames);
+        assert!(frames.iter().all(|f| f.iter().all(|v| v.is_finite())));
+        let (mean, std) = mfcc_stats(&frames);
+        assert_eq!(mean.len(), 5);
+        assert_eq!(std.len(), 5);
+    }
+
+    #[test]
+    fn different_timbres_differ_in_mfcc_means() {
+        let mk = |harmonics: &[f32]| -> Vec<f32> {
+            let n = 2 * 22_050;
+            (0..n)
+                .map(|i| {
+                    let t = i as f32 / 22_050.0;
+                    harmonics
+                        .iter()
+                        .enumerate()
+                        .map(|(k, a)| {
+                            a * (std::f32::consts::TAU * 110.0 * (k as f32 + 1.0) * t).sin()
+                        })
+                        .sum()
+                })
+                .collect()
+        };
+        let bright = mk(&[0.4, 0.35, 0.3, 0.25]);
+        let dark = mk(&[0.9]);
+        let (b, _) = mfcc_stats(&mfcc(&stft(&bright, 2048, 512), 22_050));
+        let (d, _) = mfcc_stats(&mfcc(&stft(&dark, 2048, 512), 22_050));
+        let dist: f32 = b.iter().zip(&d).map(|(x, y)| (x - y).abs()).sum();
+        assert!(dist > 1.0, "mfcc mean distance {dist} too small");
+    }
+}

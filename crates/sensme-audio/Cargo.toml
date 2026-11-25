@@ -12,3 +12,6 @@ rubato.workspace = true
 sensme-core.workspace = true
 symphonia.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

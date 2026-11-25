@@ -176,3 +176,53 @@ mod tests {
         assert_eq!(tod, 5);
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+
+    #[test]
+    fn tone_axes_are_twelve_unique() {
+        assert_eq!(TONE_AXES.len(), 12);
+        for (i, a) in TONE_AXES.iter().enumerate() {
+            assert!(!TONE_AXES[i + 1..].contains(a), "duplicate axis {a}");
+        }
+    }
+
+    #[test]
+    fn channels_are_thirteen_unique() {
+        assert_eq!(Channel::ALL.len(), 13);
+        for (i, c) in Channel::ALL.iter().enumerate() {
+            assert!(
+                !Channel::ALL[i + 1..].contains(c),
+                "duplicate channel {c:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn score_for_matches_channel_position() {
+        let scores: [f32; 13] = [
+            0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.05, 0.15,
+        ];
+        let cs = ChannelScores {
+            scores,
+            weights_version: "t".into(),
+        };
+        for (i, ch) in Channel::ALL.iter().enumerate() {
+            assert_eq!(cs.score_for(*ch), scores[i]);
+        }
+    }
+
+    #[test]
+    fn feature_vector_serde_roundtrip() {
+        let fv = FeatureVector {
+            algorithm_version: "0.1.0".into(),
+            feature_vector_version: 1,
+            values: vec![0.25, -0.5, 1.0],
+        };
+        let json = serde_json::to_string(&fv).unwrap();
+        let back: FeatureVector = serde_json::from_str(&json).unwrap();
+        assert_eq!(fv, back);
+    }
+}

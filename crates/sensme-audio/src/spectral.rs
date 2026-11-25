@@ -163,7 +163,8 @@ pub fn energy_stats(x: &[f32], frame: usize, hop: usize) -> EnergyStats {
         };
     }
     dbs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let mean_db = x.iter().map(|s| s * s).sum::<f32>().max(1e-12).log10() * 10.0;
+    let mean_power = x.iter().map(|s| s * s).sum::<f32>() / x.len().max(1) as f32;
+    let mean_db = mean_power.max(1e-12).log10() * 10.0;
     let p5 = dbs[(dbs.len() as f32 * 0.05) as usize];
     let p95 = dbs[((dbs.len() as f32 * 0.95) as usize).min(dbs.len() - 1)];
     EnergyStats {
@@ -201,5 +202,94 @@ mod tests {
         let s = spectral_stats(&spec, rate, &x, 2048, 512);
         assert!(s.band_low_ratio > 0.9);
         assert!(s.zcr_mean < 0.05);
+    }
+}
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+    use crate::stft::stft;
+
+    fn tone(freq: f32, secs: usize) -> Vec<f32> {
+        let n = secs * 22_050;
+        (0..n)
+            .map(|i| (std::f32::consts::TAU * freq * i as f32 / 22_050.0).sin())
+            .collect()
+    }
+
+    #[test]
+    fn band_ratios_sum_to_one() {
+        let x = tone(440.0, 2);
+        let s = stft(&x, 2048, 512);
+        let st = spectral_stats(&s, 22_050, &x, 2048, 512);
+        let sum = st.band_low_ratio + st.band_mid_ratio + st.band_high_ratio;
+        assert!((sum - 1.0).abs() < 0.02, "band sum {sum}");
+        assert!(st.band_mid_ratio > 0.9, "mid {}", st.band_mid_ratio);
+    }
+
+    #[test]
+    fn tone_is_less_flat_and_darker_than_noise() {
+        let t = tone(440.0, 2);
+        let mut lcg = 7u32;
+        let n: Vec<f32> = (0..2 * 22_050)
+            .map(|_| {
+                lcg = lcg.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                (lcg >> 8) as f32 / 8_388_608.0 - 1.0
+            })
+            .collect();
+        let a = spectral_stats(&stft(&t, 2048, 512), 22_050, &t, 2048, 512);
+        let b = spectral_stats(&stft(&n, 2048, 512), 22_050, &n, 2048, 512);
+        assert!(
+            a.flatness_mean < b.flatness_mean,
+            "tone flatness {} >= noise {}",
+            a.flatness_mean,
+            b.flatness_mean
+        );
+        assert!(
+            a.centroid_mean_hz < b.centroid_mean_hz,
+            "tone centroid {} >= noise {}",
+            a.centroid_mean_hz,
+            b.centroid_mean_hz
+        );
+    }
+}
+
+#[cfg(test)]
+mod energy_tests {
+    use super::*;
+
+    fn tone(freq: f32, amp: f32, n: usize) -> Vec<f32> {
+        (0..n)
+            .map(|i| (std::f32::consts::TAU * freq * i as f32 / 22_050.0).sin() * amp)
+            .collect()
+    }
+
+    #[test]
+    fn rms_db_is_independent_of_signal_length() {
+        let loud = energy_stats(&tone(440.0, 0.9, 22_050 * 5), 2048, 512);
+        let short = energy_stats(&tone(440.0, 0.9, 22_050), 2048, 512);
+        assert!(
+            (loud.rms_mean_db - short.rms_mean_db).abs() < 0.5,
+            "loud {} vs short {}",
+            loud.rms_mean_db,
+            short.rms_mean_db
+        );
+    }
+
+    #[test]
+    fn quiet_tone_is_far_below_full_scale() {
+        // amplitude 0.05 sine → RMS ≈ -29 dBFS, not 0
+        let e = energy_stats(&tone(330.0, 0.05, 22_050 * 3), 2048, 512);
+        assert!(
+            (e.rms_mean_db - (-27.0)).abs() < 3.0,
+            "rms_mean_db {} expected ~-27",
+            e.rms_mean_db
+        );
+    }
+
+    #[test]
+    fn silence_hits_floor() {
+        let e = energy_stats(&vec![0.0f32; 22_050], 2048, 512);
+        assert!(e.rms_mean_db <= -59.0, "floor {}", e.rms_mean_db);
     }
 }

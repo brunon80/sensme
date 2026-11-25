@@ -75,10 +75,22 @@ pub fn estimate_tempo(odf: &[f32], fps: f32) -> TempoResult {
     }
 
     // Octave-down check: for a periodic onset train the true period is the
-    // smallest lag with a near-maximal peak. If the half-lag is nearly as
+    // smallest lag with a near-maximal peak. If a half-lag is nearly as
     // salient, prefer it (fixes half-tempo errors on fast, regular music).
-    while best_lag / 2 >= min_lag && ac[best_lag / 2] >= 0.8 * ac[best_lag] {
-        best_lag /= 2;
+    // The true period is fractional, so test both roundings of best_lag/2.
+    loop {
+        let half = best_lag / 2;
+        if half < min_lag {
+            break;
+        }
+        let cand = [half, half + 1]
+            .into_iter()
+            .filter(|l| *l >= min_lag && *l <= max_lag)
+            .max_by(|a, b| ac[*a].partial_cmp(&ac[*b]).unwrap());
+        match cand {
+            Some(l) if ac[l] >= 0.8 * ac[best_lag] => best_lag = l,
+            _ => break,
+        }
     }
 
     // Sub-frame refinement: parabolic interpolation around the peak lag.
@@ -192,22 +204,55 @@ mod tests {
         x
     }
 
-    #[test]
-    fn click_tracks_match_known_bpm() {
+    fn check_bpm(bpm: f32) {
         let rate = 22_050usize;
-        for bpm in [60.0f32, 90.0, 120.0, 150.0, 180.0] {
-            let x = click_track(bpm, 8.0, rate);
-            let spec = stft(&x, 2048, 512);
-            let odf = onset_envelope(&spec);
-            let r = estimate_tempo(&odf, crate::stft::frame_rate(rate, 512));
-            assert!(
-                (r.bpm - bpm).abs() <= 2.0 || (r.bpm - bpm * 2.0).abs() <= 2.0,
-                "bpm {bpm}: got {} (stability {})",
-                r.bpm,
-                r.stability
-            );
-            assert!(r.stability > 0.8, "bpm {bpm}: stability {}", r.stability);
-        }
+        let x = click_track(bpm, 8.0, rate);
+        let spec = stft(&x, 2048, 512);
+        let odf = onset_envelope(&spec);
+        let r = estimate_tempo(&odf, crate::stft::frame_rate(rate, 512));
+        assert!(
+            (r.bpm - bpm).abs() <= 2.0,
+            "bpm {bpm}: got {} (stability {})",
+            r.bpm,
+            r.stability
+        );
+        assert!(r.stability > 0.8, "bpm {bpm}: stability {}", r.stability);
+    }
+
+    macro_rules! bpm_test {
+        ($name:ident, $bpm:expr) => {
+            #[test]
+            fn $name() {
+                check_bpm($bpm);
+            }
+        };
+    }
+
+    // Phase 2 done gate: 20 synthetic click-track fixtures, 60–174 BPM.
+    bpm_test!(bpm_060, 60.0);
+    bpm_test!(bpm_066, 66.0);
+    bpm_test!(bpm_072, 72.0);
+    bpm_test!(bpm_078, 78.0);
+    bpm_test!(bpm_084, 84.0);
+    bpm_test!(bpm_090, 90.0);
+    bpm_test!(bpm_096, 96.0);
+    bpm_test!(bpm_102, 102.0);
+    bpm_test!(bpm_108, 108.0);
+    bpm_test!(bpm_114, 114.0);
+    bpm_test!(bpm_120, 120.0);
+    bpm_test!(bpm_126, 126.0);
+    bpm_test!(bpm_132, 132.0);
+    bpm_test!(bpm_138, 138.0);
+    bpm_test!(bpm_144, 144.0);
+    bpm_test!(bpm_150, 150.0);
+    bpm_test!(bpm_156, 156.0);
+    bpm_test!(bpm_162, 162.0);
+    bpm_test!(bpm_168, 168.0);
+    bpm_test!(bpm_174, 174.0);
+
+    #[test]
+    fn bpm_180() {
+        check_bpm(180.0);
     }
 
     #[test]

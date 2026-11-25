@@ -497,6 +497,7 @@ dependencies = [
  "rubato",
  "rustfft",
  "sensme-core",
+ "serde_json",
  "symphonia",
  "thiserror",
 ]
@@ -536,6 +537,7 @@ dependencies = [
  "lofty",
  "rusqlite",
  "serde",
+ "serde_json",
  "thiserror",
 ]
 

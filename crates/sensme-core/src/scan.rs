@@ -175,3 +175,61 @@ mod tests {
         let _ = std::fs::remove_dir_all(dir);
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+
+    fn write_wav(path: &Path, rate: usize, n: usize) {
+        let samples: Vec<f32> = (0..n)
+            .map(|i| (2.0 * std::f32::consts::PI * 440.0 * i as f32 / rate as f32).sin() * 0.5)
+            .collect();
+        let data_len = (samples.len() * 2) as u32;
+        let mut bytes: Vec<u8> = Vec::new();
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&(36 + data_len).to_le_bytes());
+        bytes.extend_from_slice(b"WAVE");
+        bytes.extend_from_slice(b"fmt ");
+        bytes.extend_from_slice(&16u32.to_le_bytes());
+        bytes.extend_from_slice(&1u16.to_le_bytes());
+        bytes.extend_from_slice(&1u16.to_le_bytes());
+        bytes.extend_from_slice(&(rate as u32).to_le_bytes());
+        bytes.extend_from_slice(&((rate * 2) as u32).to_le_bytes());
+        bytes.extend_from_slice(&2u16.to_le_bytes());
+        bytes.extend_from_slice(&16u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_len.to_le_bytes());
+        for s in &samples {
+            let v = (s.clamp(-1.0, 1.0) * i16::MAX as f32) as i16;
+            bytes.extend_from_slice(&v.to_le_bytes());
+        }
+        std::fs::write(path, bytes).expect("write wav");
+    }
+
+    #[test]
+    fn modified_file_is_reported_as_updated() {
+        let dir = std::path::Path::new("/tmp/opencode/sensme-scan-upd");
+        let _ = std::fs::remove_dir_all(dir);
+        std::fs::create_dir_all(dir).unwrap();
+        let f = dir.join("a.wav");
+        write_wav(&f, 44_100, 4410);
+        let mut lib = Library::open_in_memory().unwrap();
+        assert_eq!(scan_directory(&mut lib, dir).unwrap().added, 1);
+        // rewrite with different size -> size change detected
+        write_wav(&f, 44_100, 8820);
+        let stats = scan_directory(&mut lib, dir).unwrap();
+        assert_eq!((stats.updated, stats.added), (1, 0));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn uppercase_extension_is_accepted() {
+        let dir = std::path::Path::new("/tmp/opencode/sensme-scan-case");
+        let _ = std::fs::remove_dir_all(dir);
+        std::fs::create_dir_all(dir).unwrap();
+        write_wav(&dir.join("A.WAV"), 44_100, 4410);
+        let mut lib = Library::open_in_memory().unwrap();
+        assert_eq!(scan_directory(&mut lib, dir).unwrap().added, 1);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+}

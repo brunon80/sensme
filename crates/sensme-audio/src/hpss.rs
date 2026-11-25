@@ -100,3 +100,45 @@ mod tests {
         assert!(s.harmonic_ratio < 0.3);
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+    use crate::stft::stft;
+
+    #[test]
+    fn pure_tone_is_mostly_harmonic() {
+        let n = 22_050 * 2;
+        let x: Vec<f32> = (0..n)
+            .map(|i| (std::f32::consts::TAU * 440.0 * i as f32 / 22_050.0).sin())
+            .collect();
+        let s = stft(&x, 2048, 512);
+        let h = hpss_stats(&s);
+        assert!(h.harmonic_ratio > 0.8, "harmonic {}", h.harmonic_ratio);
+    }
+
+    #[test]
+    fn noise_bursts_are_less_harmonic_than_a_tone() {
+        let n = 22_050 * 2;
+        let mut x = vec![0.0f32; n];
+        let mut lcg = 12_345u32;
+        let mut i = 0usize;
+        while i < n {
+            for _ in 0..500.min(n - i) {
+                lcg = lcg.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                x[i] = ((lcg >> 8) as f32 / 8_388_608.0 - 1.0) * 0.5;
+                i += 1;
+            }
+            i += 2205;
+        }
+        let tone: Vec<f32> = (0..n)
+            .map(|i| (std::f32::consts::TAU * 440.0 * i as f32 / 22_050.0).sin())
+            .collect();
+        let h_noise = hpss_stats(&stft(&x, 2048, 512)).harmonic_ratio;
+        let h_tone = hpss_stats(&stft(&tone, 2048, 512)).harmonic_ratio;
+        assert!(
+            h_noise < h_tone,
+            "noise {h_noise} should be less harmonic than tone {h_tone}"
+        );
+    }
+}

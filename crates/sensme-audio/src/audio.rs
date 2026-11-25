@@ -225,6 +225,20 @@ mod tests {
     }
 
     #[test]
+    fn decode_preserves_amplitude_scale() {
+        // samples must stay in -1..=1 (f32 normalized), not raw integer scale
+        let path = "/tmp/opencode/sensme-test-amp.wav";
+        write_test_wav(path, 44_100, &sine(440.0, 1.0, 44_100));
+        let audio = load_mono(path, 22_050).expect("decode");
+        let peak = audio.samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
+        assert!(
+            (peak - 0.8).abs() < 0.05,
+            "decoded peak amplitude {peak}, expected ~0.8"
+        );
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
     fn decode_missing_file_errors() {
         let err = load_mono("/tmp/opencode/definitely-missing.wav", 22_050);
         assert!(matches!(err, Err(AudioError::Io { .. })));

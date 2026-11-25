@@ -399,3 +399,114 @@ mod tests {
         assert!(CHANNEL_WEIGHTS_VERSION.matches('.').count() == 2);
     }
 }
+
+#[cfg(test)]
+mod axis_response_tests {
+    use super::*;
+    use sensme_core::models::Channel;
+
+    /// Score every axis with one feature swept 0→1 (tempo kept reliable).
+    fn delta(axis: usize, feature: usize) -> f32 {
+        let mut v = [0.5f32; 30];
+        v[TEMPO_STRENGTH] = 0.5;
+        let mut lo = v;
+        lo[feature] = 0.0;
+        let mut hi = v;
+        hi[feature] = 1.0;
+        let mk = |x: [f32; 30]| FeatureVector {
+            algorithm_version: "t".into(),
+            feature_vector_version: 1,
+            values: x.to_vec(),
+        };
+        let s_lo = score_axes(&mk(lo)).unwrap().scores[axis];
+        let s_hi = score_axes(&mk(hi)).unwrap().scores[axis];
+        s_hi - s_lo
+    }
+
+    macro_rules! responds {
+        ($name:ident, $axis:expr, $feat:expr, $positive:expr) => {
+            #[test]
+            fn $name() {
+                let axis_idx = $axis;
+                let d = delta($axis, $feat);
+                if $positive {
+                    assert!(d > 0.05, "axis {axis_idx} delta {d} should be positive");
+                } else {
+                    assert!(d < -0.05, "axis {axis_idx} delta {d} should be negative");
+                }
+            }
+        };
+    }
+
+    responds!(energetic_speed, 0, BPM, true);
+    responds!(excited_onsets, 1, ONSET_RATE, true);
+    responds!(groovy_stability, 2, TEMPO_STABILITY, true);
+    responds!(danceable_bass, 3, LOW, true);
+    responds!(sensual_bass, 4, LOW, true);
+    responds!(sweet_major, 5, VALENCE, true);
+    responds!(bittersweet_minor, 6, VALENCE, false);
+    responds!(dreamy_harmonic, 8, HARMONIC, true);
+    responds!(tough_loud, 10, RMS, true);
+    responds!(aggressive_bright, 11, CENTROID, true);
+
+    #[test]
+    fn mellow_dark_and_sparse_respond_in_the_right_direction() {
+        // soft, slow, harmonic base where both axes sit in the linear range
+        let mut v = [0.2f32; 30];
+        v[TEMPO_STRENGTH] = 0.5;
+        v[HARMONIC] = 0.9;
+        let mk = |centroid: f32, onset: f32| {
+            let mut x = v;
+            x[CENTROID] = centroid;
+            x[ONSET_RATE] = onset;
+            score_axes(&FeatureVector {
+                algorithm_version: "t".into(),
+                feature_vector_version: 1,
+                values: x.to_vec(),
+            })
+            .unwrap()
+            .scores
+        };
+        let dark = mk(0.0, 0.0);
+        let bright = mk(1.0, 0.0);
+        assert!(dark[7] > bright[7] + 0.1, "mellow should prefer dark");
+        let sparse = mk(0.0, 0.0);
+        let busy = mk(0.0, 1.0);
+        assert!(sparse[9] > busy[9] + 0.1, "chillout should prefer sparse");
+    }
+
+    #[test]
+    fn every_channel_reachable() {
+        // each channel must score positively for at least one of the two
+        // opposite reference profiles
+        let mut ag = [0.5f32; 30];
+        ag[BPM] = 0.9;
+        ag[ONSET_RATE] = 0.9;
+        ag[RMS] = 0.95;
+        ag[CENTROID] = 0.8;
+        ag[ZCR] = 0.8;
+        ag[HARMONIC] = 0.2;
+        ag[VALENCE] = 0.2;
+        let mut ml = [0.3f32; 30];
+        ml[BPM] = 0.2;
+        ml[ONSET_RATE] = 0.05;
+        ml[RMS] = 0.3;
+        ml[CENTROID] = 0.15;
+        ml[ZCR] = 0.05;
+        ml[HARMONIC] = 0.95;
+        ml[VALENCE] = 0.6;
+        let mk = |v: [f32; 30]| FeatureVector {
+            algorithm_version: "t".into(),
+            feature_vector_version: 1,
+            values: v.to_vec(),
+        };
+        let (_, a) = classify(&mk(ag)).unwrap();
+        let (_, m) = classify(&mk(ml)).unwrap();
+        for ch in Channel::ALL {
+            assert!(
+                a.score_for(ch) > 0.0 || m.score_for(ch) > 0.0,
+                "channel {ch:?} unreachable"
+            );
+        }
+    }
+}

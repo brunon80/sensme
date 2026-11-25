@@ -90,3 +90,45 @@ mod tests {
         assert!((peak_hz - freq).abs() < 2.0 * bin_hz);
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+
+    fn sine(freq: f32, n: usize, rate: f32) -> Vec<f32> {
+        (0..n)
+            .map(|i| (std::f32::consts::TAU * freq * i as f32 / rate).sin())
+            .collect()
+    }
+
+    #[test]
+    fn frame_count_and_shape_match_input() {
+        let x = vec![0.0f32; 4096];
+        let s = stft(&x, 2048, 512);
+        assert!((5..=8).contains(&s.frames));
+        assert_eq!(s.bins, 1025);
+        assert_eq!(s.mags.len(), s.frames * s.bins);
+    }
+
+    #[test]
+    fn sine_peaks_at_expected_bin() {
+        let rate = 22_050.0f32;
+        let x = sine(440.0, 4096, rate);
+        let s = stft(&x, 2048, 512);
+        let t = s.frames / 2;
+        let mut peak = 0usize;
+        for b in 1..s.bins {
+            if s.get(t, b) > s.get(t, peak) {
+                peak = b;
+            }
+        }
+        let bin_hz = (rate / 2.0) / (s.bins - 1) as f32;
+        let hz = peak as f32 * bin_hz;
+        assert!((hz - 440.0).abs() < 15.0, "peak at {hz} Hz");
+    }
+
+    #[test]
+    fn frame_rate_is_rate_over_hop() {
+        assert!((frame_rate(22_050, 512) - 43.066).abs() < 0.01);
+    }
+}

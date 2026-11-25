@@ -397,3 +397,101 @@ mod tests {
         assert_eq!(c, channels);
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+    use crate::models::{ToneAxes, TrackId};
+
+    fn track(path: &str, title: &str) -> Track {
+        Track {
+            id: TrackId(0),
+            path: path.to_string(),
+            title: Some(title.into()),
+            artist: None,
+            album: None,
+            genre: None,
+            year: None,
+            duration_ms: 1000,
+            size_bytes: 10,
+            modified_epoch: 1,
+        }
+    }
+
+    #[test]
+    fn file_database_persists_across_reopen() {
+        let path = std::path::Path::new("/tmp/opencode/sensme-storage-persist.db");
+        let _ = std::fs::remove_file(path);
+        {
+            let mut lib = Library::open(path).unwrap();
+            lib.upsert_track(&track("/m/persist.mp3", "Kept")).unwrap();
+        }
+        let lib = Library::open(path).unwrap();
+        let t = lib.track_by_path("/m/persist.mp3").unwrap().unwrap();
+        assert_eq!(t.title.as_deref(), Some("Kept"));
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn upsert_updates_existing_fields() {
+        let mut lib = Library::open_in_memory().unwrap();
+        lib.upsert_track(&track("/m/u.mp3", "Old")).unwrap();
+        lib.upsert_track(&track("/m/u.mp3", "New")).unwrap();
+        let t = lib.track_by_path("/m/u.mp3").unwrap().unwrap();
+        assert_eq!(t.title.as_deref(), Some("New"));
+        assert_eq!(lib.all_tracks().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn analysis_replaces_previous_version() {
+        let mut lib = Library::open_in_memory().unwrap();
+        let id = lib.upsert_track(&track("/m/v.mp3", "V")).unwrap();
+        let v1 = FeatureVector {
+            algorithm_version: "0.1.0".into(),
+            feature_vector_version: 1,
+            values: vec![1.0; 30],
+        };
+        let mut v2 = v1.clone();
+        v2.algorithm_version = "0.2.0".into();
+        v2.values = vec![0.5; 30];
+        lib.store_analysis(id, &v1).unwrap();
+        lib.store_analysis(id, &v2).unwrap();
+        assert_eq!(lib.analysis_for(id).unwrap(), v2);
+    }
+
+    #[test]
+    fn missing_track_errors() {
+        let lib = Library::open_in_memory().unwrap();
+        assert!(matches!(
+            lib.track_by_id(TrackId(999)),
+            Err(CoreError::TrackNotFound(999))
+        ));
+    }
+
+    #[test]
+    fn classification_upsert_replaces() {
+        let mut lib = Library::open_in_memory().unwrap();
+        let id = lib.upsert_track(&track("/m/c.mp3", "C")).unwrap();
+        let axes = ToneAxes {
+            scores: [0.1; 12],
+            weights_version: "1".into(),
+        };
+        let ch = ChannelScores {
+            scores: [0.1; 13],
+            weights_version: "1".into(),
+        };
+        lib.store_classification(id, &axes, &ch).unwrap();
+        let axes2 = ToneAxes {
+            scores: [0.9; 12],
+            weights_version: "2".into(),
+        };
+        let ch2 = ChannelScores {
+            scores: [0.9; 13],
+            weights_version: "2".into(),
+        };
+        lib.store_classification(id, &axes2, &ch2).unwrap();
+        let (a, c) = lib.classification_for(id).unwrap();
+        assert_eq!(a, axes2);
+        assert_eq!(c, ch2);
+    }
+}

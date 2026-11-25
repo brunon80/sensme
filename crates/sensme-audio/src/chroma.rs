@@ -170,3 +170,50 @@ mod tests {
         assert!(m.valence < 0.4, "minor expected, got {}", m.valence);
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+    use crate::stft::stft;
+
+    fn chord(freqs: &[f32], secs: f32, rate: usize) -> Vec<f32> {
+        let n = (secs * rate as f32) as usize;
+        (0..n)
+            .map(|i| {
+                let t = i as f32 / rate as f32;
+                freqs
+                    .iter()
+                    .map(|f| (std::f32::consts::TAU * f * t).sin() * 0.3)
+                    .sum()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_minor_chord_lights_a_c_e() {
+        let x = chord(&[220.0, 261.63, 329.63], 2.0, 22_050);
+        let s = stft(&x, 2048, 512);
+        let c = chroma_profile(&s, 22_050);
+        // pitch classes: A=9, C=0, E=4
+        let mut idx: Vec<usize> = (0..12).collect();
+        idx.sort_by(|a, b| c[*b].partial_cmp(&c[*a]).unwrap());
+        assert!(
+            idx[..3].iter().all(|p| matches!(p, 0 | 4 | 9)),
+            "top pitch classes {idx:?}, profile {c:?}"
+        );
+    }
+
+    #[test]
+    fn major_scores_higher_valence_than_minor() {
+        let s_maj = stft(&chord(&[220.0, 277.18, 329.63], 2.0, 22_050), 2048, 512);
+        let s_min = stft(&chord(&[220.0, 261.63, 329.63], 2.0, 22_050), 2048, 512);
+        let maj = mode_stats(&s_maj, 22_050);
+        let min = mode_stats(&s_min, 22_050);
+        assert!(
+            maj.valence > min.valence,
+            "major {} <= minor {}",
+            maj.valence,
+            min.valence
+        );
+    }
+}

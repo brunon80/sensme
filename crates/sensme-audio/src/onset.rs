@@ -75,3 +75,41 @@ mod tests {
         assert!(hits >= 6, "expected onset peaks at clicks, got {hits}/7");
     }
 }
+
+#[cfg(test)]
+mod extra_tests {
+    use super::*;
+    use crate::stft::stft;
+
+    #[test]
+    fn silence_gives_zero_envelope() {
+        let x = vec![0.0f32; 8192];
+        let s = stft(&x, 2048, 512);
+        let o = onset_envelope(&s);
+        assert_eq!(o.len(), s.frames);
+        assert!(o.iter().all(|v| *v == 0.0));
+    }
+
+    #[test]
+    fn clicks_produce_peaks_at_click_times() {
+        let rate = 22_050usize;
+        let mut x = vec![0.0f32; rate * 4];
+        // clicks centered inside frames f = 30, 60, 90 so the frame's
+        // Hann-windowed energy jumps against the previous (silent) frame
+        let click_frames = [30usize, 60, 90];
+        for &f in &click_frames {
+            let at = f * 512 + 1024 - 50;
+            for i in 0..100 {
+                x[at + i] = 0.8;
+            }
+        }
+        let s = stft(&x, 2048, 512);
+        let o = onset_envelope(&s);
+        let max = o.iter().cloned().fold(0.0f32, f32::max);
+        assert!(max > 0.0);
+        for &f in &click_frames {
+            let win = &o[f - 1..f + 2];
+            assert!(win.iter().any(|v| *v > 0.5 * max), "no onset at frame {f}");
+        }
+    }
+}

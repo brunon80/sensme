@@ -140,7 +140,7 @@ fn count_onsets(odf: &[f32], fps: f32) -> f32 {
     let mut count = 0usize;
     let mut last = usize::MAX / 2;
     for t in 1..odf.len() - 1 {
-        if odf[t] > 0.4 && odf[t] >= odf[t - 1] && odf[t] > odf[t + 1] && t - last > refractory {
+        if odf[t] > 0.4 && odf[t] >= odf[t - 1] && odf[t] > odf[t + 1] && t > last + refractory {
             count += 1;
             last = t;
         }
