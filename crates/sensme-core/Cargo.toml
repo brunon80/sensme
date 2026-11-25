@@ -1,0 +1,11 @@
+[package]
+name = "sensme-core"
+description = "Domain models, library management, and persistence for SensMe"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true

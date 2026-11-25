@@ -1,0 +1,21 @@
+# Rust
+/target
+**/*.rs.bk
+
+# Node
+node_modules/
+dist/
+.turbo/
+
+# Generated contracts (regenerate with `cargo run -p sensme-core --bin export-ts`)
+/contracts/generated/*.ts
+
+# App artifacts
+apps/desktop/src-tauri/target/
+apps/mobile/ios/Pods/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+
+# Misc
+.DS_Store
+*.log

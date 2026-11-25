@@ -1,0 +1,11 @@
+[package]
+name = "sensme-ffi"
+description = "UniFFI bindings surface (Kotlin/Swift) for the SensMe core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+# TODO(phase-2): uniffi + interface definitions, validated via the RN spike.
+sensme-core.workspace = true

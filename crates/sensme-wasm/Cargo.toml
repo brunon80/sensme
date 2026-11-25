@@ -1,0 +1,11 @@
+[package]
+name = "sensme-wasm"
+description = "wasm-bindgen surface for the SensMe web app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+# TODO(phase-5): wasm-bindgen surface (ADR-009).
+sensme-core.workspace = true

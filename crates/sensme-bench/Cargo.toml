@@ -1,0 +1,11 @@
+[package]
+name = "sensme-bench"
+description = "Reference datasets, agreement metrics, and calibration for SensMe"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+# sensme-classify joins when metrics compare classifier output (phase 3)
+sensme-core.workspace = true
