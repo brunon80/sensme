@@ -1,7 +1,7 @@
 //! `sensme` CLI — analysis, classification, and benchmarking entry point.
 //!
-//! `analyze`, `scan` and `classify` are live; `bench`/`tune` are explicit
-//! stubs until their phase (AGENTS.md §3: no silent placeholders).
+//! `analyze`, `scan`, `classify` and `export` are live; `bench`/`tune` are
+//! explicit stubs until their phase (AGENTS.md §3: no silent placeholders).
 
 use std::path::{Path, PathBuf};
 
@@ -40,6 +40,15 @@ enum Command {
         /// Library database file
         #[arg(long, default_value = "~/.sensme/library.db")]
         db: String,
+    },
+    /// Export the library (tracks, analyses, classifications) as JSON
+    Export {
+        /// Library database file
+        #[arg(long, default_value = "~/.sensme/library.db")]
+        db: String,
+        /// Output file (default: stdout)
+        #[arg(short, long)]
+        out: Option<String>,
     },
     /// Run a benchmark dataset and print the agreement report
     Bench { dataset: String },
@@ -120,6 +129,29 @@ fn main() -> Result<()> {
                 println!("{}: top channel {top}", track.path);
             }
             println!("classified {classified} track(s)");
+        }
+        Command::Export { db, out } => {
+            let db_path = expand_tilde(&db);
+            let lib = sensme_core::Library::open(&db_path)?;
+            let entries: Vec<serde_json::Value> = lib
+                .all_tracks()?
+                .into_iter()
+                .map(|t| {
+                    serde_json::json!({
+                        "track": t,
+                        "analysis": lib.analysis_for(t.id).ok(),
+                        "classification": lib.classification_for(t.id).ok(),
+                    })
+                })
+                .collect();
+            let doc = serde_json::json!({ "library_version": 1, "tracks": entries });
+            let text = serde_json::to_string_pretty(&doc)?;
+            match out {
+                Some(p) => {
+                    std::fs::write(p, text)?;
+                }
+                None => println!("{text}"),
+            }
         }
         Command::Bench { dataset } => sensme_bench::run_bench(&dataset).map(|_| ())?,
         Command::Tune { .. } => return Err(err("phase 3", "weight tuning")),
