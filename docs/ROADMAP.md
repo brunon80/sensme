@@ -31,11 +31,14 @@ Work items:
 7. Golden-vector fixtures: synthetic + real CC-licensed audio; CI on x86-64 + aarch64.
 
 Done gate:
-- [ ] `sensme analyze <file>` prints a versioned feature vector for MP3/FLAC/OGG/M4A/WAV
-- [ ] Tempo within ±2 BPM on 20 synthetic click-track fixtures (all common BPMs 60–180)
-- [ ] ≥100 unit tests passing; golden vectors identical (±1e-4) on x86-64 and aarch64
-- [ ] `sensme classify` assigns channels from stored vectors without re-decoding
+- [x] `sensme analyze <file>` prints a versioned feature vector for MP3/FLAC/OGG/M4A/WAV
+- [x] Tempo within ±2 BPM on 20 synthetic click-track fixtures (all common BPMs 60–180)
+- [x] ≥100 unit tests passing; golden vectors identical (±1e-4) on x86-64 and aarch64
+- [x] `sensme classify` assigns channels from stored vectors without re-decoding
 - [ ] UniFFI spike demonstrates typed calls from RN on an Android emulator or device
+      (spike done: typed API, Kotlin binding generation, typed calls over JNA on the
+      JVM, and aarch64-linux-android cdylib build — see `spike/rn-spike/README.md`;
+      emulator/device run pending Phase 5 tooling)
 
 ## Phase 3 — Benchmarking and calibration
 

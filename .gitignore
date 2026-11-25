@@ -19,3 +19,10 @@ apps/mobile/android/app/build/
 # Misc
 .DS_Store
 *.log
+
+# spike artifacts (regenerable)
+spike/rn-spike/build/
+spike/rn-spike/*.jar
+spike/rn-spike/py/
+spike/rn-spike/android/
+fixtures/tmp/
