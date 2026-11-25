@@ -33,3 +33,9 @@ fixtures/tmp/
 
 # Sony reference screenshots are studied locally, never committed (AGENTS.md §7)
 references-local/
+
+# Windows downloaded-file metadata junk
+*:Zone.Identifier
+
+# Real music dropped in for manual testing stays local (copyrighted; not a fixture)
+fixtures/formats/*[0-9]*.mp3
