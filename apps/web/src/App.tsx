@@ -8,6 +8,7 @@ import { player } from "./engine/player";
 import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
 import { CAROUSEL_ORDER, entryHues, entryTracks, shuffledQueue } from "./ui/channels";
+import { captionFor, detectPlatform } from "./ui/controls";
 import { NowPlaying } from "./ui/NowPlaying";
 import { Options, type Settings } from "./ui/Options";
 import { Scene } from "./ui/Scene";
@@ -251,17 +252,10 @@ export default function App() {
     return c as Record<(typeof CAROUSEL_ORDER)[number], number>;
   }, [records]);
 
+  const platform = useMemo(detectPlatform, []);
   const captionText = menuOpen
     ? ""
-    : screen === "carousel"
-      ? "✕ Back    ◯ Select"
-      : screen === "empty"
-        ? "◯ Import Music…    C"
-        : pending !== null
-          ? "START/◯ Confirm · ✕ Cancel · L ◀ Prev · R Next ▶"
-          : playing
-            ? "SELECT Change Channels · START Pause · L ◀ Prev · R Next ▶ · ♥ Favourites"
-            : "SELECT Change Channels · START Play · L ◀ Prev · R Next ▶ · ♥ Favourites";
+    : captionFor(screen, { playing, pending: pending !== null }, platform);
 
   return (
     <div className="app">
