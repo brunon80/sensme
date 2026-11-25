@@ -26,3 +26,6 @@ spike/rn-spike/*.jar
 spike/rn-spike/py/
 spike/rn-spike/android/
 fixtures/tmp/
+
+# Sony reference screenshots are studied locally, never committed (AGENTS.md §7)
+references-local/
