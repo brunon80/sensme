@@ -7,5 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+lofty.workspace = true
+rusqlite.workspace = true
 serde.workspace = true
 thiserror.workspace = true

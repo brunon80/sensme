@@ -6,5 +6,8 @@
 
 pub mod error;
 pub mod models;
+pub mod scan;
+pub mod storage;
 
 pub use error::CoreError;
+pub use storage::Library;

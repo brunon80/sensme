@@ -5,12 +5,14 @@ members = ["crates/*"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.87"
+rust-version = "1.89"
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+lofty = "0.25"
+rusqlite = { version = "0.43", features = ["bundled"] }
 rustfft = "6"
 rubato = "5"
 serde = { version = "1", features = ["derive"] }
