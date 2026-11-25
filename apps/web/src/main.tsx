@@ -22,3 +22,13 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>,
 );
+
+// PWA: register the service worker in production builds only (dev keeps
+// plain reloads). Relative URL works under the Pages project path.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("./sw.js").catch(() => {
+      // Offline capability is progressive enhancement; ignore failures.
+    });
+  });
+}
