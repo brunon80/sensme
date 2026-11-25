@@ -201,8 +201,8 @@
   position: absolute;
   top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
   right: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
-  font-weight: var(--sensme-type-title-weight);
+  font-size: calc(var(--sensme-type-clock-sizeH) * 100vh);
+  font-weight: var(--sensme-type-clock-weight);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 .captions {

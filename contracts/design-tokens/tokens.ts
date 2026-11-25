@@ -206,24 +206,29 @@ export const tokens = {
   "type": {
     "family": "'Source Sans 3', 'Noto Sans', system-ui, sans-serif",
     "title": {
-      "sizeH": 0.059,
-      "weight": 600,
-      "px480": 16
-    },
-    "body": {
-      "sizeH": 0.048,
-      "weight": 400,
-      "px480": 13
-    },
-    "caption": {
-      "sizeH": 0.03,
+      "sizeH": 0.0295,
       "weight": 600,
       "px480": 8
     },
-    "small": {
-      "sizeH": 0.037,
+    "body": {
+      "sizeH": 0.024,
       "weight": 400,
-      "px480": 10
+      "px480": 6
+    },
+    "caption": {
+      "sizeH": 0.015,
+      "weight": 600,
+      "px480": 4
+    },
+    "small": {
+      "sizeH": 0.0185,
+      "weight": 400,
+      "px480": 5
+    },
+    "clock": {
+      "sizeH": 0.059,
+      "weight": 600,
+      "px480": 16
     }
   },
   "motion": {
