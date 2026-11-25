@@ -1,7 +1,7 @@
 //! `sensme` CLI — analysis, classification, and benchmarking entry point.
 //!
-//! Subcommand bodies are explicit stubs until their phase (AGENTS.md §3:
-//! no silent placeholders).
+//! `analyze` is live; the remaining subcommands are explicit stubs until
+//! their phase (AGENTS.md §3: no silent placeholders).
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -33,9 +33,10 @@ fn main() -> Result<()> {
         anyhow::anyhow!("not implemented until {phase}: {what}")
     };
     match cli.command {
-        // analyze/bench call their crate stubs, which return
-        // NotImplemented until their phase; later this prints real output.
-        Command::Analyze { path } => sensme_audio::analyze_file(&path).map(|_| ())?,
+        Command::Analyze { path } => {
+            let fv = sensme_audio::analyze_file(&path)?;
+            println!("{}", serde_json::to_string_pretty(&fv)?);
+        }
         Command::Classify { .. } => return Err(err("phase 2", "classification")),
         Command::Scan { .. } => return Err(err("phase 2", "library scanning")),
         Command::Bench { dataset } => sensme_bench::run_bench(&dataset).map(|_| ())?,
