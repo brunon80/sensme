@@ -132,7 +132,7 @@ export const tokens = {
     },
     "np": {
       "size": 0.62,
-      "bottom": 0.82,
+      "centerY": 0.51,
       "slots": [
         {
           "centerX": 0.23,

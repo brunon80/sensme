@@ -56,8 +56,9 @@ export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
               entry={entry}
               slot={slot}
               size={np.size}
-              bottom={np.bottom}
+              centerY={np.centerY}
               z={10 - Math.abs(k)}
+              reflect={k === 0}
             />
           );
         })}
@@ -89,21 +90,23 @@ export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
 }
 
 /** One track card in the now-playing carousel (artwork + reflection).
- * Bottom-aligned on the floor line (PSP: cards stand on the glossy floor). */
+ * Vertically centered on `centerY`, aligned with the current (big) card. */
 function TrackCard({
   record,
   entry,
   slot,
   size,
-  bottom,
+  centerY,
   z,
+  reflect,
 }: {
   record: LibraryRecord;
   entry: CarouselEntry;
   slot: Slot;
   size: number;
-  bottom: number;
+  centerY: number;
   z: number;
+  reflect: boolean;
 }) {
   const [artUrl, setArtUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -123,8 +126,8 @@ function TrackCard({
         width: `${size * 100}vh`,
         height: `${size * 100}vh`,
         left: `${slot.centerX * 100}vw`,
-        bottom: `${(1 - bottom) * 100}vh`,
-        transform: `translateX(-50%) scale(${slot.scale})`,
+        top: `${centerY * 100}vh`,
+        transform: `translate(-50%, -50%) scale(${slot.scale})`,
         opacity: slot.opacity,
         zIndex: z,
       }}
@@ -134,7 +137,7 @@ function TrackCard({
       ) : (
         <Placeholder entry={entry} />
       )}
-      {artUrl && <div className="np-track-reflect" style={{ backgroundImage: `url(${artUrl})` }} />}
+      {artUrl && reflect && <div className="np-track-reflect" style={{ backgroundImage: `url(${artUrl})` }} />}
     </div>
   );
 }

@@ -68,13 +68,14 @@ Reference: R-1 `sensme_cp2.jpg`, R-6 photos 7509–7519.
 
 Layout:
 - Track carousel (R-6 7508/7509, demo_ref_video 32–46 s): current track
-  card `np.size` 0.62 H at center x 0.23, bottom edge `np.bottom` 0.82 H
-  (stands on the floor; reflection below). Missing artwork → channel
-  placeholder card (e.g. Favourites heart).
-- Next tracks: up to 5 smaller cards (`np.slots` 1–5: scale 0.36→0.25,
-  opacity 0.9→0.3), bottom-aligned, receding to the right edge; the
-  previous card glides out left. Non-cyclic: clamped at both ends — a
-  one-track channel shows a single card; next at the end stops.
+  card `np.size` 0.62 H at center x 0.23, vertical center `np.centerY`
+  0.51 (reflection below). Missing artwork → channel placeholder card
+  (e.g. Favourites heart).
+- Next tracks: up to 5 smaller cards (`np.slots` 1–5: scale 0.55→0.24,
+  opacity 0.95→0.35) stacked behind and immediately after the previous
+  (overlapping, nearer on top), all vertically centered on the current
+  card; the previous card glides out left. Non-cyclic: clamped at both
+  ends — a one-track channel shows a single card; next at the end stops.
 - Track title: right-aligned block, baseline y 0.74, `type.title`,
   white; thin rule under it (R-6 7511).
 - `Artist / Album` line below: y 0.81, `type.body`, white 72%; title
