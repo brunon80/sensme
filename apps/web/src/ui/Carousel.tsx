@@ -51,10 +51,12 @@ export function Carousel({ selected, counts, phase }: Props) {
       {cards.map(({ entry, col, row, sel }) => {
         const empty = counts[entry] === 0;
         const theta = thetaOf(col);
+        // Inside-the-globe (concave): the viewer is at the cylinder's
+        // center, so side cards wrap TOWARD the viewer and face inward.
         const x = g.radius * Math.sin(theta) * 100; // vw along the globe
-        const z = g.radius * (Math.cos(theta) - 1) * 100; // vw (negative recedes)
-        const rotY = col * g.stepDeg; // face outward on the cylinder
-        const rotX = (row === 1 ? 1 : -1) * g.rowTiltDeg; // rows curve too
+        const z = g.radius * (1 - Math.cos(theta)) * 100; // vw (positive = nearer)
+        const rotY = -col * g.stepDeg; // face inward toward the viewer
+        const rotX = (row === 1 ? -1 : 1) * g.rowTiltDeg; // rows curve around
         const dim = 1 - Math.min(2, Math.abs(col)) * 0.12; // far cards darker
         const style = {
           width: `${t.card.w * 100}vw`,
