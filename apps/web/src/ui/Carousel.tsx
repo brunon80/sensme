@@ -10,6 +10,8 @@ interface Props {
   selected: number;
   /** Entries with zero tracks are dimmed and unselectable (R-2 hint). */
   counts: Record<CarouselEntry, number>;
+  /** Screen-transition phase (UI_SPEC §1). */
+  phase?: "enter" | "exit";
 }
 
 const tileCache = new Map<string, string>();
@@ -24,8 +26,11 @@ function tileImage(entry: CarouselEntry): string {
   return url;
 }
 
-export function Carousel({ selected, counts }: Props) {
+export function Carousel({ selected, counts, phase }: Props) {
   const n = CAROUSEL_ORDER.length;
+  // Keep every tile mounted so stepping is one continuous morph: a tile
+  // glides to the side and shrinks while its neighbor grows into center.
+  // Size is driven by transform: scale() (transitionable), not width/height.
   const items = useMemo(
     () =>
       CAROUSEL_ORDER.map((entry, i) => {
@@ -33,7 +38,7 @@ export function Carousel({ selected, counts }: Props) {
         if (d > n / 2) d -= n;
         if (d < -n / 2) d += n;
         return { entry, d };
-      }).filter(({ d }) => Math.abs(d) <= 4),
+      }),
     [selected, n],
   );
 
@@ -41,21 +46,23 @@ export function Carousel({ selected, counts }: Props) {
   const selH = tokens.layout.carousel.selected.h;
 
   return (
-    <div className="carousel">
+    <div className={`carousel ${phase ?? ""}`}>
       {items.map(({ entry, d }) => {
-        const scale = d === 0 ? 1 : Math.pow(tokens.layout.carousel.scaleStep, Math.abs(d));
-        const dim = Math.max(0.25, 1 - tokens.layout.carousel.dimStep * Math.abs(d));
+        const ad = Math.abs(d);
+        const scale = Math.pow(tokens.layout.carousel.scaleStep, ad);
+        const dim = Math.max(0, 1 - tokens.layout.carousel.dimStep * ad);
         const empty = counts[entry] === 0;
-        const wPct = selW * scale * 100;
-        const hPct = selH * scale * 100;
+        // Tiles beyond the visible ring stay mounted but invisible, so they
+        // glide in (opacity + transform transition) instead of popping.
+        const visible = ad <= 4;
         const xVw = d * selW * 0.72 * 100;
         const tilt = d === 0 ? 0 : d > 0 ? -tokens.layout.carousel.tiltDeg : tokens.layout.carousel.tiltDeg;
         const style = {
-          width: `${wPct}vw`,
-          height: `${hPct}vh`,
-          transform: `translateX(calc(-50% + ${xVw}vw)) perspective(1200px) rotateY(${tilt}deg)`,
-          opacity: (empty ? 0.35 : 1) * dim,
-          zIndex: 10 - Math.abs(d),
+          width: `${selW * 100}vw`,
+          height: `${selH * 100}vh`,
+          transform: `translateX(calc(-50% + ${xVw}vw)) perspective(1200px) rotateY(${tilt}deg) scale(${scale})`,
+          opacity: visible ? (empty ? 0.35 : 1) * dim : 0,
+          zIndex: 10 - ad,
           borderRadius: `${tokens.layout.carousel.tileRadius * 100}vmin`,
         };
         return (

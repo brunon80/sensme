@@ -1,5 +1,6 @@
 // App state machine + PSP input mapping (docs/UI_REFERENCES/interaction-model.md).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { tokens } from "../../../contracts/design-tokens/tokens";
 import { engine } from "./engine/engine";
 import { allRecords, getAudioBytes, updateRecord } from "./engine/library";
 import { importFiles, pickAudioFiles, type ImportProgress } from "./engine/importer";
@@ -33,6 +34,8 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [clock, setClock] = useState("");
   const [playing, setPlaying] = useState(false);
+  const [prevScreen, setPrevScreen] = useState<Screen>("boot");
+  const [transitioning, setTransitioning] = useState(false);
   const menuOpenRef = useRef(menuOpen);
   menuOpenRef.current = menuOpen;
   const queuePosRef = useRef(0);
@@ -87,6 +90,17 @@ export default function App() {
     return q;
   }
 
+  // Screen navigation with the PSP enter/exit transition (UI_SPEC §1).
+  const goScreen = useCallback((to: Screen) => {
+    setScreen((cur) => {
+      if (cur === to) return cur;
+      setPrevScreen(cur);
+      setTransitioning(true);
+      window.setTimeout(() => setTransitioning(false), tokens.motion.enterNowPlayingMs);
+      return to;
+    });
+  }, []);
+
   const current = queue[queuePos] ?? null;
 
   const playAt = useCallback(async (pos: number, q: LibraryRecord[]) => {
@@ -121,9 +135,9 @@ export default function App() {
     const q = rebuildQueue(idx, selection + 1, records);
     setEntryIndex(idx);
     setSelection((s) => s + 1);
-    setScreen("nowplaying");
+    goScreen("nowplaying");
     if (q.length > 0) void playAt(0, q);
-  }, [records, selection, playAt]);
+  }, [records, selection, playAt, goScreen]);
 
   // ---- PSP button map (interaction-model.md) ----
   useEffect(() => {
@@ -150,10 +164,10 @@ export default function App() {
         case "Enter":
           if (screen === "carousel") {
             if (entryTracks(entry, records).length > 0) enterChannel(entryIndex);
-          } else setScreen("carousel");
+          } else goScreen("carousel");
           break;
         case "Escape":
-          if (screen === "carousel") setScreen("nowplaying");
+          if (screen === "carousel") goScreen("nowplaying");
           break;
         case " ":
           e.preventDefault();
@@ -200,6 +214,10 @@ export default function App() {
   }
 
   const hues = useMemo(() => entryHues(entry), [entry]);
+  const showCarousel = screen === "carousel" || (transitioning && prevScreen === "carousel");
+  const showNow = screen === "nowplaying" || screen === "boot" || (transitioning && prevScreen === "nowplaying");
+  const carPhase = screen === "carousel" ? "enter" : "exit";
+  const npPhase = screen === "nowplaying" || screen === "boot" ? "enter" : "exit";
   const counts = useMemo(() => {
     const c = {} as Record<string, number>;
     for (const e of CAROUSEL_ORDER) c[e] = entryTracks(e, records).length;
@@ -220,10 +238,8 @@ export default function App() {
     <div className="app">
       <Scene sceneKey={entry} hues={hues} />
 
-      {screen === "carousel" && <Carousel selected={entryIndex} counts={counts} />}
-      {(screen === "nowplaying" || screen === "boot") && (
-        <NowPlaying record={current} entry={entry} playing={playing} />
-      )}
+      {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
+      {showNow && <NowPlaying record={current} entry={entry} playing={playing} phase={npPhase} />}
 
       {screen === "empty" && (
         <div className="empty-card">

@@ -9,9 +9,11 @@ interface Props {
   record: LibraryRecord | null;
   entry: CarouselEntry;
   playing: boolean;
+  /** Screen-transition phase (UI_SPEC §1). */
+  phase?: "enter" | "exit";
 }
 
-export function NowPlaying({ record, entry, playing }: Props) {
+export function NowPlaying({ record, entry, playing, phase }: Props) {
   const [artUrl, setArtUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!record?.artwork) {
@@ -30,7 +32,7 @@ export function NowPlaying({ record, entry, playing }: Props) {
   const second = [record?.artist, record?.album].filter(Boolean).join(" / ");
 
   return (
-    <div className="nowplaying">
+    <div className={`nowplaying ${phase ?? ""}`}>
       <div
         className="artwork"
         style={{

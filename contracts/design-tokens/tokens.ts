@@ -107,14 +107,15 @@ export const tokens = {
   },
   "layout": {
     "waterlineY": 0.55,
+    "edgePad": 0.045,
     "art": {
       "size": 0.59,
-      "centerX": 0.28,
+      "centerX": 0.34,
       "bottom": 0.86
     },
     "title": {
       "baselineY": 0.77,
-      "rightMargin": 0.025
+      "rightMargin": 0.05
     },
     "artistAlbum": {
       "baselineY": 0.85
@@ -123,11 +124,11 @@ export const tokens = {
       "baselineY": 0.92
     },
     "caption": {
-      "baselineY": 0.955
+      "baselineY": 0.93
     },
     "clock": {
-      "topMargin": 0.03,
-      "rightMargin": 0.03
+      "topMargin": 0.05,
+      "rightMargin": 0.05
     },
     "carousel": {
       "baseline": 0.62,

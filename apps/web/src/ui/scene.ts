@@ -108,3 +108,20 @@ export function drawScene(
   ctx.fillStyle = "rgba(255,255,255,0.10)";
   ctx.fillRect(0, waterY - 1, w, 2);
 }
+
+/** Blend two same-size backdrops into `out` at mix `p` (0 = a, 1 = b).
+ * Used for the channel-switch crossfade (UI_SPEC §1). */
+export function crossfade(
+  out: HTMLCanvasElement,
+  a: HTMLCanvasElement,
+  b: HTMLCanvasElement,
+  p: number,
+): void {
+  const ctx = out.getContext("2d")!;
+  ctx.clearRect(0, 0, out.width, out.height);
+  ctx.globalAlpha = 1;
+  ctx.drawImage(a, 0, 0);
+  ctx.globalAlpha = Math.max(0, Math.min(1, p));
+  ctx.drawImage(b, 0, 0);
+  ctx.globalAlpha = 1;
+}
