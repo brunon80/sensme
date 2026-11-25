@@ -20,7 +20,7 @@ jobs:
       - run: cargo test --workspace
 
   aarch64:
-    name: aarch64 (determinism gate: golden vectors ±1e-4)
+    name: "aarch64 (determinism gate: golden vectors ±1e-4)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
