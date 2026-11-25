@@ -213,7 +213,8 @@ export const tokens = {
     }
   },
   "motion": {
-    "carouselStepMs": 260,
+    "carouselStepMs": 420,
+    "tileInMs": 300,
     "npStepMs": 460,
     "enterNowPlayingMs": 380,
     "channelSwitchMs": 320,

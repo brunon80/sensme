@@ -65,7 +65,8 @@ export function Carousel({ selected, counts, phase }: Props) {
           </div>
         );
       })}
-      <div className="carousel-name" style={{ bottom: `${nameBottom}vh`, top: "auto" }}>
+      {/* keyed by selection so the name crossfades on every change */}
+      <div className="carousel-name" key={CAROUSEL_ORDER[selected]} style={{ bottom: `${nameBottom}vh`, top: "auto" }}>
         {entryName(CAROUSEL_ORDER[selected]!)}
         <span className="carousel-name-reflect" aria-hidden="true">
           {entryName(CAROUSEL_ORDER[selected]!)}

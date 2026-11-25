@@ -110,7 +110,8 @@
   --sensme-type-small-sizeH: 0.037;
   --sensme-type-small-weight: 400;
   --sensme-type-small-px480: 10;
-  --sensme-motion-carouselStepMs: 260;
+  --sensme-motion-carouselStepMs: 420;
+  --sensme-motion-tileInMs: 300;
   --sensme-motion-npStepMs: 460;
   --sensme-motion-enterNowPlayingMs: 380;
   --sensme-motion-channelSwitchMs: 320;

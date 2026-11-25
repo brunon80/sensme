@@ -54,7 +54,9 @@ Layout (rest state):
 
 Interaction (R-2):
 - ←/→ move one column (±2 entries); ↑/↓ move within the column. Grid
-  scroll animates `motion.carouselStep` 260 ms.
+  scroll animates `motion.carouselStep` 420 ms
+  (`cubic-bezier 0.25,0.1,0.25,1`); tiles scrolled into view fade in
+  (`motion.tileInMs` 300 ms) and the channel name crossfades.
 - ◯/Enter confirms → now-playing (`motion.enterNowPlaying` 380 ms).
 - ✕/Esc returns to now-playing.
 - Channel switch crossfades the backdrop photo (`motion.channelSwitch`
