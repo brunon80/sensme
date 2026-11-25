@@ -114,11 +114,11 @@ export const tokens = {
       "bottom": 0.86
     },
     "title": {
-      "baselineY": 0.77,
+      "baselineY": 0.74,
       "rightMargin": 0.05
     },
     "artistAlbum": {
-      "baselineY": 0.85
+      "baselineY": 0.81
     },
     "copyright": {
       "baselineY": 0.92
@@ -131,49 +131,55 @@ export const tokens = {
       "rightMargin": 0.05
     },
     "np": {
-      "size": 0.5,
+      "size": 0.62,
       "bottom": 0.82,
       "slots": [
         {
-          "centerX": 0.3,
+          "centerX": 0.23,
           "scale": 1,
           "opacity": 1
         },
         {
-          "centerX": 0.55,
-          "scale": 0.62,
-          "opacity": 0.85
+          "centerX": 0.52,
+          "scale": 0.36,
+          "opacity": 0.9
         },
         {
-          "centerX": 0.71,
-          "scale": 0.42,
-          "opacity": 0.5
+          "centerX": 0.65,
+          "scale": 0.33,
+          "opacity": 0.75
+        },
+        {
+          "centerX": 0.77,
+          "scale": 0.3,
+          "opacity": 0.6
+        },
+        {
+          "centerX": 0.89,
+          "scale": 0.27,
+          "opacity": 0.45
+        },
+        {
+          "centerX": 1,
+          "scale": 0.25,
+          "opacity": 0.3
         }
       ],
       "prev": {
-        "centerX": 0.08,
-        "scale": 0.62,
-        "opacity": 0
-      },
-      "next2": {
-        "centerX": 0.8,
-        "scale": 0.3,
+        "centerX": 0,
+        "scale": 0.36,
         "opacity": 0
       }
     },
     "carousel": {
       "baseline": 0.6,
-      "selected": {
-        "w": 0.3,
-        "h": 0.21
+      "card": {
+        "w": 0.19,
+        "h": 0.28
       },
-      "neighbor": {
-        "w": 0.24,
-        "h": 0.17
-      },
-      "scaleStep": 0.86,
-      "dimStep": 0.16,
-      "tiltDeg": 12,
+      "colGap": 0.015,
+      "rowGap": 0.015,
+      "selectedScale": 1.12,
       "nameY": 0.66,
       "tileRadius": 0.012
     },

@@ -1,10 +1,11 @@
-// Channel carousel (UI_SPEC §1): horizontal row of photographic-style
-// tiles centered on the waterline, selected tile centered + enlarged,
-// neighbors receding with scale/dim steps; reflections below the water.
-import { useMemo } from "react";
+// Channel selection (UI_SPEC §1; PSP references IMG_7506/7510): a static
+// two-row grid of near-square photo cards — not a carousel. Column c holds
+// entries 2c (bottom row) and 2c+1 (top row); ←/→ move between columns and
+// ↑/↓ move within a column. The selected card scales up slightly with a
+// light glow; the grid scrolls horizontally to keep it centered.
 import { tokens } from "../../../../contracts/design-tokens/tokens";
-import { renderBackdrop } from "./scene";
-import { CAROUSEL_ORDER, entryHues, entryName, type CarouselEntry } from "./channels";
+import { photoUrlFor } from "./scene";
+import { CAROUSEL_ORDER, entryName, type CarouselEntry } from "./channels";
 
 interface Props {
   selected: number;
@@ -14,65 +15,57 @@ interface Props {
   phase?: "enter" | "exit";
 }
 
-const tileCache = new Map<string, string>();
-function tileImage(entry: CarouselEntry): string {
-  const key = entry;
-  let url = tileCache.get(key);
-  if (!url) {
-    const cv = renderBackdrop(`tile:${key}`, entryHues(entry), 320, 224);
-    url = cv.toDataURL("image/png");
-    tileCache.set(key, url);
-  }
-  return url;
+const COLS = Math.ceil(CAROUSEL_ORDER.length / 2);
+
+interface Card {
+  entry: CarouselEntry;
+  col: number; // column offset from the selected column
+  row: 0 | 1; // 0 = bottom, 1 = top
+  sel: boolean;
 }
 
 export function Carousel({ selected, counts, phase }: Props) {
-  const n = CAROUSEL_ORDER.length;
-  // Keep every tile mounted so stepping is one continuous morph: a tile
-  // glides to the side and shrinks while its neighbor grows into center.
-  // Size is driven by transform: scale() (transitionable), not width/height.
-  const items = useMemo(
-    () =>
-      CAROUSEL_ORDER.map((entry, i) => {
-        let d = i - selected;
-        if (d > n / 2) d -= n;
-        if (d < -n / 2) d += n;
-        return { entry, d };
-      }),
-    [selected, n],
-  );
+  const selCol = Math.floor(selected / 2);
 
-  const selW = tokens.layout.carousel.selected.w;
-  const selH = tokens.layout.carousel.selected.h;
+  const cards: Card[] = [];
+  for (let c = selCol - 2; c <= selCol + 2; c++) {
+    if (c < 0 || c >= COLS) continue;
+    for (const r of [0, 1] as const) {
+      const idx = 2 * c + r;
+      if (idx >= CAROUSEL_ORDER.length) continue;
+      cards.push({ entry: CAROUSEL_ORDER[idx]!, col: c - selCol, row: r, sel: idx === selected });
+    }
+  }
+
+  const t = tokens.layout.carousel;
+  const colStep = (t.card.w + t.colGap) * 100; // vw between column centers
+  const bottomVh = (1 - t.baseline) * 100;
+  const topVh = bottomVh + t.card.h * 100 + t.rowGap * 100;
+  const nameBottom = bottomVh - 3.5; // always under the bottom row (PSP)
 
   return (
     <div className={`carousel ${phase ?? ""}`}>
-      {items.map(({ entry, d }) => {
-        const ad = Math.abs(d);
-        const scale = Math.pow(tokens.layout.carousel.scaleStep, ad);
-        const dim = Math.max(0, 1 - tokens.layout.carousel.dimStep * ad);
+      {cards.map(({ entry, col, row, sel }) => {
         const empty = counts[entry] === 0;
-        // Tiles beyond the visible ring stay mounted but invisible, so they
-        // glide in (opacity + transform transition) instead of popping.
-        const visible = ad <= 4;
-        const xVw = d * selW * 0.66 * 100;
-        const tilt = d === 0 ? 0 : d > 0 ? -tokens.layout.carousel.tiltDeg : tokens.layout.carousel.tiltDeg;
         const style = {
-          width: `${selW * 100}vw`,
-          height: `${selH * 100}vh`,
-          transform: `translateX(calc(-50% + ${xVw}vw)) perspective(1200px) rotateY(${tilt}deg) scale(${scale})`,
-          opacity: visible ? (empty ? 0.35 : 1) * dim : 0,
-          zIndex: 10 - ad,
-          borderRadius: `${tokens.layout.carousel.tileRadius * 100}vmin`,
+          width: `${t.card.w * 100}vw`,
+          height: `${t.card.h * 100}vh`,
+          bottom: `${row === 0 ? bottomVh : topVh}vh`,
+          transform: `translateX(calc(-50% + ${col * colStep}vw)) scale(${sel ? t.selectedScale : 1})`,
+          opacity: empty ? 0.8 : 1,
+          zIndex: sel ? 30 : 20,
+          borderRadius: `${t.tileRadius * 100}vmin`,
         };
         return (
-          <div key={entry} className={`tile ${d === 0 ? "tile-sel" : ""}`} style={style}>
-            <img src={tileImage(entry)} alt="" draggable={false} />
-            <div className="tile-reflect" style={{ backgroundImage: `url(${tileImage(entry)})` }} />
+          <div key={entry} className={`tile ${sel ? "tile-sel" : ""}`} style={style}>
+            <img src={photoUrlFor(entry)} alt="" draggable={false} />
+            {row === 0 && (
+              <div className="tile-reflect" style={{ backgroundImage: `url(${photoUrlFor(entry)})` }} />
+            )}
           </div>
         );
       })}
-      <div className="carousel-name">
+      <div className="carousel-name" style={{ bottom: `${nameBottom}vh`, top: "auto" }}>
         {entryName(CAROUSEL_ORDER[selected]!)}
         <span className="carousel-name-reflect" aria-hidden="true">
           {entryName(CAROUSEL_ORDER[selected]!)}

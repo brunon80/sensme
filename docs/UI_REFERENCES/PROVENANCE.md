@@ -41,3 +41,10 @@ reimplementations derived from the specs in `docs/UI_SPEC.md`.
 | XMB context (out of scope) | R-4, R-6 ×1 |
 | Help screen | not captured — documented deviation in UI_SPEC §5 |
 | Empty-channel state | not captured — behavior spec from R-2 only |
+
+## Test backdrop photos (not Sony assets)
+
+- `backgrounds/day.jpg` + `backgrounds/relax.jpg` (copies at `apps/web/public/bg/`) —
+  user-provided landscape photo (mountain lake), added 2026-11-25 explicitly
+  for testing the scene backdrop + water reflection. Not shipped product
+  art; replace with clean-room/per-channel art before distribution.

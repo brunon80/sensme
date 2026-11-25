@@ -3,7 +3,7 @@
 // (UI_SPEC §1: "channel switch crossfades backdrop").
 import { useEffect, useRef } from "react";
 import { tokens } from "../../../../contracts/design-tokens/tokens";
-import { crossfade, drawScene, renderBackdrop } from "./scene";
+import { crossfade, DEFAULT_PHOTO, drawScene, loadPhoto, PHOTO_MAP, photoUrlFor, renderBackdrop, renderBackdropPhoto } from "./scene";
 
 interface Props {
   /** Backdrop identity key (channel id); changing it crossfades the scene. */
@@ -19,14 +19,37 @@ export function Scene({ sceneKey, hues }: Props) {
   const mixRef = useRef<HTMLCanvasElement | null>(null);
   const fadeStartRef = useRef<number>(-1);
   const dimsRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+  const photosRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const keyRef = useRef({ sceneKey, hues });
   keyRef.current = { sceneKey, hues };
 
   const make = () => {
     const { w, h } = dimsRef.current;
     if (w === 0 || h === 0) return;
-    curRef.current = renderBackdrop(keyRef.current.sceneKey, keyRef.current.hues, w, h);
+    const photo = photosRef.current.get(photoUrlFor(keyRef.current.sceneKey));
+    curRef.current = photo
+      ? renderBackdropPhoto(photo, w, h)
+      : renderBackdrop(keyRef.current.sceneKey, keyRef.current.hues, w, h);
   };
+
+  // Load all test photos once; when ready, rebuild the current backdrop.
+  useEffect(() => {
+    let alive = true;
+    const urls = [...new Set(Object.values(PHOTO_MAP).concat(DEFAULT_PHOTO))];
+    void Promise.allSettled(urls.map((u) => loadPhoto(u))).then((res) => {
+      if (!alive) return;
+      urls.forEach((u, i) => {
+        const r = res[i]!;
+        if (r.status === "fulfilled") photosRef.current.set(u, r.value);
+      });
+      const { w, h } = dimsRef.current;
+      if (w && h) make();
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // One stable rAF loop + resize handling.
   useEffect(() => {

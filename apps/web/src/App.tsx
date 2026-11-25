@@ -149,12 +149,19 @@ export default function App() {
       }
       switch (e.key) {
         case "ArrowLeft":
-          if (screen === "carousel") setEntryIndex((i) => (i + CAROUSEL_ORDER.length - 1) % CAROUSEL_ORDER.length);
+          if (screen === "carousel") setEntryIndex((i) => Math.max(0, i - 2)); // one column left
           else if (screen === "nowplaying") void prev();
           break;
         case "ArrowRight":
-          if (screen === "carousel") setEntryIndex((i) => (i + 1) % CAROUSEL_ORDER.length);
+          if (screen === "carousel") setEntryIndex((i) => Math.min(CAROUSEL_ORDER.length - 1, i + 2));
           else if (screen === "nowplaying") void next();
+          break;
+        case "ArrowUp":
+          if (screen === "carousel")
+            setEntryIndex((i) => (i % 2 === 0 && i + 1 < CAROUSEL_ORDER.length ? i + 1 : i));
+          break;
+        case "ArrowDown":
+          if (screen === "carousel") setEntryIndex((i) => (i % 2 === 1 ? i - 1 : i));
           break;
         case ",":
           void prev();

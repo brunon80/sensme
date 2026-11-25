@@ -30,33 +30,34 @@ The whole app is one continuous scene:
 
 Tokens: `tokens.json` (canonical), `tokens.css`, `tokens.ts`.
 
-## 1. Channel carousel (SELECT)
+## 1. Channel selection grid (SELECT)
 
-Reference: R-1 `sensme_cp1.jpg`, R-6 photos 7501/7503–7507.
+Reference: R-1 `sensme_cp1.jpg`, R-6 photos 7501/7503–7507, IMG_7506,
+IMG_7510, demo_ref_video (52–58 s).
 
 Layout (rest state):
-- Single horizontal row of tiles, vertically centered on the waterline
-  (tile bottom at `carousel.baseline` = 62% H).
-- Selected tile centered horizontally: `w 0.26, h 0.42` of viewport,
-  white border 2px + soft outer glow.
-- Neighbors: `w 0.18, h 0.30`, receding right (and left) with
-  perspective tilt (~18°) and progressive scale-down (×0.85 per step)
-  and dim (−18% per step).
-- Tile content: channel backdrop thumbnail; rounded corners `r 0.02`.
-- Reflections of all tiles below the waterline.
-- Channel name: centered under selected tile, `type.title` (16/272 H),
-  white, at y 0.68.
-- Captions bottom-center: `✕ Back` left of `◯ Select` (or `✕ Next`
-  when entered from now-playing), `type.caption`.
+- Static two-row grid of near-square cards — NOT a carousel. Column c
+  holds entries 2c (bottom row) and 2c+1 (top row); the grid scrolls
+  horizontally to keep the selected column centered.
+- Card size `carousel.card` (w 0.19 vw, h 0.28 vh), gap 0.015; bottom
+  row bottom edge at `carousel.baseline` 0.60 H.
+- Card content: the channel's backdrop photo (per-channel mapping,
+  fallback default), cover-cropped; rounded corners `r 0.012`; every
+  card has a light border (2px white 0.7) + soft glow.
+- Selected card: scale `carousel.selectedScale` 1.12 + stronger white
+  glow. Bottom-row cards reflect on the floor.
+- Channel name: centered under the bottom row, `type.title`, white with
+  shadow + floor reflection.
+- Captions bottom-center: `✕ Back  ◯ Select`, `type.caption`.
 
 Interaction (R-2):
-- ←/→ step tiles; each step animates `motion.carouselStep` 260 ms
-  ease-in-out.
-- ◯/Enter confirms → transition to now-playing (`motion.enterNowPlaying`
-  380 ms: tiles slide right + fade, artwork grows from selected tile).
+- ←/→ move one column (±2 entries); ↑/↓ move within the column. Grid
+  scroll animates `motion.carouselStep` 260 ms.
+- ◯/Enter confirms → now-playing (`motion.enterNowPlaying` 380 ms).
 - ✕/Esc returns to now-playing.
-- Channel switch while playing crossfades backdrop + dot hue.
-- Empty channels are dimmed and cannot be selected (R-2 hint).
+- Channel switch crossfades the backdrop photo (`motion.channelSwitch`
+  320 ms) — e.g. day ↔ relax test photos.
+- Empty channels are slightly dimmed and cannot be selected (R-2 hint).
 
 Fidelity checklist: [ ] layout [ ] color [ ] typography [ ] icons
 [ ] animation timing [ ] behavior — to be scored in 4d.
@@ -66,19 +67,24 @@ Fidelity checklist: [ ] layout [ ] color [ ] typography [ ] icons
 Reference: R-1 `sensme_cp2.jpg`, R-6 photos 7509–7519.
 
 Layout:
-- Album artwork: square, `art.size` 0.59 H, center x `0.28`, bottom
-  edge at `art.bottom` 0.86 H (stands on the water; reflection below).
-  Missing artwork → channel placeholder card (e.g. Favourites heart).
-- Track title: right-aligned block, baseline y 0.77, `type.title`,
+- Track carousel (R-6 7508/7509, demo_ref_video 32–46 s): current track
+  card `np.size` 0.62 H at center x 0.23, bottom edge `np.bottom` 0.82 H
+  (stands on the floor; reflection below). Missing artwork → channel
+  placeholder card (e.g. Favourites heart).
+- Next tracks: up to 5 smaller cards (`np.slots` 1–5: scale 0.36→0.25,
+  opacity 0.9→0.3), bottom-aligned, receding to the right edge; the
+  previous card glides out left. Non-cyclic: clamped at both ends — a
+  one-track channel shows a single card; next at the end stops.
+- Track title: right-aligned block, baseline y 0.74, `type.title`,
   white; thin rule under it (R-6 7511).
-- `Artist / Album` line below: y 0.85, `type.body`, white 72%.
+- `Artist / Album` line below: y 0.81, `type.body`, white 72%; title
+  block mirrored on the floor (reflection).
 - Copyright line (when tagged): y 0.92, `type.small`, white 45%.
-- Backdrop: current channel's image; dot-grid channels (Dance) show
-  the colored dot field with water reflection.
-- Captions bottom-left: `△ Options`; while playing also
-  `SELECT Change Channels · START Pause · ♥ Add to Favourites`
-  (R-6 7509), `type.caption`, centered bottom.
-- Clock + battery top-right (margin 0.03), `type.title`.
+- Backdrop: current channel's photo (per-channel mapping), crossfaded
+  on channel switch; rippling floor reflection below the waterline.
+- Captions bottom-center: `SELECT Change Channels · START Play/Pause ·
+  L ◀ Prev · R Next ▶ · ♥ Favourites` (R-6 7509), `type.caption`.
+- Clock + battery top-right (margin 0.05), `type.title`.
 
 Interaction (R-2):
 - START/Space toggles play/pause; L/R or `,`/`.` prev/next with

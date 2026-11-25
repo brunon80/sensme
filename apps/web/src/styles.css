@@ -37,7 +37,8 @@
   height: 100%;
   object-fit: cover;
   border-radius: inherit;
-  border: 2px solid var(--sensme-color-tileBorderDim);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.35);
 }
 .tile-sel img {
   border: 2px solid var(--sensme-color-tileBorder);
@@ -60,12 +61,13 @@
   position: absolute;
   left: 0;
   right: 0;
+  z-index: 40;
   text-align: center;
-  top: var(--sensme-layout-carousel-nameY);
+  top: calc(var(--sensme-layout-carousel-nameY) * 100vh);
   font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
   font-weight: var(--sensme-type-title-weight);
   color: #fff;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 14px rgba(0, 0, 0, 0.6);
 }
 .carousel-name-reflect {
   position: absolute;
@@ -126,6 +128,18 @@
   top: calc(var(--sensme-layout-title-baselineY) * 100vh - calc(var(--sensme-type-title-sizeH) * 100vh));
   max-width: 44vw;
   text-align: right;
+  z-index: 20;
+}
+/* Title/artist mirrored on the glossy floor (PSP reflection). */
+.np-text-reflect {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  transform: scaleY(-1);
+  opacity: 0.14;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 75%);
+  pointer-events: none;
 }
 .np-title {
   font-size: calc(var(--sensme-type-title-sizeH) * 100vh);

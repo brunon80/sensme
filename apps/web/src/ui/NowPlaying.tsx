@@ -24,10 +24,7 @@ interface Slot {
 
 function slotFor(k: number): Slot | null {
   const np = tokens.layout.np;
-  if (k === 0) return np.slots[0]!;
-  if (k === 1) return np.slots[1]!;
-  if (k === 2) return np.slots[2]!;
-  if (k === 3) return np.next2!; // glides in
+  if (k >= 0 && k < np.slots.length) return np.slots[k]!;
   if (k === -1) return np.prev!; // glides out
   return null;
 }
@@ -41,7 +38,7 @@ export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
   const second = [current?.artist, current?.album].filter(Boolean).join(" / ");
 
   const np = tokens.layout.np;
-  const offsets = [-1, 0, 1, 2, 3];
+  const offsets = [-1, 0, 1, 2, 3, 4, 5];
 
   return (
     <div className={`nowplaying ${phase ?? ""}`}>
@@ -69,6 +66,10 @@ export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
         <div className="np-title">{title}</div>
         <div className="np-rule" />
         {second && <div className="np-second">{second}</div>}
+        <div className="np-text-reflect" aria-hidden="true">
+          {title}
+          {second && <><br />{second}</>}
+        </div>
       </div>
 
       <div className="dotgrid">
@@ -87,7 +88,8 @@ export function NowPlaying({ queue, pos, entry, playing, phase }: Props) {
   );
 }
 
-/** One track card in the now-playing carousel (artwork + reflection). */
+/** One track card in the now-playing carousel (artwork + reflection).
+ * Bottom-aligned on the floor line (PSP: cards stand on the glossy floor). */
 function TrackCard({
   record,
   entry,

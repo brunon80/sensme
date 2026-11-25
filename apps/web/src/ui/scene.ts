@@ -26,12 +26,60 @@ function hashStr(s: string): number {
 
 export type Hues = readonly string[];
 
+/** Per-channel backdrop photos (user-provided test art in `public/bg/`).
+ * Channels without a mapping fall back to the default photo. */
+export const PHOTO_MAP: Record<string, string> = { relax: "/bg/relax.jpg" };
+export const DEFAULT_PHOTO = "/bg/day.jpg";
+export const photoUrlFor = (key: string) => PHOTO_MAP[key] ?? DEFAULT_PHOTO;
+
+/** Photo backdrops (user-provided test art in `public/bg/`): loaded once,
+ * cover-cropped above the waterline; the water below mirrors them. */
+const photoCache = new Map<string, Promise<HTMLImageElement>>();
+export function loadPhoto(url: string): Promise<HTMLImageElement> {
+  let p = photoCache.get(url);
+  if (!p) {
+    p = new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error(`bg load failed: ${url}`));
+      img.src = url;
+    });
+    photoCache.set(url, p);
+  }
+  return p;
+}
+
+/** Render a photo backdrop: cover-crop into the region above the waterline
+ * so the photo's own shoreline meets the mirrored water. */
+export function renderBackdropPhoto(img: HTMLImageElement, w: number, h: number): HTMLCanvasElement {
+  const cv = document.createElement("canvas");
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext("2d")!;
+  const waterY = Math.round(h * tokens.layout.waterlineY);
+  const iw = img.naturalWidth;
+  const ih = img.naturalHeight;
+  const scale = Math.max(w / iw, waterY / ih);
+  const sw = w / scale;
+  const sh = waterY / scale;
+  // Bias the crop toward the photo's lower half (water/shore at the bottom).
+  const sx = (iw - sw) / 2;
+  const sy = ih - sh;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, waterY);
+  return cv;
+}
+
 function hexRGB(hex: string): [number, number, number] {
   return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
 }
 function mixWhite(hex: string, t: number): string {
   const [r, g, b] = hexRGB(hex);
   const m = (c: number) => Math.round(c + (255 - c) * t);
+  return `rgb(${m(r)},${m(g)},${m(b)})`;
+}
+function mixBlack(hex: string, t: number): string {
+  const [r, g, b] = hexRGB(hex);
+  const m = (c: number) => Math.round(c * (1 - t));
   return `rgb(${m(r)},${m(g)},${m(b)})`;
 }
 function hexA(hex: string, a: number): string {
@@ -41,21 +89,35 @@ function hexA(hex: string, a: number): string {
 
 /** Render the static backdrop for a channel: a bright, luminous scene
  * (channel-tinted sky gradient + glowing bokeh), reflected on a glossy
- * floor below the waterline (UI_SPEC §0; PSP references IMG_75xx). */
-export function renderBackdrop(key: string, hues: Hues, w: number, h: number): HTMLCanvasElement {
+ * floor below the waterline (UI_SPEC §0; PSP references IMG_75xx).
+ * `vivid` boosts saturation/contrast for small card thumbnails. */
+export function renderBackdrop(
+  key: string,
+  hues: Hues,
+  w: number,
+  h: number,
+  vivid = false,
+): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = w;
   cv.height = h;
   const ctx = cv.getContext("2d")!;
   const rnd = mulberry32(hashStr(key));
-  const waterY = Math.round(h * tokens.layout.waterlineY);
+  const waterY = Math.round(h * (vivid ? 1 : tokens.layout.waterlineY));
   const base = hues[0] ?? "#6f86a8";
 
-  // Bright sky gradient: near-white tint at top, channel colour lower.
+  // Sky gradient: near-white tint at top, channel colour lower. Vivid cards
+  // stay saturated (less white wash).
   const grad = ctx.createLinearGradient(0, 0, 0, waterY);
-  grad.addColorStop(0, mixWhite(base, 0.82));
-  grad.addColorStop(0.6, mixWhite(base, 0.5));
-  grad.addColorStop(1, mixWhite(base, 0.28));
+  if (vivid) {
+    grad.addColorStop(0, mixWhite(base, 0.2));
+    grad.addColorStop(0.55, base);
+    grad.addColorStop(1, mixBlack(base, 0.35));
+  } else {
+    grad.addColorStop(0, mixWhite(base, 0.82));
+    grad.addColorStop(0.6, mixWhite(base, 0.5));
+    grad.addColorStop(1, mixWhite(base, 0.28));
+  }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
@@ -63,22 +125,22 @@ export function renderBackdrop(key: string, hues: Hues, w: number, h: number): H
   const gx = w * (0.3 + rnd() * 0.4);
   const gy = waterY * (0.25 + rnd() * 0.3);
   const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(w, h) * 0.5);
-  glow.addColorStop(0, "rgba(255,255,255,0.55)");
+  glow.addColorStop(0, `rgba(255,255,255,${vivid ? 0.3 : 0.55})`);
   glow.addColorStop(0.5, "rgba(255,255,255,0.12)");
   glow.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, w, waterY);
 
   // Glowing bokeh field (channel-hued, bright, varied sizes).
-  const count = 110;
+  const count = vivid ? 70 : 110;
   for (let i = 0; i < count; i++) {
     const x = rnd() * w;
     const y = rnd() * (waterY - 8);
-    const r = 2 + rnd() * rnd() * 22;
+    const r = (2 + rnd() * rnd() * 22) * (vivid ? 1.6 : 1);
     const hue = hues[Math.floor(rnd() * hues.length)] ?? "#ffffff";
-    const alpha = 0.12 + rnd() * 0.4;
+    const alpha = (vivid ? 0.35 : 0.12) + rnd() * (vivid ? 0.45 : 0.4);
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, mixWhite(hue, 0.5));
+    g.addColorStop(0, vivid ? mixWhite(hue, 0.25) : mixWhite(hue, 0.5));
     g.addColorStop(0.4, hexA(hue, alpha));
     g.addColorStop(1, hexA(hue, 0));
     ctx.fillStyle = g;
