@@ -51,15 +51,59 @@ pub enum AudioError {
 /// Decode errors on individual packets are skipped (corrupt frames should not
 /// fail the whole analysis); a file with no decodable audio errors.
 pub fn load_mono(path: &str, target_rate: usize) -> Result<Audio, AudioError> {
-    let (rate, interleaved, channels) = decode_interleaved_f32(path)?;
+    let file = File::open(path).map_err(|source| AudioError::Io {
+        path: path.to_string(),
+        source,
+    })?;
+    let mut hint = symphonia::core::formats::probe::Hint::new();
+    if let Some(ext) = std::path::Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+    {
+        hint.with_extension(ext);
+    }
+    decode_reader(path, file, &hint, target_rate)
+}
+
+/// Decode in-memory audio bytes (filename `label` used only for the format
+/// hint and error messages) to mono f32 at `target_rate` Hz. This is the
+/// entry point for shells without a filesystem (web/wasm, ADR-016).
+///
+/// # Errors
+/// Same as [`load_mono`].
+pub fn load_mono_bytes(
+    label: &str,
+    bytes: &[u8],
+    target_rate: usize,
+) -> Result<Audio, AudioError> {
+    let mut hint = symphonia::core::formats::probe::Hint::new();
+    if let Some(ext) = std::path::Path::new(label)
+        .extension()
+        .and_then(|e| e.to_str())
+    {
+        hint.with_extension(ext);
+    }
+    decode_reader(label, std::io::Cursor::new(bytes.to_vec()), &hint, target_rate)
+}
+
+fn decode_reader<R>(
+    label: &str,
+    reader: R,
+    hint: &symphonia::core::formats::probe::Hint,
+    target_rate: usize,
+) -> Result<Audio, AudioError>
+where
+    R: symphonia::core::io::MediaSource + 'static,
+{
+    let (rate, interleaved, channels) = decode_interleaved_f32(label, reader, hint)?;
     if interleaved.is_empty() {
-        return Err(AudioError::Empty(path.to_string()));
+        return Err(AudioError::Empty(label.to_string()));
     }
     let mono = downmix_mono(interleaved, channels);
     let samples = if rate == target_rate {
         mono
     } else {
-        resample(&mono, rate, target_rate, path)?
+        resample(&mono, rate, target_rate, label)?
     };
     Ok(Audio {
         sample_rate: target_rate,
@@ -67,32 +111,25 @@ pub fn load_mono(path: &str, target_rate: usize) -> Result<Audio, AudioError> {
     })
 }
 
-fn decode_interleaved_f32(path: &str) -> Result<(usize, Vec<f32>, usize), AudioError> {
+fn decode_interleaved_f32<R>(
+    path: &str,
+    reader: R,
+    hint: &symphonia::core::formats::probe::Hint,
+) -> Result<(usize, Vec<f32>, usize), AudioError>
+where
+    R: symphonia::core::io::MediaSource + 'static,
+{
     use symphonia::core::codecs::audio::AudioDecoderOptions;
     use symphonia::core::codecs::CodecParameters;
     use symphonia::core::errors::Error;
-    use symphonia::core::formats::probe::Hint;
     use symphonia::core::formats::{FormatOptions, TrackType};
     use symphonia::core::io::MediaSourceStream;
     use symphonia::core::meta::MetadataOptions;
 
-    let file = File::open(path).map_err(|source| AudioError::Io {
-        path: path.to_string(),
-        source,
-    })?;
-
-    let mut hint = Hint::new();
-    if let Some(ext) = std::path::Path::new(path)
-        .extension()
-        .and_then(|e| e.to_str())
-    {
-        hint.with_extension(ext);
-    }
-
-    let mss = MediaSourceStream::new(Box::new(file), Default::default());
+    let mss = MediaSourceStream::new(Box::new(reader), Default::default());
     let mut reader = symphonia::default::get_probe()
         .probe(
-            &hint,
+            hint,
             mss,
             FormatOptions::default(),
             MetadataOptions::default(),

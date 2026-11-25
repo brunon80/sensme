@@ -14,7 +14,7 @@ pub mod spectral;
 pub mod stft;
 pub mod tempo;
 
-pub use audio::{load_mono, Audio, AudioError};
+pub use audio::{load_mono, load_mono_bytes, Audio, AudioError};
 pub use features::ANALYSIS_RATE;
 
 /// Version of the analysis pipeline. Bump on any semantic change (ADR-012).
@@ -38,4 +38,17 @@ pub fn analyze_file(path: &str) -> Result<sensme_core::models::FeatureVector, Au
 /// (used by the bench dataset generator; same pipeline as [`analyze_file`]).
 pub fn analyze_audio(audio: &Audio) -> sensme_core::models::FeatureVector {
     features::extract(audio)
+}
+
+/// Analyze in-memory audio bytes (web/wasm shells, ADR-016); `label` is
+/// used for the format hint and error messages only.
+///
+/// # Errors
+/// [`AudioError`] on decode/resample failure.
+pub fn analyze_bytes(
+    label: &str,
+    bytes: &[u8],
+) -> Result<sensme_core::models::FeatureVector, AudioError> {
+    let audio = load_mono_bytes(label, bytes, ANALYSIS_RATE)?;
+    Ok(features::extract(&audio))
 }

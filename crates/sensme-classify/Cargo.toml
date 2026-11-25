@@ -7,6 +7,6 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
-sensme-core.workspace = true
+sensme-core = { path = "../sensme-core", default-features = false }
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true

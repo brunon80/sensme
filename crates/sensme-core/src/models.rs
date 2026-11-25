@@ -3,6 +3,7 @@
 //! determinism (AGENTS.md §2).
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// Stable identifier of a track within the local library.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -31,7 +32,8 @@ pub struct Track {
 ///
 /// The layout of `values` is defined by `feature_vector_version`; changing
 /// the layout requires bumping it (ADR-012).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../contracts/generated/")]
 pub struct FeatureVector {
     /// Version of the analysis pipeline that produced this vector.
     pub algorithm_version: String,
@@ -59,7 +61,8 @@ pub const TONE_AXES: [&str; 12] = [
 ];
 
 /// Scores on the 12 tone axes, each 0.0–1.0.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../contracts/generated/")]
 pub struct ToneAxes {
     /// Ordered to match [`TONE_AXES`].
     pub scores: [f32; 12],
@@ -68,7 +71,9 @@ pub struct ToneAxes {
 }
 
 /// The 13 SensMe channels (11 PSP channels + split Morning/Day/Night set).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(rename_all = "lowercase")]
+#[ts(export, export_to = "../../../contracts/generated/")]
 pub enum Channel {
     Energetic,
     Relax,
@@ -136,7 +141,8 @@ impl Channel {
 }
 
 /// Per-channel score for one track, each 0.0–1.0.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../contracts/generated/")]
 pub struct ChannelScores {
     /// Ordered to match [`Channel::ALL`].
     pub scores: [f32; 13],
@@ -148,6 +154,16 @@ impl ChannelScores {
     pub fn score_for(&self, channel: Channel) -> f32 {
         self.scores[Channel::ALL.iter().position(|c| *c == channel).unwrap()]
     }
+}
+
+/// The full classification result for one track: tone axes plus channel
+/// scores. This is the shape exchanged with shells over FFI/wasm (ADR-016);
+/// classification remains a pure function of (stored features, weights).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../contracts/generated/")]
+pub struct Classification {
+    pub axes: ToneAxes,
+    pub channels: ChannelScores,
 }
 
 #[cfg(test)]

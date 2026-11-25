@@ -1,11 +1,18 @@
 [package]
 name = "sensme-wasm"
-description = "wasm-bindgen surface for the SensMe web app"
+description = "WebAssembly surface over the SensMe analysis/classification core (ADR-016)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
-# TODO(phase-5): wasm-bindgen surface (ADR-009).
-sensme-core.workspace = true
+sensme-audio = { workspace = true }
+sensme-classify = { workspace = true }
+sensme-core = { path = "../sensme-core", default-features = false }
+serde-wasm-bindgen.workspace = true
+serde_json.workspace = true
+wasm-bindgen.workspace = true

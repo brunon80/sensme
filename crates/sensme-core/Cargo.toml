@@ -6,11 +6,18 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+# Filesystem scanning + SQLite persistence. Off for wasm shells (ADR-016),
+# which own persistence behind the same versioned-record contract.
+default = ["db"]
+db = ["dep:lofty", "dep:rusqlite"]
+
 [dependencies]
-lofty.workspace = true
-rusqlite.workspace = true
+lofty = { workspace = true, optional = true }
+rusqlite = { workspace = true, optional = true }
 serde.workspace = true
 thiserror.workspace = true
+ts-rs.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
