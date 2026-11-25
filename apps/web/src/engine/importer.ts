@@ -13,18 +13,26 @@ export function isAudioFile(name: string): boolean {
   return dot >= 0 && AUDIO_EXT.includes(name.slice(dot + 1).toLowerCase());
 }
 
+/** A picked audio file plus its display path relative to the picked root.
+ * (`File.webkitRelativePath` is a read-only getter in Chromium, so the
+ * directory-picker path must be carried alongside the file, not on it.) */
+export interface PickedFile {
+  file: File;
+  path: string;
+}
+
 /** Ask the user for audio files; returns them with display paths. */
-export async function pickAudioFiles(): Promise<File[]> {
+export async function pickAudioFiles(): Promise<PickedFile[]> {
   const w = window as unknown as { showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle> };
   if (typeof w.showDirectoryPicker === "function") {
     const root = await w.showDirectoryPicker();
-    const out: File[] = [];
+    const out: PickedFile[] = [];
     const walk = async (dir: FileSystemDirectoryHandle, prefix: string): Promise<void> => {
       const entries = (dir as unknown as { values: () => AsyncIterable<FileSystemHandle> }).values();
       for await (const entry of entries) {
         if (entry instanceof FileSystemFileHandle && isAudioFile(entry.name)) {
           const file = await entry.getFile();
-          out.push(Object.assign(file, { webkitRelativePath: prefix ? `${prefix}/${entry.name}` : entry.name }));
+          out.push({ file, path: prefix ? `${prefix}/${entry.name}` : entry.name });
         } else if (entry instanceof FileSystemDirectoryHandle) {
           await walk(entry, prefix ? `${prefix}/${entry.name}` : entry.name);
         }
@@ -40,7 +48,7 @@ export async function pickAudioFiles(): Promise<File[]> {
     (input as HTMLInputElement & { webkitdirectory: boolean }).webkitdirectory = true;
     input.addEventListener("change", () => {
       const files = Array.from(input.files ?? []);
-      resolve(files);
+      resolve(files.map((file) => ({ file, path: file.webkitRelativePath || file.name })));
     });
     input.click();
   });
@@ -55,13 +63,13 @@ export interface ImportProgress {
 
 /** Analyze + persist every file. Returns the number imported. */
 export async function importFiles(
-  files: File[],
+  picked: PickedFile[],
   onProgress: (p: ImportProgress) => void,
 ): Promise<number> {
   let done = 0;
   let errors = 0;
-  for (const file of files) {
-    onProgress({ done, total: files.length, current: file.name, errors });
+  for (const { file, path } of picked) {
+    onProgress({ done, total: picked.length, current: file.name, errors });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       const { featureVector, classification } = await engine.analyze(file.name, bytes);
@@ -83,7 +91,7 @@ export async function importFiles(
       }
       const rec: LibraryRecord = {
         id: 0,
-        path: file.webkitRelativePath || file.name,
+        path: path || file.name,
         name: file.name,
         sizeBytes: file.size,
         modifiedEpoch: Math.round(file.lastModified / 1000),
@@ -104,7 +112,7 @@ export async function importFiles(
       console.error(`import failed: ${file.name}`, err);
     }
     done += 1;
-    onProgress({ done, total: files.length, current: file.name, errors });
+    onProgress({ done, total: picked.length, current: file.name, errors });
     // Yield to the event loop so the PSP UI keeps animating.
     await new Promise((r) => setTimeout(r, 0));
   }
