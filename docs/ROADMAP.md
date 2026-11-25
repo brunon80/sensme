@@ -75,11 +75,13 @@ Sub-phases (gates between each):
 - **4b Visual spec**: `docs/UI_SPEC.md` — per-screen layout, tokens,
   interaction flows; `contracts/design-tokens/` generated.
   Gate: spec approved by product owner; tokens package published.
-- **4c Implementation**: `sensme-wasm` crate (wasm-bindgen surface over
-  the core) + React shell: folder import (File System Access API /
+- **4c Implementation** *(done)*: `sensme-wasm` crate (wasm-bindgen surface
+  over the core) + React shell: folder import (File System Access API /
   directory input), analysis progress, channel carousel → now-playing →
   Web Audio playback, options menu.
-  Gate: full analyze→browse→play loop in Chromium and Firefox.
+  Gate: full analyze→browse→play loop in Chromium and Firefox. ✅ Verified
+  2026-11-25: loop passes in Chromium (dev + preview) and Firefox
+  (`apps/web/scripts/fourc-firefox.mjs`, Playwright).
 - **4d Fidelity review**: each screen scored against the checklist (layout,
   color, typography, icons, animation timing, behavior).
   Gate: all screens pass review or have explicit, documented deviations.
@@ -87,8 +89,8 @@ Sub-phases (gates between each):
 Done gate:
 - [ ] Golden feature vectors identical (±1e-4) to native on
       `wasm32-unknown-unknown`, enforced in CI
-- [ ] Full analyze→browse→play loop in Chromium and Firefox
-- [ ] Library persists across reloads (IndexedDB) with versioned vectors
+- [x] Full analyze→browse→play loop in Chromium and Firefox
+- [x] Library persists across reloads (IndexedDB) with versioned vectors
 - [ ] Visual regression screenshots committed per screen
 
 ## Phase 5 — Platform-specific shells
