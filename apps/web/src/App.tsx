@@ -51,8 +51,17 @@ export default function App() {
     void (async () => {
       setMeta(await engine.ready);
       const recs = await reload();
-      setScreen(recs.length > 0 ? "nowplaying" : "empty");
-      if (recs.length > 0) rebuildQueue(0, 0, recs);
+      if (recs.length === 0) {
+        setScreen("empty");
+        return;
+      }
+      // Land on the first carousel entry that actually has tracks (the PSP
+      // opens on a populated channel; index 0 may be empty for a given library).
+      let idx = CAROUSEL_ORDER.findIndex((e) => entryTracks(e, recs).length > 0);
+      if (idx < 0) idx = 0;
+      setEntryIndex(idx);
+      setScreen("nowplaying");
+      rebuildQueue(idx, 0, recs);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -149,7 +158,13 @@ export default function App() {
         case " ":
           e.preventDefault();
           if (screen === "empty") void doImport();
-          else if (current) player.toggle();
+          else if (current) {
+            // START: play/pause toggle. From stopped, (re)load the current
+            // track's bytes and play it (player.toggle alone can't start).
+            if (player.state === "playing") player.pause();
+            else if (player.state === "paused") player.resume();
+            else void playAt(queuePos, queue);
+          }
           break;
         case "c":
         case "C":
