@@ -229,6 +229,16 @@ export const tokens = {
       "sizeH": 0.059,
       "weight": 600,
       "px480": 16
+    },
+    "npTitle": {
+      "sizeH": 0.059,
+      "weight": 600,
+      "px480": 16
+    },
+    "npBody": {
+      "sizeH": 0.048,
+      "weight": 400,
+      "px480": 13
     }
   },
   "motion": {

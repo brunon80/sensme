@@ -144,6 +144,8 @@
 /* Title/artist mirrored on the glossy floor (PSP reflection). */
 .np-text-reflect {
   position: absolute;
+  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100vh);
+  font-weight: var(--sensme-type-npTitle-weight);
   left: 0;
   right: 0;
   top: 100%;
@@ -153,8 +155,8 @@
   pointer-events: none;
 }
 .np-title {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
-  font-weight: var(--sensme-type-title-weight);
+  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100vh);
+  font-weight: var(--sensme-type-npTitle-weight);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
   overflow: hidden;
@@ -166,7 +168,7 @@
   margin: 0.4vh 0;
 }
 .np-second {
-  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-npBody-sizeH) * 100vh);
   color: var(--sensme-color-textSecondary);
   white-space: nowrap;
   overflow: hidden;

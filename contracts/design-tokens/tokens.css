@@ -123,6 +123,12 @@
   --sensme-type-clock-sizeH: 0.059;
   --sensme-type-clock-weight: 600;
   --sensme-type-clock-px480: 16;
+  --sensme-type-npTitle-sizeH: 0.059;
+  --sensme-type-npTitle-weight: 600;
+  --sensme-type-npTitle-px480: 16;
+  --sensme-type-npBody-sizeH: 0.048;
+  --sensme-type-npBody-weight: 400;
+  --sensme-type-npBody-px480: 13;
   --sensme-motion-carouselStepMs: 420;
   --sensme-motion-tileInMs: 300;
   --sensme-motion-npStepMs: 520;
