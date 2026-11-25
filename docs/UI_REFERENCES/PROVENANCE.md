@@ -52,7 +52,7 @@ distribution if licensing is unclear.
 
 | File | Used by |
 |---|---|
-| `day.jpg` | default backdrop (unmapped channels: morning/daytime/evening/night/midnight) |
+| `day.jpg` | default backdrop (fallback for entries without a photo) |
 | `relax.jpg` | Relax |
 | `energetic.jpg` | Energetic |
 | `upbeat.jpg` | Upbeat |
@@ -61,6 +61,11 @@ distribution if licensing is unclear.
 | `emotional.jpg` | Emotional |
 | `dance.jpg` | Dance |
 | `extreme.jpg` | Extreme |
+| `morning.jpg` | Morning |
+| `day.jpg` | Daytime |
+| `evening.jpg` | Evening |
+| `night.jpg` | Night |
+| `midnight.jpg` | Midnight |
 | `favorite.webp` | Favourites |
 | `shuffle_all.jpg` | Shuffle All |
 
