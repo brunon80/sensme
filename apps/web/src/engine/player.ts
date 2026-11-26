@@ -36,6 +36,12 @@ export class Player {
   private onEndedCb: (() => void) | null = null;
   state: PlayerState = "stopped";
   private listeners = new Set<() => void>();
+  // Optional Web Audio gain stage (Dynamic Normalizer): element → source →
+  // gain → destination. The element stays the media session owner (ADR-017);
+  // the graph only inserts volume control in front of the speakers.
+  private ctx: AudioContext | null = null;
+  private gainNode: GainNode | null = null;
+  private pendingGain = 1;
 
   /** Subscribe to state changes; returns an unsubscribe function. */
   onChange(fn: () => void): () => void {
@@ -66,11 +72,54 @@ export class Player {
     return this.el;
   }
 
+  /** PSP mixer ramp interval: 0x70 chunks × 28 samples = 3136 samples
+   * ≈ 71 ms @44.1 kHz (RE report §5; sensme-psp port). Gain changes glide
+   * over the same interval the original's ramp engine uses. */
+  private static readonly RAMP_SEC = 3136 / 44100;
+
+  /** Lazily insert the gain stage. Once a MediaElementAudioSourceNode is
+   * bound, the element's output flows through the graph; if Web Audio is
+   * unavailable playback still works at unity gain. */
+  private ensureGraph(): void {
+    if (this.ctx) return;
+    try {
+      const ctx = new AudioContext();
+      const src = ctx.createMediaElementSource(this.ensureEl());
+      const gain = ctx.createGain();
+      gain.gain.value = this.pendingGain;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      this.ctx = ctx;
+      this.gainNode = gain;
+    } catch {
+      this.ctx = null;
+      this.gainNode = null;
+    }
+  }
+
+  /** Current target gain (automation seam for the normalizer gate). */
+  gainValue(): number {
+    return this.pendingGain;
+  }
+
+  /** Set output gain (1.0 = unity) with a PSP-style ramp. Safe before the
+   * graph exists: the value is applied when it is created. */
+  setGain(g: number): void {
+    this.pendingGain = Math.max(0, g);
+    if (!this.ctx || !this.gainNode) return;
+    const t = this.ctx.currentTime;
+    this.gainNode.gain.cancelScheduledValues(t);
+    this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, t);
+    this.gainNode.gain.linearRampToValueAtTime(this.pendingGain, t + Player.RAMP_SEC);
+  }
+
   /** Play a track from the beginning. `mime` names the container so the
    * element can pick a decoder. Rejects only on autoplay-policy or decode
    * failure; the player stays "stopped" in that case. */
   async play(bytes: Uint8Array, onEnded?: () => void, mime = ""): Promise<void> {
     const el = this.ensureEl();
+    this.ensureGraph();
+    void this.ctx?.resume(); // autoplay policy: the context starts suspended
     this.releaseSource();
     // Copy into a fresh ArrayBuffer: the bytes come out of IndexedDB and the
     // blob keeps its own detached-safe copy (slice() also narrows the type).

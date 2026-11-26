@@ -236,3 +236,43 @@ but not `setPositionState` — the position push is feature-detected and
 skipped there. Tauri (Phase 5) gets the same OS integration natively
 (rodio + a native media-session layer), so this ADR is web-shell scope
 only.
+
+## ADR-018 — Dynamic Normalizer: recovered contract, clean-room algorithm
+Status: accepted — 2026-11-26
+
+Decision: Implement the PSP "Dynamic Normalizer" Sound Settings feature as
+a per-track static playback gain: the Rust core measures loudness
+(peak + RMS over the deterministic mono decode, `sensme-audio::loudness`,
+versioned by `LOUDNESS_VERSION`) at analysis time, maps it to a gain
+(target RMS 0.10, bounds 0.2–3.0, post-gain peak ceiling 0.99, silence
+guard), stores both on the record, and the web shell applies it through a
+Web Audio `GainNode` inserted in front of the `<audio>` element
+(element → MediaElementSource → Gain → destination), ramping changes over
+the original mixer's 71 ms interval (0x70 chunks × 28 samples). The
+setting is ON by default and persisted (localStorage; the original used
+property.xml).
+
+Rationale: We reverse-engineered the original EBOOT for this feature
+(full report: `docs/RE_DYNAMIC_NORMALIZER.md`). Findings: the audible
+normalizer is NOT implemented in the EBOOT — it lives inside Sony's
+closed firmware codec libraries. What the EBOOT *does* give us is the
+contract: a per-track loudness scalar computed during analysis (the DB's
+`pcsd` column stores only its presence flag), an ON/OFF setting defaulting
+to ON, and a bit-exact software mixer whose ramp engine (71 ms gain
+ramps) is the designed hook for playback gain. The measurement + gain
+mapping are therefore a clean-room design over the recovered contract
+(AGENTS §7: concepts reproduced, no copied code); the audible behavior is
+ours and labeled as such in code.
+
+Consequences: `AnalysisResult` gains `loudness` + `normalizerGain`
+(computed once at analysis; playback never re-decodes — AGENTS §2).
+Records imported before this feature have `null` and play at unity until
+"Database Settings → Clear and Rebuild" re-analyzes them. The Player
+gains `setGain`/`gainValue`; the Media Session integration of ADR-017 is
+unaffected (the element still owns the media session — verified by the
+mediasession gate). Options menu regains Sound Settings → Dynamic
+Normalizer (the previously removed no-op is now real; Sound Effects
+stays removed until it does something). Gated by
+`apps/web/scripts/normalizer.mjs` (gain applied at play, toggle restores
+unity live, setting persists across reload) plus Rust unit tests in
+`sensme-audio::loudness`.

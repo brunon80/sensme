@@ -89,7 +89,8 @@ export async function importFiles(
     onProgress({ done, total: picked.length, current: file.name, errors, skipped });
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const { featureVector, classification } = await engine.analyze(file.name, bytes);
+      const { featureVector, classification, loudness, normalizerGain } =
+        await engine.analyze(file.name, bytes);
       let title: string | null = null;
       let artist: string | null = null;
       let album: string | null = null;
@@ -122,6 +123,8 @@ export async function importFiles(
         addedEpoch: Math.floor(Date.now() / 1000),
         featureVector,
         classification,
+        loudness: loudness ?? null,
+        normalizerGain: normalizerGain ?? null,
       };
       await putRecord(rec, bytes);
     } catch (err) {
@@ -160,8 +163,15 @@ export async function rebuildLibrary(
     try {
       const bytes = await getAudioBytes(rec.id);
       if (!bytes) throw new Error("audio bytes missing");
-      const { featureVector, classification } = await engine.analyze(rec.name, bytes);
-      await updateRecord({ ...rec, featureVector, classification });
+      const { featureVector, classification, loudness, normalizerGain } =
+        await engine.analyze(rec.name, bytes);
+      await updateRecord({
+        ...rec,
+        featureVector,
+        classification,
+        loudness: loudness ?? null,
+        normalizerGain: normalizerGain ?? null,
+      });
     } catch (err) {
       errors += 1;
       console.error(`rebuild failed: ${rec.name}`, err);

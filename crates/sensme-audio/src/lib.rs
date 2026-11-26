@@ -8,6 +8,7 @@ pub mod audio;
 pub mod chroma;
 pub mod features;
 pub mod hpss;
+pub mod loudness;
 pub mod mfcc;
 pub mod onset;
 pub mod spectral;

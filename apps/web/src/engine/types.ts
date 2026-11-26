@@ -37,6 +37,25 @@ export interface LibraryRecord {
   addedEpoch: number;
   featureVector: FeatureVector;
   classification: Classification;
+  /** Per-track loudness for the Dynamic Normalizer (ADR-018); null on
+   * records analyzed before the measurement existed. */
+  loudness: Loudness | null;
+  /** Static playback gain from the versioned Rust mapping (ADR-018). */
+  normalizerGain: number | null;
+}
+
+/** Per-track loudness measured in the Rust core (normalized −1..=1). */
+export interface Loudness {
+  peak: number;
+  rms: number;
+}
+
+/** What the analysis worker returns per track. */
+export interface AnalysisResult {
+  featureVector: FeatureVector;
+  classification: Classification;
+  loudness?: Loudness | null;
+  normalizerGain?: number | null;
 }
 
 /** Channels a track belongs to (score ≥ 0.5 — same threshold as the bench

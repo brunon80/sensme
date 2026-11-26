@@ -1,8 +1,8 @@
 // Main-thread handle to the analysis worker.
-import type { Classification, ContractMeta, FeatureVector } from "./types";
+import type { AnalysisResult, ContractMeta } from "./types";
 
 interface Pending {
-  resolve: (v: { featureVector: FeatureVector; classification: Classification }) => void;
+  resolve: (v: AnalysisResult) => void;
   reject: (e: Error) => void;
 }
 
@@ -18,7 +18,7 @@ class Engine {
     this.ready = new Promise<ContractMeta>((resolve) => {
       this.worker.onmessage = (e: MessageEvent) => {
         const m = e.data as { type: string; id?: number; meta?: ContractMeta;
-          result?: { featureVector: FeatureVector; classification: Classification };
+          result?: AnalysisResult;
           message?: string };
         if (m.type === "ready" && m.meta) {
           this.meta = m.meta;
@@ -39,10 +39,7 @@ class Engine {
   /** Decode + analyze + classify one file's bytes (deterministic, wasm).
    * `psp` selects the faithful PSP SensMe engine (default, the core
    * analyzer); pass false for the legacy v1 feature pipeline. */
-  analyze(label: string, bytes: Uint8Array, psp = true): Promise<{
-    featureVector: FeatureVector;
-    classification: Classification;
-  }> {
+  analyze(label: string, bytes: Uint8Array, psp = true): Promise<AnalysisResult> {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });

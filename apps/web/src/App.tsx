@@ -24,6 +24,13 @@ import { useTouchGestures } from "./ui/touch";
 
 type Screen = "boot" | "empty" | "carousel" | "nowplaying";
 
+/** Dynamic Normalizer gain for a record (ADR-018): the static per-track
+ * gain computed by the Rust core, or unity when the setting is off / the
+ * record predates the measurement. */
+function normalizerGainFor(rec: LibraryRecord | null | undefined, s: Settings): number {
+  return s.dynamicNormalizer && rec?.normalizerGain != null ? rec.normalizerGain : 1;
+}
+
 interface UpdateState {
   active: boolean;
   done: number;
@@ -48,7 +55,27 @@ export default function App() {
   // smaller scale in the big slot; START/◯ confirms (scales up + plays).
   const [pending, setPending] = useState<number | null>(null);
   const [update, setUpdate] = useState<UpdateState>({ active: false, done: 0, total: 0, errors: 0, skipped: 0 });
-  const [settings, setSettings] = useState<Settings>({ showClock: true, showCaptions: true });
+  // Settings persist across sessions (the original stores them in
+  // property.xml; we use localStorage). Defaults match the PSP's
+  // MenuParam*_DefaultCheck (all ON).
+  const [settings, setSettings] = useState<Settings>(() => {
+    const defaults: Settings = { showClock: true, showCaptions: true, dynamicNormalizer: true };
+    try {
+      const raw = localStorage.getItem("sensme.settings");
+      return raw ? { ...defaults, ...(JSON.parse(raw) as Partial<Settings>) } : defaults;
+    } catch {
+      return defaults;
+    }
+  });
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  useEffect(() => {
+    try {
+      localStorage.setItem("sensme.settings", JSON.stringify(settings));
+    } catch {
+      // Private-mode quota errors must not break the app.
+    }
+  }, [settings]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [clock, setClock] = useState("");
   const [playing, setPlaying] = useState(false);
@@ -148,6 +175,12 @@ export default function App() {
 
   const current = queue[queuePos] ?? null;
 
+  // Dynamic Normalizer (ADR-018): toggling the setting re-applies the gain
+  // to the loaded track (the player glides over the PSP ramp interval).
+  useEffect(() => {
+    player.setGain(normalizerGainFor(current, settings));
+  }, [current, settings]);
+
   // OS media integration (ADR-017): publish the loaded track (title, artist,
   // album, artwork) to the desktop environment's media controls.
   useEffect(() => {
@@ -162,6 +195,9 @@ export default function App() {
     setQueuePos(pos);
     const bytes = await getAudioBytes(rec.id);
     if (!bytes) return;
+    // Dynamic Normalizer (ADR-018): static per-track gain from the Rust
+    // core, off when the setting is off or the record predates it.
+    player.setGain(normalizerGainFor(rec, settingsRef.current));
     try {
       await player.play(bytes, () => void nextIn(q), mimeForName(rec.name));
     } catch {

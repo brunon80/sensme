@@ -4,6 +4,9 @@ import { useState } from "react";
 export interface Settings {
   showClock: boolean;
   showCaptions: boolean;
+  /** PSP Sound Settings → Dynamic Normalizer (default ON, per the original's
+   * MenuParam8_DefaultCheck=1). Normalizes playback loudness per track. */
+  dynamicNormalizer: boolean;
 }
 
 interface Props {
@@ -18,7 +21,7 @@ interface Props {
   onClose: () => void;
 }
 
-type Page = "root" | "view" | "database" | "help" | "about";
+type Page = "root" | "view" | "sound" | "database" | "help" | "about";
 
 export function Options({ settings, onSettings, onClearFavourites, onClearBlocked, onRebuild, onWipe, onImport, meta, onClose }: Props) {
   const [page, setPage] = useState<Page>("root");
@@ -36,6 +39,7 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
         {page === "root" && (
           <>
             {item("View Settings", () => setPage("view"))}
+            {item("Sound Settings", () => setPage("sound"))}
             {item("Music Scan", onImport, "add new music")}
             {item("Favourites Setting", onClearFavourites, "delete all")}
             {item("Block List Settings", onClearBlocked, "delete all")}
@@ -50,6 +54,13 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
               () => onSettings({ ...settings, showClock: !settings.showClock }))}
             {item(`Button Caption: ${settings.showCaptions ? "ON" : "OFF"}`,
               () => onSettings({ ...settings, showCaptions: !settings.showCaptions }))}
+            {item("Back", () => setPage("root"))}
+          </>
+        )}
+        {page === "sound" && (
+          <>
+            {item(`Dynamic Normalizer: ${settings.dynamicNormalizer ? "ON" : "OFF"}`,
+              () => onSettings({ ...settings, dynamicNormalizer: !settings.dynamicNormalizer }))}
             {item("Back", () => setPage("root"))}
           </>
         )}

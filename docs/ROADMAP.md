@@ -97,6 +97,10 @@ Done gate:
 - [x] Mobile-friendly web app: landscape-locked PSP scene, touch gestures
       and caption-button controls (UI_SPEC §9;
       gate: `apps/web/scripts/mobile.mjs`)
+- [x] Dynamic Normalizer: per-track loudness → playback gain, recovered
+      contract from the original EBOOT, clean-room algorithm
+      (ADR-018, `docs/RE_DYNAMIC_NORMALIZER.md`;
+      gate: `apps/web/scripts/normalizer.mjs`)
 - [ ] Visual regression screenshots committed per screen
 
 ## Phase 5 — Platform-specific shells

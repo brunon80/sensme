@@ -840,6 +840,7 @@ dependencies = [
  "rustfft",
  "sensme-core",
  "sensme-psp",
+ "serde",
  "serde_json",
  "symphonia",
  "thiserror",

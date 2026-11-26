@@ -163,9 +163,10 @@ Reference: R-6 photos 7520–7521; item list from R-2.
   item bold + brighter; ▼ scroll indicator when overflowed.
 - Items (PSP order per R-2, minus no-ops — AGENTS §3 forbids silent
   placeholders): View Settings (Time and Battery, Button Caption),
-  Music Scan, Favourites Setting, Block List Settings, Database
-  Settings (rebuild/wipe), Help, About. Sound Settings and Check for
-  Updates are omitted until they actually do something.
+  Sound Settings (Dynamic Normalizer ON/OFF, default ON — functional,
+  ADR-018), Music Scan, Favourites Setting, Block List Settings,
+  Database Settings (rebuild/wipe), Help, About. Check for Updates and
+  Sound Effects stay omitted until they actually do something.
 - Layer: the menu sits above every scene layer (z 50: backdrop →
   now-playing → scrim → grid) and below the furniture overlay (z 60).
 - Captions bottom: `✕ Select  ◯ Close`.

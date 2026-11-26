@@ -10,6 +10,7 @@ license.workspace = true
 rustfft.workspace = true
 rubato.workspace = true
 sensme-core = { path = "../sensme-core", default-features = false }
+serde.workspace = true
 symphonia.workspace = true
 thiserror.workspace = true
 sensme-psp.workspace = true

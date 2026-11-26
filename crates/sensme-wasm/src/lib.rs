@@ -55,6 +55,13 @@ pub fn classify_features(features: JsValue) -> Result<JsValue, JsError> {
 struct AnalysisResult {
     feature_vector: sensme_core::models::FeatureVector,
     classification: Classification,
+    /// Per-track loudness for the Dynamic Normalizer (ADR-018); `None` on
+    /// the legacy v1 pipeline, which predates the measurement.
+    #[serde(default)]
+    loudness: Option<sensme_audio::loudness::Loudness>,
+    /// Static playback gain for the Dynamic Normalizer (ADR-018).
+    #[serde(default)]
+    normalizer_gain: Option<f32>,
 }
 
 #[wasm_bindgen]
@@ -65,6 +72,8 @@ pub fn analyze_and_classify(label: &str, bytes: &[u8]) -> Result<JsValue, JsErro
     let result = AnalysisResult {
         feature_vector: fv,
         classification,
+        loudness: None,
+        normalizer_gain: None,
     };
     serde_wasm_bindgen::to_value(&result).map_err(|e| JsError::new(&e.to_string()))
 }
@@ -97,9 +106,15 @@ pub fn psp_analyze_and_classify(label: &str, bytes: &[u8]) -> Result<JsValue, Js
         let audio = sensme_audio::load_mono_bytes(label, bytes, 44_100)
             .map_err(|e| JsError::new(&format!("{e}")))?;
         let res = sensme_psp::analyze_f32(&audio.samples, audio.sample_rate as u32);
+        // Dynamic Normalizer inputs (ADR-018): loudness measured on the same
+        // deterministic mono decode the classifier sees; gain is a pure
+        // function of it, stored so playback never re-decodes.
+        let loud = sensme_audio::loudness::measure(&audio.samples);
         let result = AnalysisResult {
             feature_vector: psp_feature_vector(&res),
             classification: psp_classification(&res),
+            loudness: Some(loud),
+            normalizer_gain: Some(sensme_audio::loudness::normalizer_gain(&loud)),
         };
         serde_wasm_bindgen::to_value(&result).map_err(|e| JsError::new(&e.to_string()))
     });
@@ -169,6 +184,7 @@ struct ContractMeta {
     axis_weights_version: &'static str,
     channel_weights_version: &'static str,
     psp_algorithm_version: &'static str,
+    loudness_version: u32,
     feature_names: [&'static str; 30],
     tone_axes: [&'static str; 12],
     channels: [&'static str; 13],
@@ -182,6 +198,7 @@ pub fn contract_meta() -> JsValue {
         axis_weights_version: sensme_classify::AXIS_WEIGHTS_VERSION,
         channel_weights_version: sensme_classify::CHANNEL_WEIGHTS_VERSION,
         psp_algorithm_version: sensme_psp::PSP_ALGORITHM_VERSION,
+        loudness_version: sensme_audio::loudness::LOUDNESS_VERSION,
         feature_names: sensme_audio::features::FEATURE_NAMES_V1,
         tone_axes: sensme_core::models::TONE_AXES,
         channels: Channel::ALL.map(|c| c.id()),
