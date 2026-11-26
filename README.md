@@ -15,6 +15,9 @@ recreation of the original PSP SensMe Channels application.
 - **Cross-platform.** Windows, Linux, macOS, Android, iOS, and (secondary) web.
 - **Deterministic engine.** One Rust core compiled everywhere; identical
   analysis results on every platform, guaranteed by golden-vector tests.
+- **Desktop-integrated playback.** Now-playing metadata and transport
+  controls appear in Windows/Linux media overlays, and hardware media keys
+  drive playback (web app: Media Session API).
 
 ## Status
 

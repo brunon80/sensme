@@ -205,3 +205,34 @@ Consequences: Two persistence backends (SQLite, IndexedDB) with one
 record contract — covered by shared contract tests over exported ts-rs
 types; wasm determinism is gated by running the golden-vector suite on
 wasm32-unknown-unknown in CI.
+
+## ADR-017 — Web playback through an HTMLMediaElement; Media Session API
+Status: accepted — 2026-11-26 (amends the playback detail of ADR-016)
+
+Decision: The web shell plays audio through a hidden `<audio>` element
+(blob URL + container MIME from the file extension) instead of a Web Audio
+`AudioBufferSourceNode`, and publishes the current track through the Media
+Session API (`metadata`, `playbackState`, `positionState`, action handlers
+for play/pause/prev/next/stop/seek*).
+
+Rationale: Desktop environments only show now-playing metadata and
+transport controls (Windows media overlay/Game Bar, Linux MPRIS over
+D-Bus, hardware media keys) for the page that owns the *active media
+session*, and browsers only activate that session for a real media
+element — a Web-Audio-only page never surfaces (w3c/mediasession #244 and
+#378; Firefox bug 2067534). Playback was already browser-native by design
+(ADR-016): the analysis path stays deterministic in wasm, so moving the
+playback transport costs nothing in fidelity and buys native seeking and
+OS integration for free.
+
+Consequences: `Player` keeps its public API (`state`, `onChange`, `play`,
+`pause`, `resume`, `toggle`, `stop`, `positionSec`) and gains
+`durationSec`/`seek`; the media session lives in
+`apps/web/src/engine/mediaSession.ts` and is wired in `App.tsx`. Gated by
+`apps/web/scripts/mediasession.mjs` (Chromium: metadata matches the
+on-screen title, playback state mirrors the player, OS transport drives
+next/prev/pause/play/stop). Firefox supports metadata + action handlers
+but not `setPositionState` — the position push is feature-detected and
+skipped there. Tauri (Phase 5) gets the same OS integration natively
+(rodio + a native media-session layer), so this ADR is web-shell scope
+only.

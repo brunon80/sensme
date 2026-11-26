@@ -91,6 +91,9 @@ Done gate:
       `wasm32-unknown-unknown`, enforced in CI
 - [x] Full analyze→browse→play loop in Chromium and Firefox
 - [x] Library persists across reloads (IndexedDB) with versioned vectors
+- [x] OS media integration: now-playing metadata + transport controls in
+      Windows/Linux desktop environments (Media Session API, ADR-017;
+      gate: `apps/web/scripts/mediasession.mjs`)
 - [ ] Visual regression screenshots committed per screen
 
 ## Phase 5 — Platform-specific shells
