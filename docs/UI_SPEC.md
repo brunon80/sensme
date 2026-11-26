@@ -17,7 +17,12 @@ while preserving ratios).
 The whole app is one continuous scene:
 
 - **Backdrop**: each channel owns a static backdrop image (photo or
-  generated bokeh field) filling the screen above the waterline.
+  generated bokeh field) filling the screen above the waterline. Photo
+  backdrops are cover-cropped **anchored at the photo's top edge**, so the
+  photo's upper portion (50%→100% of the image) is what shows above the
+  waterline; the water below mirrors that same region. (Product-owner
+  decision 2026-11-26 — previously the crop was bottom-anchored, putting
+  the photo's lower half at the waterline.)
 - **Water**: from `waterline.y` (55% of height) down, the backdrop is
   mirrored as a rippling water reflection (horizontal streaking,
   ~55% opacity, subtle continuous ripple ~4 s loop).

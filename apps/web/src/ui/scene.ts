@@ -70,8 +70,10 @@ export function loadPhoto(url: string): Promise<HTMLImageElement> {
   return p;
 }
 
-/** Render a photo backdrop: cover-crop into the region above the waterline
- * so the photo's own shoreline meets the mirrored water. */
+/** Render a photo backdrop: cover-crop into the region above the waterline,
+ * anchored at the photo's TOP edge so its upper half (50%→100% of the image)
+ * is what shows; the water below mirrors that same region (product-owner
+ * request 2026-11-26, UI_SPEC §0). */
 export function renderBackdropPhoto(img: HTMLImageElement, w: number, h: number): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = w;
@@ -83,9 +85,10 @@ export function renderBackdropPhoto(img: HTMLImageElement, w: number, h: number)
   const scale = Math.max(w / iw, waterY / ih);
   const sw = w / scale;
   const sh = waterY / scale;
-  // Bias the crop toward the photo's lower half (water/shore at the bottom).
+  // Top-anchored crop: the photo's upper portion meets the waterline, and
+  // the reflection below mirrors it.
   const sx = (iw - sw) / 2;
-  const sy = ih - sh;
+  const sy = 0;
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, waterY);
   return cv;
 }
