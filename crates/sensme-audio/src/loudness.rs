@@ -127,20 +127,38 @@ mod tests {
 
     #[test]
     fn silence_keeps_unity_gain() {
-        assert_eq!(normalizer_gain(&Loudness { peak: 0.0, rms: 0.0 }), 1.0);
-        assert_eq!(normalizer_gain(&Loudness { peak: 1e-5, rms: 1e-6 }), 1.0);
+        assert_eq!(
+            normalizer_gain(&Loudness {
+                peak: 0.0,
+                rms: 0.0
+            }),
+            1.0
+        );
+        assert_eq!(
+            normalizer_gain(&Loudness {
+                peak: 1e-5,
+                rms: 1e-6
+            }),
+            1.0
+        );
     }
 
     #[test]
     fn loud_track_is_cut() {
         // rms ≈ 0.354 → raw gain ≈ 0.283 (within bounds, peak ceiling 1.98).
-        let g = normalizer_gain(&Loudness { peak: 0.5, rms: 0.354 });
+        let g = normalizer_gain(&Loudness {
+            peak: 0.5,
+            rms: 0.354,
+        });
         assert!((g - 0.1 / 0.354).abs() < 1e-4, "gain {g}");
     }
 
     #[test]
     fn quiet_track_is_boosted_up_to_max() {
-        let g = normalizer_gain(&Loudness { peak: 0.01, rms: 0.007 });
+        let g = normalizer_gain(&Loudness {
+            peak: 0.01,
+            rms: 0.007,
+        });
         assert!((g - MAX_GAIN).abs() < 1e-6, "gain {g}");
     }
 
@@ -148,13 +166,19 @@ mod tests {
     fn peak_ceiling_prevents_clipping_boost() {
         // Sparse full-scale clicks: low rms wants a big boost, but the peak
         // ceiling must cap the gain just under PEAK_CEILING/peak.
-        let g = normalizer_gain(&Loudness { peak: 1.0, rms: 0.02 });
+        let g = normalizer_gain(&Loudness {
+            peak: 1.0,
+            rms: 0.02,
+        });
         assert!((g - PEAK_CEILING).abs() < 1e-6, "gain {g}");
     }
 
     #[test]
     fn extreme_loud_is_cut_up_to_min() {
-        let g = normalizer_gain(&Loudness { peak: 1.0, rms: 0.9 });
+        let g = normalizer_gain(&Loudness {
+            peak: 1.0,
+            rms: 0.9,
+        });
         assert!((g - MIN_GAIN).abs() < 1e-6, "gain {g}");
     }
 
