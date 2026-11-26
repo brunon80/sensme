@@ -124,6 +124,11 @@ Layout:
   white; thin rule under it (R-6 7511).
 - `Artist / Album` line below: y 0.81, `type.body`, white 72%; title
   block mirrored on the floor (reflection).
+- Marquee: a title/artist line wider than the text block auto-scrolls
+  (left, loop with pauses at both ends, ~100 px/s) so the full text can
+  be read; lines that fit stay static with an ellipsis. The reflection
+  scrolls in lockstep (shared document timeline). Gate:
+  `apps/web/scripts/marquee.mjs`.
 - Copyright line (when tagged): y 0.92, `type.small`, white 45%.
 - Backdrop: current channel's photo (per-channel mapping), crossfaded
   on channel switch; rippling floor reflection below the waterline.

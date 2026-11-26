@@ -196,25 +196,45 @@
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 75%);
   pointer-events: none;
 }
-.np-title {
-  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-npTitle-weight);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+/* Marquee (UI_SPEC §2): a line that does not fit auto-scrolls so the full
+ * text can be read; a line that fits stays static with an ellipsis. The
+ * font rules live on the inner span so its width is measured at the right
+ * size; the outer div clips. */
+.marquee {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.marquee-inner {
+  display: inline-block;
+}
+.marquee-inner.marquee-run {
+  text-overflow: clip;
+  animation: marquee-scroll 1.5s linear infinite;
+  /* ~100 px/s scroll speed, plus a fixed pause at each end. */
+  animation-duration: calc(1.5s + var(--marquee-px, 0) * 0.01s);
+}
+@keyframes marquee-scroll {
+  0%, 12% { transform: translateX(0); }
+  88%, 100% { transform: translateX(calc(var(--marquee-px, 0) * -1px)); }
+}
+.np-title,
+.np-title .marquee-inner {
+  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100dvh);
+  font-weight: var(--sensme-type-npTitle-weight);
+}
+.np-title {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
 .np-rule {
   height: 1px;
   background: var(--sensme-color-rule);
   margin: 0.4dvh 0;
 }
-.np-second {
+.np-second,
+.np-second .marquee-inner {
   font-size: calc(var(--sensme-type-npBody-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .dotgrid {
   position: absolute;

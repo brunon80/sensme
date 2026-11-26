@@ -2,7 +2,7 @@
 // left, next tracks receding to the right, morphing on next/prev. Artwork
 // stands on the water with reflection; right-aligned title block; channel
 // dot grid; captions.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { tokens } from "../../../../contracts/design-tokens/tokens";
 import type { LibraryRecord } from "../engine/types";
 import { entryHues, entryName, membershipDots, type CarouselEntry } from "./channels";
@@ -72,6 +72,72 @@ function slotFor(k: number, pending: boolean, slots: Slot[], aspect: number): Sl
   return null;
 }
 
+/** Shared document timeline: every marquee animation is pinned to it so
+ * title, artist line and their water reflection scroll in lockstep. */
+let marqueeTimeline: DocumentTimeline | null = null;
+function sharedTimeline(): DocumentTimeline | null {
+  // Older Safari has no DocumentTimeline: skip the sync, animations still
+  // run (each line just starts on its own).
+  if (typeof DocumentTimeline === "undefined") return null;
+  marqueeTimeline ??= new DocumentTimeline();
+  return marqueeTimeline;
+}
+
+/** One line of now-playing text: static (ellipsis) when it fits, marquee
+ * auto-scroll when it does not (UI_SPEC §2). The inner span is measured
+ * against the container; on overflow it gets a translate animation whose
+ * distance is the exact overflow, so the last characters land flush at the
+ * right margin before the loop restarts. */
+function Marquee({ text, className }: { text: string; className?: string }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const o = outer.current;
+    const i = inner.current;
+    if (!o || !i) return;
+    let raf = 0;
+    const measure = () => {
+      const over = i.offsetWidth - o.clientWidth;
+      if (over <= 1) {
+        i.style.removeProperty("--marquee-scroll");
+        i.classList.remove("marquee-run");
+        return;
+      }
+      // +8px lets the line breathe before the loop restarts. (px, not %:
+      // `calc(<%> * <time>)` is invalid CSS, and a unitless custom property
+      // keeps both the translate and the duration calcs valid.)
+      i.style.setProperty("--marquee-px", `${over + 8}`);
+      i.classList.add("marquee-run");
+      // Pin to the shared timeline so every scrolling line stays in sync.
+      const anims = i.getAnimations();
+      const tl = sharedTimeline();
+      if (tl && anims.length > 0) {
+        for (const a of anims) {
+          // `animationTimeline` is not in the DOM lib types yet (Chrome 116+,
+          // Firefox 110+ implement it; Safari falls back to auto-join).
+          (a as Animation & { animationTimeline?: unknown }).animationTimeline = tl;
+          a.startTime ??= tl.currentTime ?? 0;
+        }
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    });
+    ro.observe(o);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [text]);
+  return (
+    <div ref={outer} className={`marquee ${className ?? ""}`}>
+      <span ref={inner} className="marquee-inner">{text}</span>
+    </div>
+  );
+}
+
 export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props) {
   const n = queue.length;
   const current = queue[pos] ?? null;
@@ -112,12 +178,12 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
 
       {/* keyed by track so the title/artist crossfade replays on change */}
       <div className="np-text" key={current?.id ?? "none"}>
-        <div className="np-title">{title}</div>
+        <Marquee text={title} className="np-title" />
         <div className="np-rule" />
-        {second && <div className="np-second">{second}</div>}
+        {second && <Marquee text={second} className="np-second" />}
         <div className="np-text-reflect" aria-hidden="true">
-          {title}
-          {second && <><br />{second}</>}
+          <Marquee text={title} />
+          {second && <Marquee text={second} className="np-second" />}
         </div>
       </div>
 
