@@ -11,6 +11,13 @@ use wasm_bindgen::prelude::*;
 
 use sensme_core::models::{Channel, ChannelScores, Classification, FeatureVector, ToneAxes};
 
+/// Surface Rust panics (with backtrace text) in the browser console instead
+/// of a bare `RuntimeError: unreachable`.
+#[wasm_bindgen(start)]
+pub fn start() {
+    console_error_panic_hook::set_once();
+}
+
 /// Decode + analyze in-memory audio bytes into a versioned
 /// [`FeatureVector`] (serialized per `contracts/generated/FeatureVector.ts`).
 ///
@@ -86,14 +93,27 @@ const PSP_FEATURE_VECTOR_VERSION: u32 = 2;
 /// Returns a JS `Error` when the bytes contain no decodable audio.
 #[wasm_bindgen]
 pub fn psp_analyze_and_classify(label: &str, bytes: &[u8]) -> Result<JsValue, JsError> {
-    let audio = sensme_audio::load_mono_bytes(label, bytes, 44_100)
-        .map_err(|e| JsError::new(&format!("{e}")))?;
-    let res = sensme_psp::analyze_f32(&audio.samples, audio.sample_rate as u32);
-    let result = AnalysisResult {
-        feature_vector: psp_feature_vector(&res),
-        classification: psp_classification(&res),
-    };
-    serde_wasm_bindgen::to_value(&result).map_err(|e| JsError::new(&e.to_string()))
+    let inner = std::panic::catch_unwind(|| {
+        let audio = sensme_audio::load_mono_bytes(label, bytes, 44_100)
+            .map_err(|e| JsError::new(&format!("{e}")))?;
+        let res = sensme_psp::analyze_f32(&audio.samples, audio.sample_rate as u32);
+        let result = AnalysisResult {
+            feature_vector: psp_feature_vector(&res),
+            classification: psp_classification(&res),
+        };
+        serde_wasm_bindgen::to_value(&result).map_err(|e| JsError::new(&e.to_string()))
+    });
+    match inner {
+        Ok(r) => r,
+        Err(p) => {
+            let msg = p
+                .downcast_ref::<String>()
+                .cloned()
+                .or_else(|| p.downcast_ref::<&str>().map(|s| (*s).to_string()))
+                .unwrap_or_else(|| "panic in psp_analyze_and_classify".into());
+            Err(JsError::new(&format!("psp engine panic: {msg}")))
+        }
+    }
 }
 
 fn psp_feature_vector(res: &sensme_psp::PspAnalysis) -> FeatureVector {
