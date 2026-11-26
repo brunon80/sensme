@@ -3,7 +3,7 @@
 // music-metadata (pure JS — lofty is native-only, ADR-016), persist.
 import { parseBlob } from "music-metadata";
 import { engine } from "./engine";
-import { putRecord } from "./library";
+import { getAudioBytes, putRecord, updateRecord } from "./library";
 import type { LibraryRecord } from "./types";
 
 const AUDIO_EXT = ["mp3", "flac", "ogg", "oga", "m4a", "mp4", "wav", "aac"];
@@ -130,6 +130,44 @@ export async function importFiles(
     }
     done += 1;
     onProgress({ done, total: picked.length, current: file.name, errors, skipped });
+    // Yield to the event loop so the PSP UI keeps animating.
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  return done - errors;
+}
+
+export interface RebuildProgress {
+  done: number;
+  total: number;
+  current: string;
+  errors: number;
+}
+
+/** Clear every stored analysis + classification and recreate them from the
+ * stored audio bytes with the faithful PSP engine (Options → Database
+ * Settings). Metadata (tags, artwork, favourite/blocked flags) is kept;
+ * a failed re-analysis keeps the record's previous vectors. */
+export async function rebuildLibrary(
+  records: LibraryRecord[],
+  onProgress: (p: RebuildProgress) => void,
+  shouldCancel?: () => boolean,
+): Promise<number> {
+  let done = 0;
+  let errors = 0;
+  for (const rec of records) {
+    if (shouldCancel?.()) break;
+    onProgress({ done, total: records.length, current: rec.name, errors });
+    try {
+      const bytes = await getAudioBytes(rec.id);
+      if (!bytes) throw new Error("audio bytes missing");
+      const { featureVector, classification } = await engine.analyze(rec.name, bytes);
+      await updateRecord({ ...rec, featureVector, classification });
+    } catch (err) {
+      errors += 1;
+      console.error(`rebuild failed: ${rec.name}`, err);
+    }
+    done += 1;
+    onProgress({ done, total: records.length, current: rec.name, errors });
     // Yield to the event loop so the PSP UI keeps animating.
     await new Promise((r) => setTimeout(r, 0));
   }

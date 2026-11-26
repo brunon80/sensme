@@ -12,6 +12,7 @@ rubato.workspace = true
 sensme-core = { path = "../sensme-core", default-features = false }
 symphonia.workspace = true
 thiserror.workspace = true
+sensme-psp.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

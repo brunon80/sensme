@@ -2,8 +2,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { tokens } from "../../../contracts/design-tokens/tokens";
 import { engine } from "./engine/engine";
-import { allRecords, getAudioBytes, updateRecord } from "./engine/library";
-import { importFiles, pickAudioFiles, type ImportProgress } from "./engine/importer";
+import { allRecords, clearLibrary, getAudioBytes, updateRecord } from "./engine/library";
+import { importFiles, pickAudioFiles, rebuildLibrary, type ImportProgress } from "./engine/importer";
 import { player } from "./engine/player";
 import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
@@ -147,6 +147,35 @@ export default function App() {
       rebuildQueue(entryIndex, selection, recs);
     }
   }, [update.active, reload, screen, entryIndex, selection]);
+
+  const doRebuild = useCallback(async () => {
+    if (update.active) return;
+    const recs = await allRecords();
+    if (recs.length === 0) return;
+    // Clear every stored analysis/classification and recreate them from the
+    // stored audio bytes with the faithful PSP engine.
+    setUpdate({ active: true, done: 0, total: recs.length, errors: 0, skipped: 0 });
+    cancelImportRef.current = false;
+    await rebuildLibrary(
+      recs,
+      (p) => setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: 0 }),
+      () => cancelImportRef.current,
+    );
+    setUpdate((u) => ({ ...u, active: false }));
+    const fresh = await reload();
+    if (fresh.length > 0) rebuildQueue(entryIndex, selection, fresh);
+  }, [update.active, reload, entryIndex, selection]);
+
+  const doWipe = useCallback(async () => {
+    if (update.active) return;
+    player.stop();
+    await clearLibrary();
+    setQueue([]);
+    setQueuePos(0);
+    setPending(null);
+    await reload();
+    goScreen("empty");
+  }, [update.active, reload, goScreen]);
 
   const enterChannel = useCallback((idx: number) => {
     const q = rebuildQueue(idx, selection + 1, records);
@@ -342,6 +371,14 @@ export default function App() {
           onSettings={setSettings}
           onClearFavourites={() => void clearFavourites()}
           onClearBlocked={() => void clearBlocked()}
+          onRebuild={() => {
+            setMenuOpen(false);
+            void doRebuild();
+          }}
+          onWipe={() => {
+            setMenuOpen(false);
+            void doWipe();
+          }}
           onImport={() => {
             setMenuOpen(false);
             void doImport();

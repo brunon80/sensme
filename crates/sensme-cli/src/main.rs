@@ -50,6 +50,13 @@ enum Command {
         #[arg(short, long)]
         out: Option<String>,
     },
+    /// Analyze an audio file with the faithful PSP SensMe Channels algorithm
+    PspAnalyze {
+        path: String,
+        /// Print per-slot pair scores
+        #[arg(long)]
+        pairs: bool,
+    },
     /// Run a benchmark dataset and print the agreement report
     Bench { dataset: String },
     /// Generate the deterministic synthetic bench dataset
@@ -103,6 +110,28 @@ fn main() -> Result<()> {
                 lib.store_analysis(track.id, &fv)?;
             }
             println!("{}", serde_json::to_string_pretty(&fv)?);
+        }
+        Command::PspAnalyze { path, pairs } => {
+            let audio = sensme_audio::load_mono(&path, 22_050)?;
+            let res = sensme_psp::analyze_f32(&audio.samples, audio.sample_rate as u32);
+            println!("algorithm: {}", sensme_psp::PSP_ALGORITHM_VERSION);
+            println!(
+                "chunks={} runs={} mask={:013b}",
+                res.chunks, res.runs, res.mask
+            );
+            let names = sensme_psp::mask_names(res.mask);
+            if names.is_empty() {
+                println!("channels: (none)");
+            } else {
+                println!("channels: {}", names.join(", "));
+            }
+            println!("kind2: {:?}", res.kind2);
+            println!("kind3: {:?}", res.kind3);
+            if pairs {
+                for (i, p) in res.pairs.iter().enumerate() {
+                    println!("  slot {i:2}: {p}");
+                }
+            }
         }
         Command::Scan { path, db } => {
             let db_path = expand_tilde(&db);

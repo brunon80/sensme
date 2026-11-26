@@ -501,6 +501,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
+name = "libm"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
+
+[[package]]
 name = "libsqlite3-sys"
 version = "0.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -823,6 +829,7 @@ dependencies = [
  "rubato",
  "rustfft",
  "sensme-core",
+ "sensme-psp",
  "serde_json",
  "symphonia",
  "thiserror",
@@ -859,6 +866,7 @@ dependencies = [
  "sensme-bench",
  "sensme-classify",
  "sensme-core",
+ "sensme-psp",
  "serde_json",
 ]
 
@@ -886,12 +894,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sensme-psp"
+version = "0.1.0"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "sensme-wasm"
 version = "0.1.0"
 dependencies = [
  "sensme-audio",
  "sensme-classify",
  "sensme-core",
+ "sensme-psp",
  "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",

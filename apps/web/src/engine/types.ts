@@ -11,6 +11,7 @@ export interface ContractMeta {
   featureVectorVersion: number;
   axisWeightsVersion: string;
   channelWeightsVersion: string;
+  pspAlgorithmVersion: string;
   featureNames: string[];
   toneAxes: string[];
   channels: string[];

@@ -13,6 +13,7 @@ sensme-audio.workspace = true
 sensme-bench.workspace = true
 sensme-classify.workspace = true
 sensme-core.workspace = true
+sensme-psp.workspace = true
 serde_json.workspace = true
 
 [[bin]]

@@ -265,6 +265,22 @@ impl Library {
                 e => CoreError::Storage(e.to_string()),
             })
     }
+
+    /// Delete every track, analysis, and classification from the library
+    /// (schema is kept). Used to rebuild the library with a different
+    /// analysis engine.
+    pub fn clear_all(&mut self) -> Result<(), CoreError> {
+        self.conn
+            .execute_batch(
+                "BEGIN;
+                DELETE FROM classifications;
+                DELETE FROM analyses;
+                DELETE FROM tracks;
+                COMMIT;",
+            )
+            .map_err(|e| CoreError::Storage(e.to_string()))?;
+        Ok(())
+    }
 }
 
 fn row_to_track(r: &rusqlite::Row<'_>) -> rusqlite::Result<Track> {
@@ -377,6 +393,38 @@ mod tests {
             lib.analysis_for(id),
             Err(CoreError::AnalysisMissing(_))
         ));
+    }
+
+    #[test]
+    fn clear_all_removes_everything() {
+        let mut lib = Library::open_in_memory().unwrap();
+        let id = lib.upsert_track(&sample_track("/m/e.mp3")).unwrap();
+        let fv = FeatureVector {
+            algorithm_version: "0.1.0".into(),
+            feature_vector_version: 1,
+            values: vec![0.5],
+        };
+        lib.store_analysis(id, &fv).unwrap();
+        let axes = ToneAxes {
+            scores: [0.5; 12],
+            weights_version: "w1".into(),
+        };
+        let channels = ChannelScores {
+            scores: [1.0; 13],
+            weights_version: "w1".into(),
+        };
+        lib.store_classification(id, &axes, &channels).unwrap();
+        lib.clear_all().unwrap();
+        assert!(lib.all_tracks().unwrap().is_empty());
+        assert!(matches!(
+            lib.analysis_for(id),
+            Err(CoreError::AnalysisMissing(_))
+        ));
+        assert!(lib.classification_for(id).is_err());
+        // library stays usable after clearing
+        let id2 = lib.upsert_track(&sample_track("/m/f.mp3")).unwrap();
+        assert_eq!(lib.all_tracks().unwrap().len(), 1);
+        assert_ne!(id2, id);
     }
 
     #[test]

@@ -11,14 +11,16 @@ interface Props {
   onSettings: (s: Settings) => void;
   onClearFavourites: () => void;
   onClearBlocked: () => void;
+  onRebuild: () => void;
+  onWipe: () => void;
   onImport: () => void;
-  meta: { algorithmVersion: string; featureVectorVersion: number; axisWeightsVersion: string; channelWeightsVersion: string } | null;
+  meta: { algorithmVersion: string; featureVectorVersion: number; axisWeightsVersion: string; channelWeightsVersion: string; pspAlgorithmVersion?: string } | null;
   onClose: () => void;
 }
 
-type Page = "root" | "view" | "sound" | "help" | "about";
+type Page = "root" | "view" | "sound" | "database" | "help" | "about";
 
-export function Options({ settings, onSettings, onClearFavourites, onClearBlocked, onImport, meta, onClose }: Props) {
+export function Options({ settings, onSettings, onClearFavourites, onClearBlocked, onRebuild, onWipe, onImport, meta, onClose }: Props) {
   const [page, setPage] = useState<Page>("root");
   const [soundFx, setSoundFx] = useState(true);
   const [normalizer, setNormalizer] = useState(true);
@@ -40,6 +42,7 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
             {item("Music Scan", onImport, "add new music")}
             {item("Favourites Setting", onClearFavourites, "delete all")}
             {item("Block List Settings", onClearBlocked, "delete all")}
+            {item("Database Settings", () => setPage("database"), "rebuild / wipe")}
             {item("Help", () => setPage("help"))}
             {item("Check for Updates", () => undefined, "offline")}
             {item("About SensMe channels", () => setPage("about"))}
@@ -61,6 +64,13 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
             {item("Back", () => setPage("root"))}
           </>
         )}
+        {page === "database" && (
+          <>
+            {item("Clear and Rebuild", onRebuild, "re-analyze all music")}
+            {item("Delete All Music", onWipe, "remove everything")}
+            {item("Back", () => setPage("root"))}
+          </>
+        )}
         {page === "help" && (
           <div className="menu-text">
             ← → change channel · ◯/Enter select · ✕/Esc back · START/Space play or
@@ -75,7 +85,7 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
             SensMe — an independent, offline reimplementation inspired by Sony's
             SensMe channels. Not affiliated with Sony.
             <br />
-            algorithm {meta?.algorithmVersion} · features v{meta?.featureVectorVersion} ·
+            algorithm {meta?.pspAlgorithmVersion ?? meta?.algorithmVersion} · features v{meta?.featureVectorVersion} ·
             weights {meta?.axisWeightsVersion}
             {item("Back", () => setPage("root"))}
           </div>

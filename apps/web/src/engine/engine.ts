@@ -36,15 +36,17 @@ class Engine {
     this.worker.postMessage({ type: "init" });
   }
 
-  /** Decode + analyze + classify one file's bytes (deterministic, wasm). */
-  analyze(label: string, bytes: Uint8Array): Promise<{
+  /** Decode + analyze + classify one file's bytes (deterministic, wasm).
+   * `psp` selects the faithful PSP SensMe engine (default, the core
+   * analyzer); pass false for the legacy v1 feature pipeline. */
+  analyze(label: string, bytes: Uint8Array, psp = true): Promise<{
     featureVector: FeatureVector;
     classification: Classification;
   }> {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.worker.postMessage({ type: "analyze", id, label, bytes });
+      this.worker.postMessage({ type: "analyze", id, label, bytes, psp });
     });
   }
 
