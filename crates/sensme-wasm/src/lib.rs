@@ -27,8 +27,8 @@ pub fn start() {
 /// Returns a JS `Error` when the bytes contain no decodable audio.
 #[wasm_bindgen]
 pub fn analyze_bytes(label: &str, bytes: &[u8]) -> Result<JsValue, JsError> {
-    let fv = sensme_audio::analyze_bytes(label, bytes)
-        .map_err(|e| JsError::new(&format!("{e}")))?;
+    let fv =
+        sensme_audio::analyze_bytes(label, bytes).map_err(|e| JsError::new(&format!("{e}")))?;
     serde_wasm_bindgen::to_value(&fv).map_err(|e| JsError::new(&e.to_string()))
 }
 
@@ -59,8 +59,8 @@ struct AnalysisResult {
 
 #[wasm_bindgen]
 pub fn analyze_and_classify(label: &str, bytes: &[u8]) -> Result<JsValue, JsError> {
-    let fv = sensme_audio::analyze_bytes(label, bytes)
-        .map_err(|e| JsError::new(&format!("{e}")))?;
+    let fv =
+        sensme_audio::analyze_bytes(label, bytes).map_err(|e| JsError::new(&format!("{e}")))?;
     let classification = classify_vector(&fv)?;
     let result = AnalysisResult {
         feature_vector: fv,

@@ -28,8 +28,14 @@ fn write_wav(path: &Path, rate: usize, samples: &[f32]) {
     std::fs::write(path, bytes).expect("write wav");
 }
 
+/// Fixture root under the platform temp dir, unique per test process: CI
+/// runners have no `/tmp/opencode`, so a hardcoded scratch path fails there.
+fn fixture_root() -> PathBuf {
+    std::env::temp_dir().join(format!("sensme-analysis-tests-{}", std::process::id()))
+}
+
 fn fixture(name: &str) -> PathBuf {
-    PathBuf::from("/tmp/opencode/sensme-analysis-tests").join(name)
+    fixture_root().join(name)
 }
 
 fn click_wav(bpm: f32, secs: f32) -> PathBuf {
@@ -68,8 +74,7 @@ fn chord_wav(name: &str, freqs: &[f32], secs: f32) -> PathBuf {
 }
 
 fn setup() {
-    let dir = PathBuf::from("/tmp/opencode/sensme-analysis-tests");
-    std::fs::create_dir_all(&dir).expect("create fixture tmp");
+    std::fs::create_dir_all(fixture_root()).expect("create fixture dir");
 }
 
 #[test]

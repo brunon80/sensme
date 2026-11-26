@@ -45,10 +45,7 @@ fn bytes_entry_point_matches_file() {
         let from_file = analyze_file(&path).unwrap();
         let from_bytes =
             analyze_bytes(&format!("tone.{fmt}"), &bytes).unwrap_or_else(|e| panic!("{fmt}: {e}"));
-        assert_eq!(
-            from_file.values, from_bytes.values,
-            "{fmt}: bytes != file"
-        );
+        assert_eq!(from_file.values, from_bytes.values, "{fmt}: bytes != file");
     }
 }
 

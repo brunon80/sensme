@@ -71,11 +71,7 @@ pub fn load_mono(path: &str, target_rate: usize) -> Result<Audio, AudioError> {
 ///
 /// # Errors
 /// Same as [`load_mono`].
-pub fn load_mono_bytes(
-    label: &str,
-    bytes: &[u8],
-    target_rate: usize,
-) -> Result<Audio, AudioError> {
+pub fn load_mono_bytes(label: &str, bytes: &[u8], target_rate: usize) -> Result<Audio, AudioError> {
     let mut hint = symphonia::core::formats::probe::Hint::new();
     if let Some(ext) = std::path::Path::new(label)
         .extension()
@@ -83,7 +79,12 @@ pub fn load_mono_bytes(
     {
         hint.with_extension(ext);
     }
-    decode_reader(label, std::io::Cursor::new(bytes.to_vec()), &hint, target_rate)
+    decode_reader(
+        label,
+        std::io::Cursor::new(bytes.to_vec()),
+        &hint,
+        target_rate,
+    )
 }
 
 fn decode_reader<R>(
@@ -220,6 +221,15 @@ fn resample(mono: &[f32], from: usize, to: usize, path: &str) -> Result<Vec<f32>
 mod tests {
     use super::*;
 
+    /// Scratch dir under the platform temp dir, unique per test. Tests must
+    /// not hardcode a machine-specific path: CI runners have no
+    /// `/tmp/opencode`, and parallel tests must not collide.
+    fn scratch_dir(tag: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("sensme-{tag}-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("create scratch dir");
+        dir
+    }
+
     /// Write a mono PCM16 WAV for tests (no external fixture needed).
     pub fn write_test_wav(path: &str, rate: usize, samples: &[f32]) {
         let data_len = (samples.len() * 2) as u32;
@@ -252,32 +262,41 @@ mod tests {
 
     #[test]
     fn decode_wav_resamples_to_target() {
-        let path = "/tmp/opencode/sensme-test-decode.wav";
-        write_test_wav(path, 44_100, &sine(440.0, 1.0, 44_100));
-        let audio = load_mono(path, 22_050).expect("decode");
+        let dir = scratch_dir("audio-decode");
+        let wav = dir.join("decode.wav");
+        let wav = wav.to_str().unwrap();
+        write_test_wav(wav, 44_100, &sine(440.0, 1.0, 44_100));
+        let audio = load_mono(wav, 22_050).expect("decode");
         assert_eq!(audio.sample_rate, 22_050);
         // ~1 second of audio at 22.05 kHz
         assert!((audio.samples.len() as f32 - 22_050.0).abs() < 200.0);
-        let _ = std::fs::remove_file(path);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn decode_preserves_amplitude_scale() {
         // samples must stay in -1..=1 (f32 normalized), not raw integer scale
-        let path = "/tmp/opencode/sensme-test-amp.wav";
-        write_test_wav(path, 44_100, &sine(440.0, 1.0, 44_100));
-        let audio = load_mono(path, 22_050).expect("decode");
+        let dir = scratch_dir("audio-amp");
+        let wav = dir.join("amp.wav");
+        let wav = wav.to_str().unwrap();
+        write_test_wav(wav, 44_100, &sine(440.0, 1.0, 44_100));
+        let audio = load_mono(wav, 22_050).expect("decode");
         let peak = audio.samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
         assert!(
             (peak - 0.8).abs() < 0.05,
             "decoded peak amplitude {peak}, expected ~0.8"
         );
-        let _ = std::fs::remove_file(path);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn decode_missing_file_errors() {
-        let err = load_mono("/tmp/opencode/definitely-missing.wav", 22_050);
+        let missing = scratch_dir("audio-missing")
+            .join("definitely-missing.wav")
+            .to_str()
+            .unwrap()
+            .to_string();
+        let err = load_mono(&missing, 22_050);
         assert!(matches!(err, Err(AudioError::Io { .. })));
     }
 }

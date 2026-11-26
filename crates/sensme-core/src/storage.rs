@@ -468,16 +468,18 @@ mod extra_tests {
 
     #[test]
     fn file_database_persists_across_reopen() {
-        let path = std::path::Path::new("/tmp/opencode/sensme-storage-persist.db");
-        let _ = std::fs::remove_file(path);
+        // Platform temp dir, unique per test: CI runners have no
+        // `/tmp/opencode`, and parallel tests must not collide.
+        let path = std::env::temp_dir().join(format!("sensme-storage-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&path);
         {
-            let mut lib = Library::open(path).unwrap();
+            let mut lib = Library::open(&path).unwrap();
             lib.upsert_track(&track("/m/persist.mp3", "Kept")).unwrap();
         }
-        let lib = Library::open(path).unwrap();
+        let lib = Library::open(&path).unwrap();
         let t = lib.track_by_path("/m/persist.mp3").unwrap().unwrap();
         assert_eq!(t.title.as_deref(), Some("Kept"));
-        let _ = std::fs::remove_file(path);
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]

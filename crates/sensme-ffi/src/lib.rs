@@ -155,8 +155,16 @@ mod tests {
 
     #[test]
     fn analyze_missing_file_errors() {
+        // Platform temp dir: CI runners have no `/tmp/opencode`.
+        let missing = std::env::temp_dir()
+            .join(format!(
+                "sensme-definitely-missing-{}.wav",
+                std::process::id()
+            ))
+            .to_string_lossy()
+            .into_owned();
         assert!(matches!(
-            analyze_file("/tmp/opencode/definitely-missing.wav".into()),
+            analyze_file(missing),
             Err(FfiError::Analysis { .. })
         ));
     }

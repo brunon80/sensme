@@ -123,6 +123,15 @@ fn scan_one(lib: &mut Library, path: &Path) -> Result<ScanOutcome, CoreError> {
 mod tests {
     use super::*;
 
+    /// Fresh scratch dir under the platform temp dir, unique per test: CI
+    /// runners have no `/tmp/opencode`, and parallel tests must not collide.
+    fn scratch_dir(tag: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("sensme-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create scratch dir");
+        dir
+    }
+
     /// Minimal mono PCM16 WAV writer for tests.
     fn write_wav(path: &Path, rate: usize, samples: &[f32]) {
         let data_len = (samples.len() * 2) as u32;
@@ -149,8 +158,7 @@ mod tests {
 
     #[test]
     fn scan_finds_audio_and_skips_unchanged() {
-        let dir = std::path::Path::new("/tmp/opencode/sensme-scan-test");
-        let _ = std::fs::remove_dir_all(dir);
+        let dir = scratch_dir("scan-test");
         std::fs::create_dir_all(dir.join("sub")).unwrap();
         let sine: Vec<f32> = (0..4410)
             .map(|i| (2.0 * std::f32::consts::PI * 440.0 * i as f32 / 44100.0).sin() * 0.5)
@@ -160,7 +168,7 @@ mod tests {
         std::fs::write(dir.join("notes.txt"), "not audio").unwrap();
 
         let mut lib = Library::open_in_memory().unwrap();
-        let stats = scan_directory(&mut lib, dir).unwrap();
+        let stats = scan_directory(&mut lib, &dir).unwrap();
         assert_eq!(
             (stats.added, stats.updated, stats.unchanged, stats.skipped),
             (2, 0, 0, 0)
@@ -170,15 +178,24 @@ mod tests {
         assert!(tracks.iter().all(|t| t.duration_ms > 0));
 
         // second pass: everything unchanged
-        let stats2 = scan_directory(&mut lib, dir).unwrap();
+        let stats2 = scan_directory(&mut lib, &dir).unwrap();
         assert_eq!((stats2.added, stats2.unchanged), (0, 2));
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
 
 #[cfg(test)]
 mod extra_tests {
     use super::*;
+
+    /// Fresh scratch dir under the platform temp dir, unique per test (see
+    /// the `tests` module: CI runners have no `/tmp/opencode`).
+    fn scratch_dir(tag: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("sensme-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create scratch dir");
+        dir
+    }
 
     fn write_wav(path: &Path, rate: usize, n: usize) {
         let samples: Vec<f32> = (0..n)
@@ -208,28 +225,24 @@ mod extra_tests {
 
     #[test]
     fn modified_file_is_reported_as_updated() {
-        let dir = std::path::Path::new("/tmp/opencode/sensme-scan-upd");
-        let _ = std::fs::remove_dir_all(dir);
-        std::fs::create_dir_all(dir).unwrap();
+        let dir = scratch_dir("scan-upd");
         let f = dir.join("a.wav");
         write_wav(&f, 44_100, 4410);
         let mut lib = Library::open_in_memory().unwrap();
-        assert_eq!(scan_directory(&mut lib, dir).unwrap().added, 1);
+        assert_eq!(scan_directory(&mut lib, &dir).unwrap().added, 1);
         // rewrite with different size -> size change detected
         write_wav(&f, 44_100, 8820);
-        let stats = scan_directory(&mut lib, dir).unwrap();
+        let stats = scan_directory(&mut lib, &dir).unwrap();
         assert_eq!((stats.updated, stats.added), (1, 0));
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn uppercase_extension_is_accepted() {
-        let dir = std::path::Path::new("/tmp/opencode/sensme-scan-case");
-        let _ = std::fs::remove_dir_all(dir);
-        std::fs::create_dir_all(dir).unwrap();
+        let dir = scratch_dir("scan-case");
         write_wav(&dir.join("A.WAV"), 44_100, 4410);
         let mut lib = Library::open_in_memory().unwrap();
-        assert_eq!(scan_directory(&mut lib, dir).unwrap().added, 1);
-        let _ = std::fs::remove_dir_all(dir);
+        assert_eq!(scan_directory(&mut lib, &dir).unwrap().added, 1);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
