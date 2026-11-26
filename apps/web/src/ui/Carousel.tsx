@@ -61,16 +61,16 @@ export function Carousel({ selected, counts, phase }: Props) {
         const vShift = g.rowCurve * (1 - Math.cos(theta)) * 100; // rows bow inward
         const dim = 1 - Math.min(2, Math.abs(col)) * 0.12; // far cards darker
         const style = {
-          width: `${t.card.w * 100}vw`,
-          height: `${t.card.h * 100}vh`,
-          bottom: `${(row === 0 ? bottomVh + vShift : topVh - vShift)}vh`,
-          transform: `translateX(calc(-50% + ${x}vw)) translateZ(${z}vw) rotateY(${rotY}deg) scale(${sel ? t.selectedScale : 1})`,
+          width: `${t.card.w * 100}dvw`,
+          height: `${t.card.h * 100}dvh`,
+          bottom: `${(row === 0 ? bottomVh + vShift : topVh - vShift)}dvh`,
+          transform: `translateX(calc(-50% + ${x}dvw)) translateZ(${z}dvw) rotateY(${rotY}deg) scale(${sel ? t.selectedScale : 1})`,
           opacity: (empty ? 0.8 : 1) * dim,
           zIndex: 30 + Math.abs(col) * 2,
           borderRadius: `${t.tileRadius * 100}vmin`,
         };
         return (
-          <div key={entry} className={`tile ${sel ? "tile-sel" : ""}`} style={style}>
+          <div key={entry} className={`tile ${sel ? "tile-sel" : ""}`} style={style} data-entry={entry}>
             <img src={photoUrlFor(entry)} alt="" draggable={false} />
             {row === 0 && (
               <div className="tile-reflect" style={{ backgroundImage: `url(${photoUrlFor(entry)})` }} />
@@ -79,7 +79,7 @@ export function Carousel({ selected, counts, phase }: Props) {
         );
       })}
       {/* keyed by selection so the name crossfades on every change */}
-      <div className="carousel-name" key={CAROUSEL_ORDER[selected]} style={{ bottom: `${nameBottom}vh`, top: "auto" }}>
+      <div className="carousel-name" key={CAROUSEL_ORDER[selected]} style={{ bottom: `${nameBottom}dvh`, top: "auto" }}>
         {entryName(CAROUSEL_ORDER[selected]!)}
         <span className="carousel-name-reflect" aria-hidden="true">
           {entryName(CAROUSEL_ORDER[selected]!)}

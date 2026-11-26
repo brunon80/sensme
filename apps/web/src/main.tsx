@@ -38,6 +38,18 @@ window.__sensme = {
   mediaSession: { supported: mediaSessionSupported, lastPositionState },
 };
 
+// Landscape lock (UI_SPEC §9): best-effort where the browser allows it
+// (installed PWA / fullscreen on Android); the manifest declares
+// orientation for installed apps, and the rotate overlay covers the rest.
+// `lock` is not in the standard ScreenOrientation typings (Chromium-only).
+const orientation = screen.orientation as ScreenOrientation & {
+  lock?: (o: "landscape") => Promise<void>;
+};
+if (window.matchMedia?.("(pointer: coarse)").matches && orientation.lock) {
+  const tryLock = () => void orientation.lock?.("landscape").catch(() => {});
+  window.addEventListener("pointerdown", tryLock, { once: true });
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />

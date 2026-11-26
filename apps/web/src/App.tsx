@@ -15,10 +15,12 @@ import { mimeForName, player } from "./engine/player";
 import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
 import { CAROUSEL_ORDER, entryHues, entryTracks, shuffledQueue } from "./ui/channels";
-import { captionsFor, detectPlatform } from "./ui/controls";
+import { captionsFor, detectPlatform, type ActionId } from "./ui/controls";
 import { NowPlaying } from "./ui/NowPlaying";
 import { Options, type Settings } from "./ui/Options";
+import { RotateHint } from "./ui/RotateHint";
 import { Scene } from "./ui/Scene";
+import { useTouchGestures } from "./ui/touch";
 
 type Screen = "boot" | "empty" | "carousel" | "nowplaying";
 
@@ -259,72 +261,132 @@ export default function App() {
     if (q.length > 0) void playAt(0, q);
   }, [records, selection, playAt, goScreen]);
 
+  // ---- shared action dispatcher (UI_SPEC §9) ----
+  // Keyboard bindings, caption buttons and touch gestures all resolve to the
+  // same actions, so platform inputs cannot drift apart (interaction-model.md).
+  function runAction(id: ActionId) {
+    if (menuOpenRef.current) {
+      if (id === "back") setMenuOpen(false);
+      return;
+    }
+    if (update.active && id === "back") {
+      cancelImportRef.current = true; // ✕ Cancel (UI_SPEC §4)
+      return;
+    }
+    switch (id) {
+      case "back":
+        if (screen === "carousel") goScreen("nowplaying");
+        else if (pending !== null) setPending(null); // cancel candidate
+        else if (screen === "nowplaying" || screen === "boot") goScreen("carousel"); // toggle channels
+        break;
+      case "select":
+        if (screen === "carousel") {
+          if (entryTracks(entry, records).length > 0) enterChannel(entryIndex);
+        } else if (pending !== null) confirmPending();
+        break;
+      case "play":
+        if (screen === "empty") void doImport();
+        else if (pending !== null) confirmPending(); // START confirms candidate
+        else if (current) {
+          // START: play/pause toggle. From stopped, (re)load the current
+          // track's bytes and play it (player.toggle alone can't start).
+          if (player.state === "playing") player.pause();
+          else if (player.state === "paused") player.resume();
+          else void playAt(queuePos, queue);
+        }
+        break;
+      case "prev":
+        prev();
+        break;
+      case "next":
+        next();
+        break;
+      case "colLeft":
+        if (screen === "carousel") setEntryIndex((i) => Math.max(0, i - 2)); // one column left
+        break;
+      case "colRight":
+        if (screen === "carousel") setEntryIndex((i) => Math.min(CAROUSEL_ORDER.length - 1, i + 2));
+        break;
+      case "rowUp":
+        if (screen === "carousel")
+          setEntryIndex((i) => (i % 2 === 0 && i + 1 < CAROUSEL_ORDER.length ? i + 1 : i));
+        break;
+      case "rowDown":
+        if (screen === "carousel") setEntryIndex((i) => (i % 2 === 1 ? i - 1 : i));
+        break;
+      case "add":
+        void doImport();
+        break;
+      case "menu":
+        setMenuOpen(true);
+        break;
+      case "favourite":
+        if (current) void toggleFavourite(current, !current.favourite);
+        break;
+      case "change":
+        if (screen === "carousel") goScreen("nowplaying");
+        else if (screen === "nowplaying" || screen === "boot") goScreen("carousel");
+        break;
+    }
+  }
+
   // ---- PSP button map (interaction-model.md) ----
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (menuOpenRef.current) {
-        if (e.key === "Escape" || e.key === "x" || e.key === "X") setMenuOpen(false);
+      // ✕ shortcuts (menu close / import cancel) have no ActionId of their
+      // own beyond "back"; keep the raw-key guards for x/X.
+      if (menuOpenRef.current && (e.key === "x" || e.key === "X")) {
+        setMenuOpen(false);
         return;
       }
-      if (update.active && (e.key === "Escape" || e.key === "x" || e.key === "X")) {
+      if (update.active && (e.key === "x" || e.key === "X")) {
         cancelImportRef.current = true; // ✕ Cancel (UI_SPEC §4)
         return;
       }
       switch (e.key) {
         case "ArrowLeft":
-          if (screen === "carousel") setEntryIndex((i) => Math.max(0, i - 2)); // one column left
-          else if (screen === "nowplaying") void prev();
+          if (screen === "carousel") runAction("colLeft");
+          else if (screen === "nowplaying") runAction("prev");
           break;
         case "ArrowRight":
-          if (screen === "carousel") setEntryIndex((i) => Math.min(CAROUSEL_ORDER.length - 1, i + 2));
-          else if (screen === "nowplaying") void next();
+          if (screen === "carousel") runAction("colRight");
+          else if (screen === "nowplaying") runAction("next");
           break;
         case "ArrowUp":
-          if (screen === "carousel")
-            setEntryIndex((i) => (i % 2 === 0 && i + 1 < CAROUSEL_ORDER.length ? i + 1 : i));
+          runAction("rowUp");
           break;
         case "ArrowDown":
-          if (screen === "carousel") setEntryIndex((i) => (i % 2 === 1 ? i - 1 : i));
+          runAction("rowDown");
           break;
         case ",":
-          void prev();
+          runAction("prev");
           break;
         case ".":
-          void next();
+          runAction("next");
           break;
         case "Enter":
-          if (screen === "carousel") {
-            if (entryTracks(entry, records).length > 0) enterChannel(entryIndex);
-          } else if (pending !== null) confirmPending();
+          runAction("select");
           break;
         case "Escape":
-          if (screen === "carousel") goScreen("nowplaying");
-          else if (pending !== null) setPending(null); // cancel candidate
-          else if (screen === "nowplaying" || screen === "boot") goScreen("carousel"); // toggle channels
+          runAction("back");
           break;
         case " ":
           e.preventDefault();
-          if (screen === "empty") void doImport();
-          else if (pending !== null) confirmPending(); // START confirms candidate
-          else if (current) {
-            // START: play/pause toggle. From stopped, (re)load the current
-            // track's bytes and play it (player.toggle alone can't start).
-            if (player.state === "playing") player.pause();
-            else if (player.state === "paused") player.resume();
-            else void playAt(queuePos, queue);
-          }
+          runAction("play");
           break;
         case "c":
         case "C":
-          void doImport();
+          runAction("add");
           break;
         case "o":
         case "O":
-          setMenuOpen(true);
+          runAction("menu");
           break;
         case "f":
         case "F":
-          if (current) void toggleFavourite(current, !e.shiftKey);
+          // f favours, shift+F unfavours (keyboard-only nuance; the touch
+          // caption button toggles).
+          if (!menuOpenRef.current && current) void toggleFavourite(current, !e.shiftKey);
           break;
       }
     };
@@ -332,6 +394,48 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, entryIndex, entry, records, current, queue, queuePos, pending, update.active, doImport, enterChannel]);
+
+  // ---- touch gestures (UI_SPEC §9) ----
+  // Tap = ◯/START, horizontal swipe = D-pad ←/→ (L/R staging on now-playing),
+  // vertical swipe = D-pad ↑/↓ (SELECT on now-playing). Same dispatcher as the
+  // keyboard, so behaviour is identical across platforms.
+  useTouchGestures((g) => {
+    if (menuOpenRef.current) return; // menu items are buttons themselves
+    if (g.type === "swipe") {
+      if (screen === "carousel") {
+        if (g.dir === "left") runAction("colLeft");
+        else if (g.dir === "right") runAction("colRight");
+        else if (g.dir === "up") runAction("rowUp");
+        else runAction("rowDown");
+      } else if (screen === "nowplaying") {
+        if (g.dir === "left") runAction("next");
+        else if (g.dir === "right") runAction("prev");
+        else runAction("change");
+      }
+      return;
+    }
+    // tap
+    if (screen === "empty") {
+      runAction("play"); // ◯ Import Music…
+      return;
+    }
+    if (screen === "carousel") {
+      const tile = document.elementFromPoint(g.x, g.y)?.closest("[data-entry]");
+      const name = tile?.getAttribute("data-entry");
+      if (name) {
+        const idx = CAROUSEL_ORDER.indexOf(name as (typeof CAROUSEL_ORDER)[number]);
+        // Empty channels stay dimmed and unselectable (R-2 hint).
+        if (idx >= 0 && entryTracks(CAROUSEL_ORDER[idx]!, records).length > 0) {
+          if (idx === entryIndex) runAction("select"); // tap the selected card = ◯
+          else setEntryIndex(idx);
+        }
+        return;
+      }
+      runAction("select"); // tap elsewhere = ◯
+      return;
+    }
+    runAction("play"); // now-playing tap = START
+  });
 
   async function toggleFavourite(rec: LibraryRecord, fav: boolean) {
     await updateRecord({ ...rec, favourite: fav });
@@ -378,6 +482,7 @@ export default function App() {
   return (
     <div className="app">
       <Scene sceneKey={entry} hues={hues} />
+      <RotateHint />
 
       {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
       {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={entry} playing={playing} phase={npPhase} />}
@@ -429,15 +534,23 @@ export default function App() {
       ) : null}
       {settings.showCaptions && captionSegs.length > 0 && (
         <div className="captions">
-          {captionSegs.map((c) => (
-            <span className="cap" key={`${c.key}-${c.desc}`}>
-              <span className="cap-key">{c.key}</span>
-              <span className="cap-desc">{c.desc}</span>
-            </span>
-          ))}
+          {captionSegs.map((c) =>
+            // Touch platforms: chips are real controls (UI_SPEC §9); desktop
+            // keeps them as static help text.
+            platform === "touch" ? (
+              <button className="cap cap-btn" key={`${c.key}-${c.desc}`} onClick={() => runAction(c.action)}>
+                <span className="cap-key">{c.key}</span>
+                <span className="cap-desc">{c.desc}</span>
+              </button>
+            ) : (
+              <span className="cap" key={`${c.key}-${c.desc}`}>
+                <span className="cap-key">{c.key}</span>
+                <span className="cap-desc">{c.desc}</span>
+              </span>
+            ),
+          )}
         </div>
       )}
-
       {menuOpen && (
         <Options
           settings={settings}

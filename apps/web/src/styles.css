@@ -7,6 +7,12 @@
   font-family: var(--sensme-type-family);
   color: var(--sensme-color-textPrimary);
   user-select: none;
+  /* Mobile (UI_SPEC §9): the app owns every gesture (ui/touch.ts) and never
+     scrolls, so `touch-action: none` keeps Chromium from stealing touch
+     sequences for panning (which would fire pointercancel mid-swipe). */
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scene {
@@ -14,6 +20,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  touch-action: none;
 }
 
 /* ---- carousel (UI_SPEC §1) ---- */
@@ -22,7 +29,7 @@
   inset: 0;
   pointer-events: none;
   /* Globe effect: tiles sit on a cylinder seen from `perspVh` away. */
-  perspective: calc(var(--sensme-layout-carousel-globe-perspVh) * 100vh);
+  perspective: calc(var(--sensme-layout-carousel-globe-perspVh) * 100dvh);
 }
 .tile {
   position: absolute;
@@ -30,6 +37,10 @@
   overflow: visible;
   will-change: transform, opacity;
   transform-origin: center center;
+  /* Hit-testable for tap-to-select on touch (UI_SPEC §9); the carousel
+     container itself stays pointer-events: none. */
+  pointer-events: auto;
+  touch-action: none;
   transition: transform calc(var(--sensme-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1),
     opacity calc(var(--sensme-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
   /* Tiles newly scrolled into view fade in instead of popping at the edge. */
@@ -72,8 +83,8 @@
   z-index: 40;
   animation: fadeUp calc(var(--sensme-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
   text-align: center;
-  top: calc(var(--sensme-layout-carousel-nameY) * 100vh);
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
+  top: calc(var(--sensme-layout-carousel-nameY) * 100dvh);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh);
   font-weight: var(--sensme-type-title-weight);
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 14px rgba(0, 0, 0, 0.6);
@@ -93,6 +104,7 @@
 .nowplaying {
   position: absolute;
   inset: 0;
+  touch-action: none;
 }
 .np-track {
   position: absolute;
@@ -129,22 +141,22 @@
   justify-content: center;
 }
 .art-placeholder span {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh * 3);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh * 3);
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 .np-text {
   position: absolute;
-  right: calc(var(--sensme-layout-title-rightMargin) * 100vw);
-  top: calc(var(--sensme-layout-title-baselineY) * 100vh - calc(var(--sensme-type-title-sizeH) * 100vh));
-  max-width: 44vw;
+  right: calc(var(--sensme-layout-title-rightMargin) * 100dvw);
+  top: calc(var(--sensme-layout-title-baselineY) * 100dvh - calc(var(--sensme-type-title-sizeH) * 100dvh));
+  max-width: 44dvw;
   text-align: right;
   z-index: 20;
 }
 /* Title/artist mirrored on the glossy floor (PSP reflection). */
 .np-text-reflect {
   position: absolute;
-  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100dvh);
   font-weight: var(--sensme-type-npTitle-weight);
   left: 0;
   right: 0;
@@ -155,7 +167,7 @@
   pointer-events: none;
 }
 .np-title {
-  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100dvh);
   font-weight: var(--sensme-type-npTitle-weight);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
   white-space: nowrap;
@@ -165,10 +177,10 @@
 .np-rule {
   height: 1px;
   background: var(--sensme-color-rule);
-  margin: 0.4vh 0;
+  margin: 0.4dvh 0;
 }
 .np-second {
-  font-size: calc(var(--sensme-type-npBody-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-npBody-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
   white-space: nowrap;
   overflow: hidden;
@@ -176,15 +188,15 @@
 }
 .dotgrid {
   position: absolute;
-  top: calc(var(--sensme-layout-clock-topMargin) * 100vh + 4vh);
-  right: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
+  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh + 4dvh);
+  right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.2vh;
+  gap: 1.2dvh;
 }
 .dot {
-  width: 1.6vh;
-  height: 1.6vh;
+  width: 1.6dvh;
+  height: 1.6dvh;
   border-radius: 50%;
 }
 .dot-on {
@@ -192,29 +204,29 @@
 }
 .np-playing-tag {
   position: absolute;
-  left: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
-  top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
-  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  left: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
+  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
+  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
 }
 
 /* ---- furniture (R-2) ---- */
 .clock {
   position: absolute;
-  top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
-  right: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
-  font-size: calc(var(--sensme-type-clock-sizeH) * 100vh);
+  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
+  right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
+  font-size: calc(var(--sensme-type-clock-sizeH) * 100dvh);
   font-weight: var(--sensme-type-clock-weight);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 .captions {
   position: absolute;
-  left: calc(var(--sensme-layout-edgePad) * 100vw);
-  top: calc(var(--sensme-layout-caption-baselineY) * 100vh);
+  left: calc(var(--sensme-layout-edgePad) * 100dvw + env(safe-area-inset-left));
+  top: calc(var(--sensme-layout-caption-baselineY) * 100dvh);
   display: flex;
   align-items: center;
-  gap: 1.4vw;
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  gap: 1.4dvw;
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   font-weight: var(--sensme-type-caption-weight);
   color: var(--sensme-color-textSecondary);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
@@ -223,10 +235,10 @@
 .cap {
   display: inline-flex;
   align-items: center;
-  gap: 0.45vw;
+  gap: 0.45dvw;
 }
 .cap-key {
-  padding: 0.45vh 0.6vw;
+  padding: 0.45dvh 0.6dvw;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 0.7vmin;
   background: rgba(255, 255, 255, 0.14);
@@ -237,9 +249,9 @@
 }
 .update-icon {
   position: absolute;
-  left: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
-  top: calc(var(--sensme-layout-clock-topMargin) * 100vh);
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh);
+  left: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
+  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh);
   animation: spin 1.2s linear infinite;
 }
 @keyframes spin {
@@ -249,9 +261,9 @@
 }
 .status {
   position: absolute;
-  left: calc(var(--sensme-layout-clock-rightMargin) * 100vw);
-  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100vh);
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  left: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
+  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100dvh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
 }
 
@@ -268,9 +280,9 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: calc(var(--sensme-layout-update-cardW) * 100vw);
+  width: calc(var(--sensme-layout-update-cardW) * 100dvw);
   box-sizing: border-box;
-  padding: 3.2vh 2.6vw;
+  padding: 3.2dvh 2.6dvw;
   text-align: center;
   background: var(--sensme-color-menuPanel);
   border: 1px solid var(--sensme-color-tileBorderDim);
@@ -280,19 +292,19 @@
   animation: fadeUp calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
 }
 .update-card-logo {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh * 1.6);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh * 1.6);
   font-weight: var(--sensme-type-title-weight);
   letter-spacing: 0.08em;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
 }
 .update-card-label {
-  margin-top: 1.6vh;
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  margin-top: 1.6dvh;
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
 }
 .update-bar {
-  height: calc(var(--sensme-layout-update-barH) * 100vh);
-  margin: 2vh 0 1.2vh;
+  height: calc(var(--sensme-layout-update-barH) * 100dvh);
+  margin: 2dvh 0 1.2dvh;
   background: var(--sensme-color-barTrack);
   border-radius: calc(var(--sensme-layout-update-barRadius) * 100vmin);
   overflow: hidden;
@@ -305,12 +317,12 @@
   transition: width calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
 }
 .update-card-errors {
-  font-size: calc(var(--sensme-type-small-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-small-sizeH) * 100dvh);
   color: var(--sensme-color-textTertiary);
-  margin-bottom: 0.8vh;
+  margin-bottom: 0.8dvh;
 }
 .update-card-cancel {
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   color: var(--sensme-color-textTertiary);
 }
 
@@ -330,14 +342,14 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--sensme-layout-menu-panelLeft) * 100vw);
+  left: calc(var(--sensme-layout-menu-panelLeft) * 100dvw);
   right: 0;
   background: var(--sensme-color-menuPanel);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc((var(--sensme-layout-menu-itemLineHeight) - var(--sensme-type-body-sizeH)) * 100vh);
+  gap: calc((var(--sensme-layout-menu-itemLineHeight) - var(--sensme-type-body-sizeH)) * 100dvh);
   animation: slidein calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
 }
 @keyframes slidein {
@@ -350,33 +362,33 @@
   border: none;
   color: var(--sensme-color-textSecondary);
   font-family: inherit;
-  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
   cursor: pointer;
-  padding: 0.4vh 1vw;
+  padding: 0.4dvh 1dvw;
 }
 .menu-item:hover {
   color: var(--sensme-color-textPrimary);
   font-weight: 600;
 }
 .menu-note {
-  font-size: calc(var(--sensme-type-small-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-small-sizeH) * 100dvh);
   color: var(--sensme-color-textTertiary);
-  margin-left: 0.6vw;
+  margin-left: 0.6dvw;
 }
 .menu-text {
   max-width: 80%;
   text-align: center;
-  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
   line-height: 1.6;
   display: flex;
   flex-direction: column;
-  gap: 1vh;
+  gap: 1dvh;
 }
 .menu-caption {
   position: absolute;
-  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100vh);
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100dvh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
 }
 
@@ -388,22 +400,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2vh;
+  gap: 2dvh;
 }
 .empty-logo {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100vh * 2.4);
+  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh * 2.4);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 .empty-sub {
-  font-size: calc(var(--sensme-type-body-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
 }
 .empty-btn {
-  margin-top: 2vh;
-  padding: 1.2vh 2.4vw;
+  margin-top: 2dvh;
+  padding: 1.2dvh 2.4dvw;
   font-family: inherit;
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   font-weight: var(--sensme-type-caption-weight);
   color: var(--sensme-color-textPrimary);
   background: rgba(255, 255, 255, 0.12);
@@ -415,7 +427,7 @@
   background: rgba(255, 255, 255, 0.2);
 }
 .empty-hint {
-  font-size: calc(var(--sensme-type-small-sizeH) * 100vh);
+  font-size: calc(var(--sensme-type-small-sizeH) * 100dvh);
   color: var(--sensme-color-textTertiary);
 }
 
@@ -438,7 +450,7 @@
 @keyframes carouselOut {
   to {
     opacity: 0;
-    transform: translateX(18vw);
+    transform: translateX(18dvw);
   }
 }
 .nowplaying.enter {
@@ -454,11 +466,77 @@
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(1.2vh);
+    transform: translateY(1.2dvh);
   }
 }
 @keyframes fadeOut {
   to {
     opacity: 0;
   }
+}
+
+/* ---- caption chips as controls on touch (UI_SPEC §9) ---- */
+/* Same look as the static .cap chips; the extra padding grows the touch
+   target while the negative margin keeps the strip layout identical. */
+.cap-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 1.2dvh 0.8dvw;
+  margin: -1.2dvh -0.8dvw;
+  -webkit-tap-highlight-color: transparent;
+}
+.cap-btn:active .cap-key {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+/* ---- landscape lock (UI_SPEC §9) ---- */
+/* The PSP is a landscape 16:9 device: on coarse-pointer devices in portrait
+   this overlay covers the whole scene until the device is turned. */
+.rotate-hint {
+  display: none;
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotate-hint {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5vmin;
+    background: rgba(0, 0, 0, 0.94);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+.rotate-glyph {
+  width: 16vmin;
+  height: 28vmin;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 2vmin;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
+  animation: rotateHint 2.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+@keyframes rotateHint {
+  0%,
+  15% {
+    transform: rotate(0deg);
+  }
+  45%,
+  60% {
+    transform: rotate(90deg);
+  }
+  90%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.rotate-text {
+  font-size: calc(var(--sensme-type-body-sizeH) * 100vmin);
+  color: var(--sensme-color-textSecondary);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }

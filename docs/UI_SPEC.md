@@ -199,6 +199,52 @@ viewport height (PSP px in comments). Motion durations measured from
 R-6 video frames (transition completes in ~10 frames @30 fps ⇒
 300–380 ms; ripple loop estimated).
 
+## 9. Mobile & touch adaptation (AGENTS §6: input adaptation, not redesign)
+
+The visual model is unchanged on touch devices; only input mechanisms and
+viewport handling adapt.
+
+### Landscape lock
+
+The PSP is a landscape 16:9 device, so the app is landscape-only on
+touch devices (product-owner decision 2026-11-26):
+
+- PWA manifest declares `orientation: "landscape"` (installed apps open
+  locked).
+- Best-effort `screen.orientation.lock("landscape")` on the first touch
+  (works where the browser allows it, e.g. Android in fullscreen/PWA;
+  failures are ignored).
+- In portrait on a coarse-pointer device, a PSP-style rotate overlay
+  (dark scrim, rotating device glyph, "Rotate your device") covers the
+  whole screen until the device is turned. Desktop (fine pointer) is
+  never affected.
+
+### Touch input map (identical semantics to the PSP buttons)
+
+| Gesture / control            | Carousel (SELECT)              | Now playing                     |
+| ---------------------------- | ------------------------------ | ------------------------------- |
+| Tap (empty area / artwork)   | ◯ Select channel               | START play/pause (confirm)      |
+| Tap a tile                   | move selection to that tile    | —                               |
+| Swipe ← / →                  | D-pad column left/right        | L / R stage prev/next candidate |
+| Swipe ↑ / ↓                  | D-pad row up/down              | SELECT → channel carousel       |
+| Caption chip (now a button)  | ✕ Back · ◯ Select              | SELECT · START · L · R · ♥ · OPTIONS |
+
+Caption chips render as buttons on coarse-pointer devices and trigger
+exactly the same actions as the keyboard bindings; on desktop they stay
+static help text. All touch actions go through the same action
+dispatcher as the keyboard map (`interaction-model.md`), so behaviour
+cannot drift between platforms.
+
+### Viewport handling
+
+- Layout units use dynamic viewport units (`dvh`/`dvw`) so mobile URL
+  bars never crop the scene.
+- Furniture (clock, captions, menu) respects `env(safe-area-inset-*)`
+  with `viewport-fit=cover`.
+- `touch-action: none` (the app owns every gesture and never scrolls),
+  suppressed overscroll and tap-highlight: no double-tap zoom, no
+  pull-to-refresh, no flash on tap.
+
 ## Fidelity gate bookkeeping (AGENTS.md §6)
 
 Each screen above carries a checklist; 4d scores every item against

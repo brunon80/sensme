@@ -94,6 +94,9 @@ Done gate:
 - [x] OS media integration: now-playing metadata + transport controls in
       Windows/Linux desktop environments (Media Session API, ADR-017;
       gate: `apps/web/scripts/mediasession.mjs`)
+- [x] Mobile-friendly web app: landscape-locked PSP scene, touch gestures
+      and caption-button controls (UI_SPEC §9;
+      gate: `apps/web/scripts/mobile.mjs`)
 - [ ] Visual regression screenshots committed per screen
 
 ## Phase 5 — Platform-specific shells

@@ -155,13 +155,13 @@ function TrackCard({
     <div
       className="np-track"
       style={{
-        width: `${size * 100}vh`,
-        height: `${size * 100}vh`,
+        width: `${size * 100}dvh`,
+        height: `${size * 100}dvh`,
         // Position lives INSIDE the transform (left/top stay 0) so slot
         // changes animate; transitioning `left` would teleport the card.
         // X is in vh (the unit card sizes live in) so the stack overlap
         // is aspect-independent.
-        transform: `translate(${slot.centerX * 100}vh, ${centerY * 100}vh) translate(-50%, -50%) scale(${slot.scale})`,
+        transform: `translate(${slot.centerX * 100}dvh, ${centerY * 100}dvh) translate(-50%, -50%) scale(${slot.scale})`,
         opacity: slot.opacity,
         zIndex: z,
       }}
