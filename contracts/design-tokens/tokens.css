@@ -96,6 +96,8 @@
   --sensme-layout-np-prev-scale: 0.55;
   --sensme-layout-np-prev-opacity: 0;
   --sensme-layout-np-pendingScale: 0.72;
+  --sensme-layout-np-dim-scale: 0.78;
+  --sensme-layout-np-dim-opacity: 0.3;
   --sensme-layout-carousel-centerY: 0.5;
   --sensme-layout-carousel-card-w: 0.18;
   --sensme-layout-carousel-card-h: 0.26;
@@ -109,6 +111,7 @@
   --sensme-layout-carousel-globe-depth: 0.12;
   --sensme-layout-carousel-globe-rowCurve: 0.045;
   --sensme-layout-carousel-globe-perspVh: 1.4;
+  --sensme-layout-carousel-scrim: 0.35;
   --sensme-layout-menu-panelLeft: 0.45;
   --sensme-layout-menu-itemLineHeight: 0.088;
   --sensme-type-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
@@ -136,7 +139,7 @@
   --sensme-motion-carouselStepMs: 420;
   --sensme-motion-tileInMs: 300;
   --sensme-motion-npStepMs: 520;
-  --sensme-motion-enterNowPlayingMs: 380;
+  --sensme-motion-enterNowPlayingMs: 240;
   --sensme-motion-channelSwitchMs: 320;
   --sensme-motion-menuOpenMs: 220;
   --sensme-motion-rippleLoopS: 4;

@@ -28,8 +28,26 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Layer order (UI_SPEC §1): the grid sits in FRONT of the dimmed
+     now-playing and its scrim. */
+  z-index: 30;
   /* Globe effect: tiles sit on a cylinder seen from `perspVh` away. */
   perspective: calc(var(--sensme-layout-carousel-globe-perspVh) * 100dvh);
+}
+/* Dark layer between the dimmed now-playing (z 10) and the grid (z 30):
+   keeps the two screens from visually mixing (UI_SPEC §1). */
+.grid-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--sensme-motion-enterNowPlayingMs) * 1ms)
+    cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.grid-scrim.on {
+  opacity: var(--sensme-layout-carousel-scrim);
 }
 .tile {
   position: absolute;
@@ -105,6 +123,18 @@
   position: absolute;
   inset: 0;
   touch-action: none;
+  /* Layer order (UI_SPEC §1): now-playing sits behind the grid scrim. */
+  z-index: 10;
+  /* Grid open/close morph (UI_SPEC §1): scale + opacity of the elements
+     only — the backdrop is a separate layer and never moves. */
+  transition: transform calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+/* Channel grid open: now-playing scales to np.dim.scale and dims to
+   np.dim.opacity but stays visible behind the grid; ✕/Esc reverses. */
+.nowplaying.dim {
+  transform: scale(var(--sensme-layout-np-dim-scale));
+  opacity: var(--sensme-layout-np-dim-opacity);
 }
 .np-track {
   position: absolute;
@@ -213,6 +243,9 @@
 /* ---- furniture (R-2) ---- */
 .clock {
   position: absolute;
+  /* Furniture sits above every scene layer (backdrop/now-playing/scrim/
+     grid), like the PSP overlay. */
+  z-index: 60;
   top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
   right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
   font-size: calc(var(--sensme-type-clock-sizeH) * 100dvh);
@@ -221,6 +254,7 @@
 }
 .captions {
   position: absolute;
+  z-index: 60;
   left: calc(var(--sensme-layout-edgePad) * 100dvw + env(safe-area-inset-left));
   top: calc(var(--sensme-layout-caption-baselineY) * 100dvh);
   display: flex;
@@ -330,6 +364,9 @@
 .menu-scrim {
   position: absolute;
   inset: 0;
+  /* Above the scene layers (backdrop/now-playing/scrim/grid), below the
+     furniture overlay (z 60). */
+  z-index: 50;
   background: var(--sensme-color-menuScrim);
   animation: fadein calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
 }
@@ -432,8 +469,8 @@
 }
 
 /* ---- screen-to-screen transitions (UI_SPEC §1: enterNowPlaying 380 ms) ---- */
-/* Carousel -> now-playing: tiles slide right + fade; artwork grows from the
-   selected tile. now-playing -> carousel: artwork fades, tiles scale in. */
+/* Grid enter/exit are exact reverses (UI_SPEC §1): scale 0.82 ↔ 1 + fade.
+   No sideways slide — the exit must mirror the entering. */
 .carousel.enter {
   animation: carouselIn calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-out;
 }
@@ -450,7 +487,7 @@
 @keyframes carouselOut {
   to {
     opacity: 0;
-    transform: translateX(18dvw);
+    transform: scale(0.82);
   }
 }
 .nowplaying.enter {
@@ -460,18 +497,10 @@
 .nowplaying.enter .dotgrid {
   animation: fadeUp calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-out;
 }
-.nowplaying.exit {
-  animation: fadeOut calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-in forwards;
-}
 @keyframes fadeUp {
   from {
     opacity: 0;
     transform: translateY(1.2dvh);
-  }
-}
-@keyframes fadeOut {
-  to {
-    opacity: 0;
   }
 }
 

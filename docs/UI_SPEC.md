@@ -76,12 +76,21 @@ Interaction (R-2):
   scroll animates `motion.carouselStep` 420 ms
   (`cubic-bezier 0.25,0.1,0.25,1`); tiles scrolled into view fade in
   (`motion.tileInMs` 300 ms) and the channel name crossfades.
-- ◯/Enter confirms → now-playing (`motion.enterNowPlaying` 380 ms).
+- ◯/Enter confirms → now-playing (`motion.enterNowPlaying` 240 ms).
 - ✕/Esc returns to now-playing.
 - Channel switch crossfades the backdrop photo (`motion.channelSwitch`
-  320 ms) — e.g. day ↔ relax test photos. While browsing, the backdrop
-  previews the selected channel; ✕/Esc cancels and restores the backdrop
-  of the channel backing now-playing (the preview must not leak).
+  320 ms) — e.g. day ↔ relax test photos. The backdrop does NOT change
+  while browsing the grid; it crossfades only when the selected channel
+  is entered.
+- SELECT/✕ from now-playing: the now-playing ELEMENTS scale down to
+  `np.dim.scale` 0.78 and dim to `np.dim.opacity` 0.3, staying visible
+  behind the grid (`motion.enterNowPlaying` 240 ms); ✕/Esc reverses the
+  same way. The grid enters scaled 0.82 → 1 + fade and exits the exact
+  reverse (no sideways slide). A dark scrim (`carousel.scrim` 0.35)
+  fades in BETWEEN the two layers so the grid clearly reads as in
+  front — the screens must never visually mix. Layer order: backdrop →
+  now-playing (z 10) → scrim (z 20) → grid (z 30). The backdrop never
+  scales or fades.
 - Empty channels are slightly dimmed and cannot be selected (R-2 hint).
 
 Fidelity checklist: [ ] layout [ ] color [ ] typography [ ] icons
@@ -96,16 +105,21 @@ Layout:
   card `np.size` 0.62 H at center x 0.23, vertical center `np.centerY`
   0.51 (reflection below). Missing artwork → channel placeholder card
   (e.g. Favourites heart).
-- Next tracks: up to 5 smaller cards (`np.slots` 1–5: scale 0.55→0.24,
-  opacity 0.95→0.35) stacked behind and immediately after the previous
-  (overlapping, nearer on top), all vertically centered on the current
-  card; the previous card glides out left. Non-cyclic: clamped at both
-  ends — a one-track channel shows a single card; next at the end stops.
+- Next tracks: smaller cards (`np.slots` 1–5: scale 0.55→0.24, NO opacity
+  fade — every card is fully opaque) stacked behind and immediately after
+  the previous (overlapping, nearer on top), all vertically centered on
+  the current card; the chain continues geometrically (ratio of the last
+  two token scales) until cards run fully past the RIGHT EDGE — the
+  stack always reaches the screen edge at any aspect. The previous card
+  glides out left. Non-cyclic: clamped at both ends — a one-track
+  channel shows a single card; next at the end stops.
   Slot X is not hardcoded: each card's center chains from the previous
   one — `x_k = x_{k−1} + (w_{k−1}+w_k)/2 − np.overlap·w_k`
   (`np.overlap` 0.3) — so every card shows 70% of its width and the
   stack overlap is uniform at every depth and aspect ratio (computed
   in vh; anchor `np.anchorX` 0.23 vw).
+- Every card (current and receding) reflects on the water below, like
+  the PSP's glossy floor.
 - Track title: right-aligned block, baseline y 0.74, `type.title`,
   white; thin rule under it (R-6 7511).
 - `Artist / Album` line below: y 0.81, `type.body`, white 72%; title
@@ -147,10 +161,13 @@ Reference: R-6 photos 7520–7521; item list from R-2.
 - Panel: right 55% of width, full height, translucent dark.
 - Items centered in panel, `type.body`, line pitch 0.088 H; selected
   item bold + brighter; ▼ scroll indicator when overflowed.
-- Items (order per R-2): View Settings (Time and Battery, Button
-  Caption), Sound Settings (Dynamic Normalizer, Sound Effects),
-  Favourites Setting, Block List Settings, Help, Check for Updates*,
-  About. (*offline-first: disabled without network.)
+- Items (PSP order per R-2, minus no-ops — AGENTS §3 forbids silent
+  placeholders): View Settings (Time and Battery, Button Caption),
+  Music Scan, Favourites Setting, Block List Settings, Database
+  Settings (rebuild/wipe), Help, About. Sound Settings and Check for
+  Updates are omitted until they actually do something.
+- Layer: the menu sits above every scene layer (z 50: backdrop →
+  now-playing → scrim → grid) and below the furniture overlay (z 60).
 - Captions bottom: `✕ Select  ◯ Close`.
 - Submenus replace the item list in place (same panel).
 

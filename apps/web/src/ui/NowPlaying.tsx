@@ -14,12 +14,13 @@ interface Props {
   pending?: boolean;
   entry: CarouselEntry;
   playing: boolean;
-  /** Screen-transition phase (UI_SPEC §1). */
-  phase?: "enter" | "exit";
+  /** Screen-transition phase (UI_SPEC §1): dim = channel grid open,
+   * elements scaled down + faded but still visible. */
+  phase?: "enter" | "dim";
 }
 
 interface Slot {
-  centerX: number; // vh units (see slotXs)
+  centerX: number; // vh units (see slotChain)
   scale: number;
   opacity: number;
 }
@@ -38,23 +39,36 @@ function useAspect(): number {
 
 /** Slot centers (vh) chained from the anchor: each card sits behind the
  * previous one, overlapping it by `np.overlap` of its own width — the
- * PSP's stacked look, uniform at every depth and aspect ratio. */
-function slotXs(aspect: number): number[] {
+ * PSP's stacked look, uniform at every depth and aspect ratio. The chain
+ * does not stop at the token slots: scales continue geometrically (ratio
+ * of the last two token slots) until the card is fully past the right
+ * edge, so the stack runs to the screen edge at any aspect (UI_SPEC §2). */
+function slotChain(aspect: number): Slot[] {
   const np = tokens.layout.np;
-  const w = np.slots.map((s) => np.size * s.scale); // card widths in vh
-  const xs = [np.anchorX * aspect]; // anchor given in vw
-  for (let k = 1; k < np.slots.length; k++)
-    xs.push(xs[k - 1]! + (w[k - 1]! + w[k]!) / 2 - np.overlap * w[k]!);
-  return xs;
+  const rightEdge = aspect; // screen width in vh-fraction units (×100 at render)
+  const ratio = np.slots[np.slots.length - 1]!.scale / np.slots[np.slots.length - 2]!.scale;
+  const scaleOf = (k: number) =>
+    k < np.slots.length
+      ? np.slots[k]!.scale
+      : np.slots[np.slots.length - 1]!.scale * Math.pow(ratio, k - np.slots.length + 1);
+  const out: Slot[] = [{ centerX: np.anchorX * aspect, scale: scaleOf(0), opacity: np.slots[0]!.opacity }];
+  for (let k = 1; ; k++) {
+    const scale = scaleOf(k);
+    const w = np.size * scale;
+    const prevW = np.size * scaleOf(k - 1);
+    const centerX = out[k - 1]!.centerX + (prevW + w) / 2 - np.overlap * w;
+    out.push({ centerX, scale, opacity: k < np.slots.length ? np.slots[k]!.opacity : 1 });
+    if (centerX - w / 2 >= rightEdge) break; // fully past the right edge
+  }
+  return out;
 }
 
-function slotFor(k: number, pending: boolean, xs: number[], aspect: number): Slot | null {
+function slotFor(k: number, pending: boolean, slots: Slot[], aspect: number): Slot | null {
   const np = tokens.layout.np;
   if (k === 0 && pending)
-    return { centerX: xs[0]!, scale: np.pendingScale, opacity: 1 }; // staged candidate
-  if (k >= 0 && k < np.slots.length)
-    return { centerX: xs[k]!, scale: np.slots[k]!.scale, opacity: np.slots[k]!.opacity };
-  if (k === -1) return { ...np.prev!, centerX: np.prev!.centerX * aspect }; // glides out
+    return { centerX: slots[0]!.centerX, scale: np.pendingScale, opacity: 1 }; // staged candidate
+  if (k >= 0 && k < slots.length) return slots[k]!;
+  if (k === -1) return { ...np.prev, centerX: np.prev.centerX * aspect }; // glides out
   return null;
 }
 
@@ -68,8 +82,10 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
 
   const np = tokens.layout.np;
   const aspect = useAspect();
-  const xs = slotXs(aspect);
-  const offsets = [-1, 0, 1, 2, 3, 4, 5];
+  const slots = slotChain(aspect);
+  // Render the outgoing card (k=-1) plus every slot that reaches the right
+  // edge.
+  const offsets = [-1, ...slots.map((_, k) => k)];
 
   return (
     <div className={`nowplaying ${phase ?? ""}`}>
@@ -77,7 +93,7 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
         offsets.map((k) => {
           const idx = pos + k;
           if (idx < 0 || idx >= n) return null; // non-cyclic: clamp at the ends
-          const slot = slotFor(k, pending ?? false, xs, aspect);
+          const slot = slotFor(k, pending ?? false, slots, aspect);
           if (!slot) return null;
           const rec = queue[idx]!;
           return (
@@ -89,7 +105,7 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
               size={np.size}
               centerY={np.centerY}
               z={10 - Math.abs(k)}
-              reflect={k === 0}
+              reflect={k >= 0}
             />
           );
         })}

@@ -54,6 +54,10 @@ export default function App() {
   const [playing, setPlaying] = useState(false);
   const [prevScreen, setPrevScreen] = useState<Screen>("boot");
   const [transitioning, setTransitioning] = useState(false);
+  // The now-playing enter animation (fadeUp) plays on boot/import; when
+  // returning from the channel grid the dim transition simply reverses
+  // (UI_SPEC §1).
+  const [npAnim, setNpAnim] = useState<"enter" | "none">("enter");
   const menuOpenRef = useRef(menuOpen);
   menuOpenRef.current = menuOpen;
   // First-run progress card cancel (UI_SPEC §4: ✕ Cancel).
@@ -224,6 +228,7 @@ export default function App() {
     setUpdate((u) => ({ ...u, active: false }));
     const recs = await reload();
     if (recs.length > 0 && screen === "empty") {
+      setNpAnim("enter");
       setScreen("nowplaying");
       rebuildQueue(npEntryIndex, selection, recs);
     }
@@ -262,6 +267,7 @@ export default function App() {
     const q = rebuildQueue(idx, selection + 1, records);
     setEntryIndex(idx);
     setNpEntryIndex(idx);
+    setNpAnim("none"); // un-dim via transition, not the boot fadeUp
     setSelection((s) => s + 1);
     setPending(null);
     goScreen("nowplaying");
@@ -282,8 +288,10 @@ export default function App() {
     }
     switch (id) {
       case "back":
-        if (screen === "carousel") goScreen("nowplaying");
-        else if (pending !== null) setPending(null); // cancel candidate
+        if (screen === "carousel") {
+          setNpAnim("none");
+          goScreen("nowplaying");
+        } else if (pending !== null) setPending(null); // cancel candidate
         else if (screen === "nowplaying" || screen === "boot") goScreen("carousel"); // toggle channels
         break;
       case "select":
@@ -331,8 +339,10 @@ export default function App() {
         if (current) void toggleFavourite(current, !current.favourite);
         break;
       case "change":
-        if (screen === "carousel") goScreen("nowplaying");
-        else if (screen === "nowplaying" || screen === "boot") goScreen("carousel");
+        if (screen === "carousel") {
+          setNpAnim("none");
+          goScreen("nowplaying");
+        } else if (screen === "nowplaying" || screen === "boot") goScreen("carousel");
         break;
     }
   }
@@ -470,15 +480,19 @@ export default function App() {
     void playAt(p, queue); // scales up to full size and starts playing
   }
 
-  // Backdrop identity: while browsing the carousel, preview the selected
-  // channel; everywhere else (now-playing/boot/empty — including after a
-  // cancelled browse) use the channel backing the queue (UI_SPEC §1).
-  const sceneEntry = screen === "carousel" ? entry : npEntry;
+  // Backdrop identity: only ever the channel backing the queue. Browsing
+  // the grid does NOT change the backdrop; it crossfades when (and only
+  // when) the selected channel is entered (UI_SPEC §1).
+  const sceneEntry = npEntry;
   const hues = useMemo(() => entryHues(sceneEntry), [sceneEntry]);
   const showCarousel = screen === "carousel" || (transitioning && prevScreen === "carousel");
-  const showNow = screen === "nowplaying" || screen === "boot" || (transitioning && prevScreen === "nowplaying");
+  // Now-playing elements stay mounted (dimmed) while the grid is open:
+  // the transition is a scale-down + dim of the elements only, and they
+  // remain visible behind the grid; ✕/Esc reverses it (UI_SPEC §1/§2).
+  const showNow = screen === "nowplaying" || screen === "boot" || screen === "carousel";
   const carPhase = screen === "carousel" ? "enter" : "exit";
-  const npPhase = screen === "nowplaying" || screen === "boot" ? "enter" : "exit";
+  const npPhase: "enter" | "dim" | undefined =
+    screen === "carousel" ? "dim" : npAnim === "enter" ? "enter" : undefined;
   const counts = useMemo(() => {
     const c = {} as Record<string, number>;
     for (const e of CAROUSEL_ORDER) c[e] = entryTracks(e, records).length;
@@ -495,6 +509,7 @@ export default function App() {
       <Scene sceneKey={sceneEntry} hues={hues} />
       <RotateHint />
 
+      {showCarousel && <div className={`grid-scrim ${screen === "carousel" ? "on" : ""}`} />}
       {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
       {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={npEntry} playing={playing} phase={npPhase} />}
 

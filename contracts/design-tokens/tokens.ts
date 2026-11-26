@@ -152,23 +152,23 @@ export const tokens = {
         },
         {
           "scale": 0.55,
-          "opacity": 0.95
+          "opacity": 1
         },
         {
           "scale": 0.42,
-          "opacity": 0.8
+          "opacity": 1
         },
         {
           "scale": 0.34,
-          "opacity": 0.65
+          "opacity": 1
         },
         {
           "scale": 0.28,
-          "opacity": 0.5
+          "opacity": 1
         },
         {
           "scale": 0.24,
-          "opacity": 0.35
+          "opacity": 1
         }
       ],
       "anchorX": 0.23,
@@ -177,7 +177,11 @@ export const tokens = {
         "scale": 0.55,
         "opacity": 0
       },
-      "pendingScale": 0.72
+      "pendingScale": 0.72,
+      "dim": {
+        "scale": 0.78,
+        "opacity": 0.3
+      }
     },
     "carousel": {
       "centerY": 0.5,
@@ -196,7 +200,8 @@ export const tokens = {
         "depth": 0.12,
         "rowCurve": 0.045,
         "perspVh": 1.4
-      }
+      },
+      "scrim": 0.35
     },
     "menu": {
       "panelLeft": 0.45,
@@ -245,7 +250,7 @@ export const tokens = {
     "carouselStepMs": 420,
     "tileInMs": 300,
     "npStepMs": 520,
-    "enterNowPlayingMs": 380,
+    "enterNowPlayingMs": 240,
     "channelSwitchMs": 320,
     "menuOpenMs": 220,
     "rippleLoopS": 4

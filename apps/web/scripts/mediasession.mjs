@@ -85,16 +85,17 @@ await page.waitForFunction(
 );
 const afterPrev = await page.evaluate(() => navigator.mediaSession.metadata?.title ?? null);
 
-// Browse-preview must not leak: opening the carousel and moving channels,
-// then cancelling (Escape), restores the playing channel's backdrop.
+// Browsing the grid must NOT change the backdrop: it crossfades only when
+// a channel is entered (UI_SPEC §1).
 const sceneBefore = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
 await page.keyboard.press("Escape");
 await page.waitForSelector(".carousel-name");
 await page.keyboard.press("ArrowRight");
-await page.waitForFunction((s) => (document.querySelector(".app")?.dataset.sceneKey ?? null) !== s, sceneBefore, { timeout: 5000 });
-const scenePreview = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
-await page.keyboard.press("Escape"); // cancel the browse: scene must restore
-await page.waitForFunction((s) => (document.querySelector(".app")?.dataset.sceneKey ?? null) === s, sceneBefore, { timeout: 5000 });
+await page.waitForTimeout(500); // any crossfade would have started by now
+const sceneBrowse = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
+await page.keyboard.press("Escape"); // cancel the browse
+await page.waitForTimeout(500);
+const sceneAfter = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
 
 // OS stop clears the session.
 await page.evaluate(() => window.__sensme.media.stop());
@@ -115,7 +116,8 @@ const ok =
   paused.pbState === "paused" &&
   afterNext !== beforeNext &&
   afterPrev === beforeNext &&
-  scenePreview !== sceneBefore &&
+  sceneBrowse === sceneBefore &&
+  sceneAfter === sceneBefore &&
   stopped.playerState === "stopped" &&
   stopped.pbState === "none" &&
   errors.length === 0;

@@ -18,12 +18,10 @@ interface Props {
   onClose: () => void;
 }
 
-type Page = "root" | "view" | "sound" | "database" | "help" | "about";
+type Page = "root" | "view" | "database" | "help" | "about";
 
 export function Options({ settings, onSettings, onClearFavourites, onClearBlocked, onRebuild, onWipe, onImport, meta, onClose }: Props) {
   const [page, setPage] = useState<Page>("root");
-  const [soundFx, setSoundFx] = useState(true);
-  const [normalizer, setNormalizer] = useState(true);
 
   const item = (label: string, action: () => void, note?: string) => (
     <button key={label} className="menu-item" onClick={action}>
@@ -38,13 +36,11 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
         {page === "root" && (
           <>
             {item("View Settings", () => setPage("view"))}
-            {item("Sound Settings", () => setPage("sound"))}
             {item("Music Scan", onImport, "add new music")}
             {item("Favourites Setting", onClearFavourites, "delete all")}
             {item("Block List Settings", onClearBlocked, "delete all")}
             {item("Database Settings", () => setPage("database"), "rebuild / wipe")}
             {item("Help", () => setPage("help"))}
-            {item("Check for Updates", () => undefined, "offline")}
             {item("About SensMe channels", () => setPage("about"))}
           </>
         )}
@@ -54,13 +50,6 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
               () => onSettings({ ...settings, showClock: !settings.showClock }))}
             {item(`Button Caption: ${settings.showCaptions ? "ON" : "OFF"}`,
               () => onSettings({ ...settings, showCaptions: !settings.showCaptions }))}
-            {item("Back", () => setPage("root"))}
-          </>
-        )}
-        {page === "sound" && (
-          <>
-            {item(`Dynamic Normalizer: ${normalizer ? "ON" : "OFF"}`, () => setNormalizer(!normalizer))}
-            {item(`Sound Effects: ${soundFx ? "ON" : "OFF"}`, () => setSoundFx(!soundFx))}
             {item("Back", () => setPage("root"))}
           </>
         )}
