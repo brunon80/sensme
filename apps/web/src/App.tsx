@@ -4,7 +4,14 @@ import { tokens } from "../../../contracts/design-tokens/tokens";
 import { engine } from "./engine/engine";
 import { allRecords, clearLibrary, getAudioBytes, updateRecord } from "./engine/library";
 import { importFiles, pickAudioFiles, rebuildLibrary, type ImportProgress } from "./engine/importer";
-import { player } from "./engine/player";
+import {
+  registerMediaControls,
+  setPlaybackState,
+  setTrackMetadata,
+  updatePositionState,
+  type MediaControls,
+} from "./engine/mediaSession";
+import { mimeForName, player } from "./engine/player";
 import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
 import { CAROUSEL_ORDER, entryHues, entryTracks, shuffledQueue } from "./ui/channels";
@@ -47,6 +54,8 @@ export default function App() {
   const cancelImportRef = useRef(false);
   const queuePosRef = useRef(0);
   queuePosRef.current = queuePos;
+  const queueRef = useRef<LibraryRecord[]>([]);
+  queueRef.current = queue;
 
   const entry = CAROUSEL_ORDER[entryIndex]!;
 
@@ -87,8 +96,25 @@ export default function App() {
     return () => clearInterval(h);
   }, []);
 
-  // Keep the UI in sync with player state (captions, ▶ tag).
-  useEffect(() => player.onChange(() => setPlaying(player.state === "playing")), []);
+  // Keep the UI in sync with player state (captions, ▶ tag) and mirror it
+  // into the OS media controls (ADR-017).
+  useEffect(
+    () =>
+      player.onChange(() => {
+        setPlaying(player.state === "playing");
+        setPlaybackState(player.state);
+        updatePositionState();
+      }),
+    [],
+  );
+
+  // OS media integration: the playhead is pushed while playing so OS
+  // scrubbing UIs follow along (metadata is published below, on `current`).
+  useEffect(() => {
+    if (!playing) return;
+    const h = window.setInterval(() => updatePositionState(), 1000);
+    return () => window.clearInterval(h);
+  }, [playing]);
 
   function rebuildQueue(idx: number, sel: number, recs: LibraryRecord[]): LibraryRecord[] {
     const q = shuffledQueue(CAROUSEL_ORDER[idx]!, sel, recs);
@@ -110,18 +136,65 @@ export default function App() {
 
   const current = queue[queuePos] ?? null;
 
+  // OS media integration (ADR-017): publish the loaded track (title, artist,
+  // album, artwork) to the desktop environment's media controls.
+  useEffect(() => {
+    setTrackMetadata(current);
+    setPlaybackState(player.state);
+    updatePositionState();
+  }, [current]);
+
   const playAt = useCallback(async (pos: number, q: LibraryRecord[]) => {
     const rec = q[pos];
     if (!rec) return;
     setQueuePos(pos);
     const bytes = await getAudioBytes(rec.id);
-    if (bytes) await player.play(bytes, () => void nextIn(q));
+    if (!bytes) return;
+    try {
+      await player.play(bytes, () => void nextIn(q), mimeForName(rec.name));
+    } catch {
+      // Autoplay policy or decode failure: stay stopped; START retries.
+    }
   }, []);
 
   const nextIn = useCallback((q: LibraryRecord[]) => {
     const pos = queuePosRef.current;
     const np = pos + 1;
     if (np < q.length) void playAt(np, q); // end of queue: stop, don't loop
+  }, [playAt]);
+
+  // OS transport (ADR-017): hardware keys and DE media buttons map onto the
+  // same actions as the PSP controls, with two hardware-key conventions:
+  // next/prev skip immediately (no L/R candidate staging — an OS request
+  // means "now"), and prev restarts the track when we are mid-playback.
+  useEffect(() => {
+    const ctl: MediaControls = {
+      play: () => {
+        if (player.state === "playing") return;
+        if (player.state === "paused") player.resume();
+        else void playAt(queuePosRef.current, queueRef.current);
+      },
+      pause: () => player.pause(),
+      next: () => {
+        const q = queueRef.current;
+        const np = queuePosRef.current + 1;
+        if (np < q.length) void playAt(np, q);
+      },
+      prev: () => {
+        if (player.positionSec() > 3) {
+          player.seek(0);
+          return;
+        }
+        const q = queueRef.current;
+        const pp = queuePosRef.current - 1;
+        if (pp >= 0) void playAt(pp, q);
+      },
+      stop: () => player.stop(),
+    };
+    // Automation seam (main.tsx): the media gate drives these directly —
+    // Media Session action events cannot be dispatched from page JS.
+    if (window.__sensme) window.__sensme.media = ctl;
+    return registerMediaControls(ctl);
   }, [playAt]);
 
   const doImport = useCallback(async () => {

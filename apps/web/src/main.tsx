@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { engine } from "./engine/engine";
 import { importFiles, pickAudioFiles } from "./engine/importer";
+import { lastPositionState, mediaSessionSupported, type MediaControls } from "./engine/mediaSession";
 import { allRecords } from "./engine/library";
 import { player } from "./engine/player";
 import "../../../contracts/design-tokens/tokens.css";
@@ -10,12 +11,32 @@ import "./styles.css";
 
 // Debug/automation seam (fidelity review, 4d): drive the import pipeline
 // from the console or a headless session without native file dialogs.
+// `media` is filled in by App with the Media Session transport handlers
+// (media gate, ADR-017) — OS media events cannot be dispatched from JS.
 declare global {
   interface Window {
-    __sensme?: { engine: typeof engine; pickAudioFiles: typeof pickAudioFiles; importFiles: typeof importFiles; allRecords: typeof allRecords; player: typeof player };
+    __sensme?: {
+      engine: typeof engine;
+      pickAudioFiles: typeof pickAudioFiles;
+      importFiles: typeof importFiles;
+      allRecords: typeof allRecords;
+      player: typeof player;
+      media?: MediaControls;
+      mediaSession: {
+        supported: typeof mediaSessionSupported;
+        lastPositionState: typeof lastPositionState;
+      };
+    };
   }
 }
-window.__sensme = { engine, pickAudioFiles, importFiles, allRecords, player };
+window.__sensme = {
+  engine,
+  pickAudioFiles,
+  importFiles,
+  allRecords,
+  player,
+  mediaSession: { supported: mediaSessionSupported, lastPositionState },
+};
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

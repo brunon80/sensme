@@ -18,12 +18,13 @@ await page.evaluate(async () => {
   for (const s of ["tracks", "audio"]) await new Promise((res, rej) => { const t = db.transaction(s, "readwrite"); t.objectStore(s).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); });
 });
 
-// Import the two fixtures through the real pipeline.
+// Import the two fixtures through the real pipeline (PickedFile shape:
+// the display path travels alongside the file).
 const imported = await page.evaluate(async () => {
   const files = [];
   for (const name of ["tone.mp3", "tone.flac"]) {
     const blob = await (await fetch("/" + name)).blob();
-    files.push(new File([blob], name, { type: blob.type }));
+    files.push({ file: new File([blob], name, { type: blob.type }), path: name });
   }
   await window.__sensme.importFiles(files, () => {});
   return (await window.__sensme.allRecords()).length;
@@ -34,8 +35,9 @@ await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => (document.querySelector(".np-title")?.textContent ?? "").length > 0, null, { timeout: 20000 });
 const title = await page.textContent(".np-title");
 
-// Browse: carousel -> select a channel with tracks -> playback.
-await page.keyboard.press("Enter");
+// Browse: toggle the carousel (Escape) -> select a channel with tracks ->
+// playback.
+await page.keyboard.press("Escape");
 await page.waitForSelector(".carousel-name");
 const channel = await page.textContent(".carousel-name");
 await page.keyboard.press("Enter");

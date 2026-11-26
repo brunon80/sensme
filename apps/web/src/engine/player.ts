@@ -1,14 +1,38 @@
-// Web Audio playback. Decoding here is browser-native on purpose: playback
-// is NOT the analysis path (analysis stays deterministic in wasm, ADR-016).
+// Playback through a hidden HTMLMediaElement (ADR-017). Browsers only hand
+// the OS media session — Windows/Linux now-playing controls, hardware media
+// keys, MPRIS on Linux — to pages that own a real media element; a Web-
+// Audio-only page never becomes the active media session (w3c/mediasession
+// #244/#378, Firefox bug 2067534). Decoding stays browser-native on purpose:
+// playback is NOT the analysis path (analysis stays deterministic in wasm,
+// ADR-016).
 export type PlayerState = "stopped" | "playing" | "paused";
 
+/** Container MIME type for a file name, used for the playback blob. An
+ * unknown extension gets an empty type so the browser sniffs the container. */
+export function mimeForName(name: string): string {
+  const ext = name.slice(name.lastIndexOf(".") + 1).toLowerCase();
+  switch (ext) {
+    case "mp3":
+      return "audio/mpeg";
+    case "flac":
+      return "audio/flac";
+    case "ogg":
+    case "oga":
+      return "audio/ogg";
+    case "m4a":
+    case "mp4":
+    case "aac":
+      return "audio/mp4";
+    case "wav":
+      return "audio/wav";
+    default:
+      return "";
+  }
+}
+
 export class Player {
-  private ctx: AudioContext | null = null;
-  private source: AudioBufferSourceNode | null = null;
-  private gain: GainNode | null = null;
-  private buffer: AudioBuffer | null = null;
-  private startedAt = 0; // ctx time when current source started
-  private offsetSec = 0; // buffer offset of the current source
+  private el: HTMLAudioElement | null = null;
+  private objectUrl: string | null = null;
   private onEndedCb: (() => void) | null = null;
   state: PlayerState = "stopped";
   private listeners = new Set<() => void>();
@@ -24,57 +48,48 @@ export class Player {
     for (const fn of this.listeners) fn();
   }
 
-  private ensureCtx(): AudioContext {
-    if (!this.ctx) {
-      this.ctx = new AudioContext();
-      this.gain = this.ctx.createGain();
-      this.gain.connect(this.ctx.destination);
+  private ensureEl(): HTMLAudioElement {
+    if (!this.el) {
+      const el = new Audio();
+      el.preload = "auto";
+      // Only `ended` is observed: every other transition is driven by our
+      // own methods (OS transport requests arrive as Media Session action
+      // handlers, which call right back into this class).
+      el.addEventListener("ended", () => {
+        if (this.state !== "playing") return;
+        const cb = this.onEndedCb;
+        this.setState("stopped");
+        cb?.();
+      });
+      this.el = el;
     }
-    return this.ctx;
+    return this.el;
   }
 
-  /** Play a track from the beginning. */
-  async play(bytes: Uint8Array, onEnded?: () => void): Promise<void> {
-    const ctx = this.ensureCtx();
-    this.stopSource();
-    // Copy: wasm memory may be grown/reused; decodeAudioData detaches the buffer.
-    const copy = bytes.slice().buffer;
-    this.buffer = await ctx.decodeAudioData(copy);
+  /** Play a track from the beginning. `mime` names the container so the
+   * element can pick a decoder. Rejects only on autoplay-policy or decode
+   * failure; the player stays "stopped" in that case. */
+  async play(bytes: Uint8Array, onEnded?: () => void, mime = ""): Promise<void> {
+    const el = this.ensureEl();
+    this.releaseSource();
+    // Copy into a fresh ArrayBuffer: the bytes come out of IndexedDB and the
+    // blob keeps its own detached-safe copy (slice() also narrows the type).
+    this.objectUrl = URL.createObjectURL(new Blob([bytes.slice()], mime ? { type: mime } : undefined));
     this.onEndedCb = onEnded ?? null;
-    this.offsetSec = 0;
-    this.startSource();
-  }
-
-  private startSource(): void {
-    const ctx = this.ensureCtx();
-    if (!this.buffer) return;
-    this.source = ctx.createBufferSource();
-    this.source.buffer = this.buffer;
-    this.source.connect(this.gain!);
-    this.source.onended = () => {
-      if (this.state === "playing" && this.onEndedCb) {
-        const naturalEnd = this.offsetSec + (this.buffer?.duration ?? 0) - ctx.currentTime < 0.15;
-        if (naturalEnd) {
-          this.setState("stopped");
-          this.onEndedCb();
-        }
-      }
-    };
-    this.startedAt = ctx.currentTime;
-    this.source.start(0, this.offsetSec);
+    el.src = this.objectUrl;
+    await el.play();
     this.setState("playing");
   }
 
   pause(): void {
-    if (this.state !== "playing" || !this.ctx || !this.source) return;
-    this.offsetSec += this.ctx.currentTime - this.startedAt;
-    this.stopSource();
+    if (this.state !== "playing" || !this.el) return;
+    this.el.pause();
     this.setState("paused");
   }
 
   resume(): void {
-    if (this.state !== "paused") return;
-    this.startSource();
+    if (this.state !== "paused" || !this.el) return;
+    void this.el.play().then(() => this.setState("playing"));
   }
 
   /** START semantics: play/pause toggle (R-2 button map). */
@@ -85,23 +100,43 @@ export class Player {
   }
 
   stop(): void {
-    this.stopSource();
-    this.buffer = null;
+    const el = this.ensureEl();
+    this.onEndedCb = null;
+    el.pause();
+    el.removeAttribute("src");
+    el.load(); // drop the loaded track so position/duration reset
+    this.releaseSource();
     this.setState("stopped");
   }
 
-  private stopSource(): void {
-    if (this.source) {
-      this.source.onended = null;
-      this.source.stop();
-      this.source.disconnect();
-      this.source = null;
+  /** Seek to `sec` (clamped to the loaded track). Works while playing or
+   * paused; a stopped player ignores it. */
+  seek(sec: number): void {
+    if (!this.el || !this.objectUrl) return;
+    const dur = this.durationSec();
+    const t = Math.min(Math.max(0, sec), dur);
+    try {
+      this.el.currentTime = t;
+    } catch {
+      // Metadata not loaded yet: nothing to seek into.
     }
   }
 
   positionSec(): number {
-    if (this.state !== "playing" || !this.ctx) return this.offsetSec;
-    return this.offsetSec + (this.ctx.currentTime - this.startedAt);
+    return this.el?.currentTime ?? 0;
+  }
+
+  /** Duration of the loaded track in seconds, 0 when nothing is loaded. */
+  durationSec(): number {
+    const d = this.el?.duration;
+    return d !== undefined && Number.isFinite(d) ? d : 0;
+  }
+
+  private releaseSource(): void {
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
+    }
   }
 }
 
