@@ -85,6 +85,17 @@ await page.waitForFunction(
 );
 const afterPrev = await page.evaluate(() => navigator.mediaSession.metadata?.title ?? null);
 
+// Browse-preview must not leak: opening the carousel and moving channels,
+// then cancelling (Escape), restores the playing channel's backdrop.
+const sceneBefore = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
+await page.keyboard.press("Escape");
+await page.waitForSelector(".carousel-name");
+await page.keyboard.press("ArrowRight");
+await page.waitForFunction((s) => (document.querySelector(".app")?.dataset.sceneKey ?? null) !== s, sceneBefore, { timeout: 5000 });
+const scenePreview = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
+await page.keyboard.press("Escape"); // cancel the browse: scene must restore
+await page.waitForFunction((s) => (document.querySelector(".app")?.dataset.sceneKey ?? null) === s, sceneBefore, { timeout: 5000 });
+
 // OS stop clears the session.
 await page.evaluate(() => window.__sensme.media.stop());
 const stopped = await snap();
@@ -104,6 +115,7 @@ const ok =
   paused.pbState === "paused" &&
   afterNext !== beforeNext &&
   afterPrev === beforeNext &&
+  scenePreview !== sceneBefore &&
   stopped.playerState === "stopped" &&
   stopped.pbState === "none" &&
   errors.length === 0;

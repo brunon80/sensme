@@ -37,6 +37,10 @@ export default function App() {
   const [meta, setMeta] = useState<ContractMeta | null>(null);
   const [records, setRecords] = useState<LibraryRecord[]>([]);
   const [entryIndex, setEntryIndex] = useState(0);
+  // Channel backing now-playing. Browsing the carousel previews other
+  // channels' backdrops, but cancelling (✕/Esc) restores this one: the
+  // preview must not leak into the now-playing scene (UI_SPEC §1).
+  const [npEntryIndex, setNpEntryIndex] = useState(0);
   const [selection, setSelection] = useState(0);
   const [queue, setQueue] = useState<LibraryRecord[]>([]);
   const [queuePos, setQueuePos] = useState(0);
@@ -60,6 +64,7 @@ export default function App() {
   queueRef.current = queue;
 
   const entry = CAROUSEL_ORDER[entryIndex]!;
+  const npEntry = CAROUSEL_ORDER[npEntryIndex]!;
 
   const reload = useCallback(async () => {
     const recs = await allRecords();
@@ -81,6 +86,7 @@ export default function App() {
       let idx = CAROUSEL_ORDER.findIndex((e) => entryTracks(e, recs).length > 0);
       if (idx < 0) idx = 0;
       setEntryIndex(idx);
+      setNpEntryIndex(idx);
       setScreen("nowplaying");
       rebuildQueue(idx, 0, recs);
     })();
@@ -219,9 +225,9 @@ export default function App() {
     const recs = await reload();
     if (recs.length > 0 && screen === "empty") {
       setScreen("nowplaying");
-      rebuildQueue(entryIndex, selection, recs);
+      rebuildQueue(npEntryIndex, selection, recs);
     }
-  }, [update.active, reload, screen, entryIndex, selection]);
+  }, [update.active, reload, screen, npEntryIndex, selection]);
 
   const doRebuild = useCallback(async () => {
     if (update.active) return;
@@ -238,8 +244,8 @@ export default function App() {
     );
     setUpdate((u) => ({ ...u, active: false }));
     const fresh = await reload();
-    if (fresh.length > 0) rebuildQueue(entryIndex, selection, fresh);
-  }, [update.active, reload, entryIndex, selection]);
+    if (fresh.length > 0) rebuildQueue(npEntryIndex, selection, fresh);
+  }, [update.active, reload, npEntryIndex, selection]);
 
   const doWipe = useCallback(async () => {
     if (update.active) return;
@@ -255,6 +261,7 @@ export default function App() {
   const enterChannel = useCallback((idx: number) => {
     const q = rebuildQueue(idx, selection + 1, records);
     setEntryIndex(idx);
+    setNpEntryIndex(idx);
     setSelection((s) => s + 1);
     setPending(null);
     goScreen("nowplaying");
@@ -463,7 +470,11 @@ export default function App() {
     void playAt(p, queue); // scales up to full size and starts playing
   }
 
-  const hues = useMemo(() => entryHues(entry), [entry]);
+  // Backdrop identity: while browsing the carousel, preview the selected
+  // channel; everywhere else (now-playing/boot/empty — including after a
+  // cancelled browse) use the channel backing the queue (UI_SPEC §1).
+  const sceneEntry = screen === "carousel" ? entry : npEntry;
+  const hues = useMemo(() => entryHues(sceneEntry), [sceneEntry]);
   const showCarousel = screen === "carousel" || (transitioning && prevScreen === "carousel");
   const showNow = screen === "nowplaying" || screen === "boot" || (transitioning && prevScreen === "nowplaying");
   const carPhase = screen === "carousel" ? "enter" : "exit";
@@ -480,12 +491,12 @@ export default function App() {
     : captionsFor(screen, { playing, pending: pending !== null }, platform);
 
   return (
-    <div className="app">
-      <Scene sceneKey={entry} hues={hues} />
+    <div className="app" data-scene-key={sceneEntry}>
+      <Scene sceneKey={sceneEntry} hues={hues} />
       <RotateHint />
 
       {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
-      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={entry} playing={playing} phase={npPhase} />}
+      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={npEntry} playing={playing} phase={npPhase} />}
 
       {screen === "empty" && (
         <div className="empty-card">

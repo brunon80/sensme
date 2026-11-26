@@ -79,7 +79,9 @@ Interaction (R-2):
 - ◯/Enter confirms → now-playing (`motion.enterNowPlaying` 380 ms).
 - ✕/Esc returns to now-playing.
 - Channel switch crossfades the backdrop photo (`motion.channelSwitch`
-  320 ms) — e.g. day ↔ relax test photos.
+  320 ms) — e.g. day ↔ relax test photos. While browsing, the backdrop
+  previews the selected channel; ✕/Esc cancels and restores the backdrop
+  of the channel backing now-playing (the preview must not leak).
 - Empty channels are slightly dimmed and cannot be selected (R-2 hint).
 
 Fidelity checklist: [ ] layout [ ] color [ ] typography [ ] icons
