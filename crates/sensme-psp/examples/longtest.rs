@@ -10,5 +10,8 @@ fn main() {
         })
         .collect();
     let r = analyze_full(&pcm, rate, 1);
-    println!("ok chunks={} runs={} mask={:013b}", r.chunks, r.runs, r.mask);
+    println!(
+        "ok chunks={} runs={} mask={:013b}",
+        r.chunks, r.runs, r.mask
+    );
 }

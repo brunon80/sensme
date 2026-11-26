@@ -27,6 +27,9 @@ const M_DC: usize = 0x3e0c / 4; // DC-removal filter state
 const M_FLAG: usize = 0x3e10 / 4; // query gate flag
 const M_CHUNKS: usize = 0x3e14 / 4; // chunk counter
 const M_RUNS: usize = 0x3e18 / 4; // classifier-run counter
+/// Rate index word: extracted from the reference session layout and kept for
+/// completeness of the ported memory map, but the port never reads it back.
+#[allow(dead_code)]
 const M_RATE: usize = 0x3e1c / 4; // rate index
 const M_INIT1: usize = 0xc / 4; // session+0xc: configured flag (record_parse)
 const M_INIT2: usize = 0x10 / 4; // session+0x10: finalized flag (record_open)
@@ -39,7 +42,11 @@ const NCHUNK: usize = 1024; // samples per chunk @ 22050 Hz
 /// MIPS arithmetic shift with the binary's `&32 → sign-fill` semantics.
 pub fn ashr(v: i32, s: u32) -> i32 {
     if s & 32 != 0 {
-        if v < 0 { -1 } else { 0 }
+        if v < 0 {
+            -1
+        } else {
+            0
+        }
     } else {
         v >> (s & 31)
     }
@@ -70,7 +77,11 @@ pub fn fix_div(x: i32, y: i32) -> (i32, i32) {
         return (0, y);
     }
     let a2 = 32 - x.leading_zeros() as i32; // bitlen (binary search result)
-    let t4: u32 = if ((a2 + y) & 1) == 0 { (31 - a2) as u32 } else { (30 - a2) as u32 };
+    let t4: u32 = if ((a2 + y) & 1) == 0 {
+        (31 - a2) as u32
+    } else {
+        (30 - a2) as u32
+    };
     let xn = (x as u32).wrapping_shl(t4 & 31) as i32;
     let mut q: i32 = 0x1000_0000; // 0.5 in Q29
     for _ in 0..7 {
@@ -172,7 +183,7 @@ pub fn fix_log2(x: i32) -> i32 {
     a2 += ((a1 as u32) > 0) as i32; // sltu $zero,$a1
     let mut xn = x.wrapping_shl((30 - a2) as u32 & 31);
     let mut acc: i32 = 5; // $a1 leftover when the first step is skipped
-    // (threshold, correction) ladder, straight from the disassembly
+                          // (threshold, correction) ladder, straight from the disassembly
     const LADDER: [(i32, i32); 25] = [
         (0x2aaaaaab, -0x02570069), // first step uses acc = -0x7a570069
         (0x33333333, -0x0149a785),
@@ -220,6 +231,10 @@ fn mul64(a: i64, b: i64) -> i64 {
 
 // ------------------------------------------------------------- session
 
+/// Debug view of the four 9-entry score rings plus the EXP chain
+/// (see [`Session::debug_rings`]).
+type RingView = ([i32; 9], [i32; 9], [i32; 9], [i32; 9], [i32; 3]);
+
 /// Analysis session: flat i32 memory mirroring the PSP session object.
 pub struct Session {
     /// Flat i32 mirror of the PSP session object (see module docs).
@@ -228,7 +243,9 @@ pub struct Session {
 
 impl Default for Session {
     fn default() -> Self {
-        Session { mem: vec![0; MEM_INTS] }
+        Session {
+            mem: vec![0; MEM_INTS],
+        }
     }
 }
 
@@ -294,7 +311,7 @@ impl Session {
         // auto-range (`buf_prep_c` @0x10d2c0): shift so max|P| has MSB at bit 31
         let mut mx: u32 = 0;
         for i in 0..NCHUNK {
-            let a = (mem[M_B + i] as i64).abs() as u32;
+            let a = mem[M_B + i].unsigned_abs();
             if a > mx {
                 mx = a;
             }
@@ -333,7 +350,8 @@ impl Session {
             let mut acc: i32 = 0;
             for j in 0..len {
                 acc = acc.wrapping_add(
-                    (((mem[M_C + start + j] as i64).wrapping_mul(BAND_W[widx + j] as i64)) >> 32) as i32,
+                    (((mem[M_C + start + j] as i64).wrapping_mul(BAND_W[widx + j] as i64)) >> 32)
+                        as i32,
                 );
             }
             widx += len;
@@ -396,31 +414,37 @@ impl Session {
     /// Debug view: accumulated pair scores + counters.
     pub fn debug_state(&self) -> ([i64; 20], i32, i32) {
         let mut p = [0i64; 20];
-        for s in 0..20 {
-            p[s] = pair_get(&self.mem, s);
+        for (s, slot) in p.iter_mut().enumerate() {
+            *slot = pair_get(&self.mem, s);
         }
         (p, self.mem[M_RUNS], self.mem[M_CHUNKS])
     }
 
     /// Debug view: last 9 ring values (chronological) + EXP chain.
-    pub fn debug_rings(&self) -> ([i32; 9], [i32; 9], [i32; 9], [i32; 9], [i32; 3]) {
+    pub fn debug_rings(&self) -> RingView {
         let chunks = self.mem[M_CHUNKS] as usize;
         let mut r = ([0i32; 9], [0i32; 9], [0i32; 9], [0i32; 9]);
         for k in 0..9 {
-            let ri = ((chunks + k) % 9) as usize;
+            let ri = (chunks + k) % 9;
             r.0[k] = self.mem[M_RING1 + ri];
             r.1[k] = self.mem[M_RING2 + ri];
             r.2[k] = self.mem[M_RING3 + ri];
             r.3[k] = self.mem[M_RING4 + ri];
         }
-        (r.0, r.1, r.2, r.3, [self.mem[M_EXP0], self.mem[M_EXP1], self.mem[M_EXP2]])
+        (
+            r.0,
+            r.1,
+            r.2,
+            r.3,
+            [self.mem[M_EXP0], self.mem[M_EXP1], self.mem[M_EXP2]],
+        )
     }
 
     /// Debug view: the 20 accumulated pair scores (i64).
     pub fn debug_pairs(&self) -> [i64; 20] {
         let mut p = [0i64; 20];
-        for s in 0..20 {
-            p[s] = pair_get(&self.mem, s);
+        for (s, slot) in p.iter_mut().enumerate() {
+            *slot = pair_get(&self.mem, s);
         }
         p
     }
@@ -517,12 +541,12 @@ impl Session {
         let mut w = -1i32;
         let mut blo = 0xffff_ffffu32;
         let mut bhi = 0x7fff_ffffi32;
-        for s in 0..20 {
+        for (s, &pair) in pairs.iter().enumerate() {
             if s == 10 || s == 14 || s == 15 {
                 continue;
             }
-            let lo = pairs[s] as u32;
-            let hi = (pairs[s] >> 32) as i32;
+            let lo = pair as u32;
+            let hi = (pair >> 32) as i32;
             if hi < bhi || (hi == bhi && lo < blo) {
                 w = s as i32;
                 blo = lo;
@@ -531,9 +555,7 @@ impl Session {
         }
         // gate: found && (flag==1 || runs−4 < 1 || query_gate == 0)
         if !(w >= 0
-            && (mem[M_FLAG] == 1
-                || mem[M_RUNS].wrapping_sub(4) < 1
-                || self.query_gate() == 0))
+            && (mem[M_FLAG] == 1 || mem[M_RUNS].wrapping_sub(4) < 1 || self.query_gate() == 0))
         {
             return vec![];
         }
@@ -658,7 +680,11 @@ impl Session {
                 sat64(pair_get(mem, s).wrapping_div(nd))
             }
         };
-        let a = if nd == 0 { 0 } else { sat64(best.wrapping_div(nd)) };
+        let a = if nd == 0 {
+            0
+        } else {
+            sat64(best.wrapping_div(nd))
+        };
         let b = div(19);
         let c = div(18);
         let d = c.wrapping_sub(b);
@@ -675,7 +701,11 @@ impl Session {
         // build 64-bit constants 10·2^e1 and 13·2^e3 exactly as the binary does
         let (hi1, lo1) = if e1 < 1 {
             let ne = (-e1) as u32;
-            let lo = if ne & 0x20 != 0 { 0 } else { (10u32 >> (ne & 31)) as i32 };
+            let lo = if ne & 0x20 != 0 {
+                0
+            } else {
+                (10u32 >> (ne & 31)) as i32
+            };
             (0i32, lo)
         } else {
             let lo = 10i32.wrapping_shl(e1 as u32 & 31);
@@ -688,7 +718,11 @@ impl Session {
         };
         let (hi2, lo2) = if e3 < 1 {
             let ne = (-e3) as u32;
-            let lo = if ne & 0x20 != 0 { 0 } else { (13u32 >> (ne & 31)) as i32 };
+            let lo = if ne & 0x20 != 0 {
+                0
+            } else {
+                (13u32 >> (ne & 31)) as i32
+            };
             (0i32, lo)
         } else {
             let lo = 13i32.wrapping_shl(e3 as u32 & 31);
@@ -700,9 +734,9 @@ impl Session {
             (hi, lo)
         };
         // signed 64 compares: 10·2^e1 < x1  and  13·2^e3 < x3
-        let cmp1 = (hi1 as i64) < (x1 >> 32) as i64
+        let cmp1 = (hi1 as i64) < (x1 >> 32)
             || (hi1 == (x1 >> 32) as i32 && (lo1 as u32 as u64) < (x1 as u64));
-        let cmp2 = (hi2 as i64) < (x3 >> 32) as i64
+        let cmp2 = (hi2 as i64) < (x3 >> 32)
             || (hi2 == (x3 >> 32) as i32 && (lo2 as u32 as u64) < (x3 as u64));
         if argmin == 19 || (cmp1 && cmp2) {
             return 1;
@@ -725,12 +759,12 @@ impl Session {
 /// if q==0 → 0; if q ≥ 512<<e → 0x7fffffff; else x = q<<(22−e), return x − (x>>9).
 fn feat_centroid(c: &[i32]) -> i32 {
     let mut sum: i32 = 0;
-    for i in 0..513 {
-        sum = sum.wrapping_add(c[i] >> 10);
+    for &v in c.iter().take(513) {
+        sum = sum.wrapping_add(v >> 10);
     }
     let mut mom: i32 = 0;
-    for i in 0..513 {
-        let term = ((c[i] as i64).wrapping_mul((i + 1) as i64)) >> 20;
+    for (i, &v) in c.iter().take(513).enumerate() {
+        let term = ((v as i64).wrapping_mul((i + 1) as i64)) >> 20;
         mom = mom.wrapping_add(term as i32);
     }
     let (q, e) = fix_div2(mom, sum);
@@ -751,17 +785,17 @@ fn feat_centroid(c: &[i32]) -> i32 {
 /// `feat_scalar_c` @0x10c648: rolloff at 1/3 energy.
 fn feat_rolloff(c: &[i32]) -> i32 {
     let mut total: i32 = 0;
-    for i in 0..513 {
-        total = total.wrapping_add(c[i] >> 10);
+    for &v in c.iter().take(513) {
+        total = total.wrapping_add(v >> 10);
     }
     // total/3 via the 0x6ccccccd magic (signed)
     let third = {
         let p = (total as i64).wrapping_mul(0x6ccc_cccdu32 as i64);
-        (((p >> 32) as i32) << 1 | ((p as u32) >> 31) as i32)
+        ((p >> 32) as i32) << 1 | ((p as u32) >> 31) as i32
     };
     let mut cum: i32 = 0;
-    for bin in 0..513 {
-        cum = cum.wrapping_add(c[bin] >> 10);
+    for (bin, &v) in c.iter().take(513).enumerate() {
+        cum = cum.wrapping_add(v >> 10);
         if third <= cum {
             if bin < 512 {
                 // disasm: sll $v1,$a3,0x16 ; sra $v0,$v1,9 ; subu $v0,$v1,$v0
@@ -794,7 +828,7 @@ fn feat_flux(mem: &[i32], cur: usize, other: usize, e_cur: i32, e_prev: i32) -> 
     for b in 0..160 {
         let prod = (q1 as i64).wrapping_mul(mem[cur + b] as i64);
         let t = if s3 > 0 {
-            (prod >> (s3 as u32 & 63)) as i64
+            prod >> (s3 as u32 & 63)
         } else if s3 < 0 {
             prod.wrapping_shl((-s3) as u32 & 63)
         } else {
@@ -806,7 +840,7 @@ fn feat_flux(mem: &[i32], cur: usize, other: usize, e_cur: i32, e_prev: i32) -> 
     for b in 0..160 {
         let prod = (q2 as i64).wrapping_mul(mem[other + b] as i64);
         let t = if s4 > 0 {
-            (prod >> (s4 as u32 & 63)) as i64
+            prod >> (s4 as u32 & 63)
         } else if s4 < 0 {
             prod.wrapping_shl((-s4) as u32 & 63)
         } else {
@@ -834,7 +868,9 @@ fn mem_get(mem: &[i32], idx: usize) -> i32 {
 
 /// `stat_reduce` @0x10c8cc: mean over `n` consecutive ints (>>4 then <<4).
 fn stat_reduce(mem: &[i32], base: usize, n: i32) -> i32 {
-    let s: i64 = (0..n).map(|i| (mem_get(mem, base + i as usize) >> 4) as i64).sum();
+    let s: i64 = (0..n)
+        .map(|i| (mem_get(mem, base + i as usize) >> 4) as i64)
+        .sum();
     (s / n as i64 * 16) as i32
 }
 
@@ -909,7 +945,8 @@ fn feat_normalize(f: &mut [i32; 8]) {
     f[0] = sat64(p0 >> 28);
     // f2, f3: sat32(((raw − off>>6)·sc) >> 23)
     for k in 2..4 {
-        let pk = ((f[k].wrapping_sub(NORM_OFFSET[k] >> 6)) as i64).wrapping_mul(NORM_SCALE[k] as i64);
+        let pk =
+            ((f[k].wrapping_sub(NORM_OFFSET[k] >> 6)) as i64).wrapping_mul(NORM_SCALE[k] as i64);
         f[k] = sat64(pk >> 23);
     }
     // f4..f7: sat32(((raw − off)·sc) >> 29)
@@ -936,7 +973,7 @@ fn score_kernel(x: &[i32; 8], mean: &[i32], chol: &[i32]) -> i32 {
         for j in 0..=i {
             v = v.wrapping_add(((chol[i * 8 + j] as i64 * d[j] as i64) >> 32) as i32);
         }
-        score = score.wrapping_sub((((v as i64 * v as i64) >> 31) as i32));
+        score = score.wrapping_sub(((v as i64 * v as i64) >> 31) as i32);
     }
     score
 }
@@ -982,8 +1019,8 @@ fn emit_categories(kind: i32, mem: &[i32], out: &mut Vec<i32>) {
     // loop1: first index of category 8 (DAT_007743a0), only counts when v12 > 0
     let mut idx8 = 0usize;
     let mut bvar1 = false;
-    for i in 0..out.len().min(20) {
-        if out[i] == 8 {
+    for (i, &o) in out.iter().take(20).enumerate() {
+        if o == 8 {
             if v12 > 0 {
                 bvar1 = true;
                 idx8 = i;
@@ -1041,7 +1078,7 @@ fn emit_categories2(kind: i32, mem: &[i32], out: &mut Vec<i32>) {
         return;
     }
     let p = (v10 as i64).wrapping_mul(0x7684_bda1u32 as i64);
-    let scaled = ((((p >> 32) << 1) | ((p as u32) >> 31) as i64) as i32);
+    let scaled = (((p >> 32) << 1) | ((p as u32) >> 31) as i64) as i32;
     if scaled < sum {
         if bvar1 {
             if idx10 < 19 && idx10 < out.len() {
@@ -1057,19 +1094,19 @@ fn emit_categories2(kind: i32, mem: &[i32], out: &mut Vec<i32>) {
 
 /// Category ID → DB bit (`result_to_channel_mask` @0x4bd28).
 pub const CATEGORY_TO_BIT: [u32; 13] = [
-    0x400, // 0  jazz
-    0x010, // 1  midnight
-    0x001, // 2  morning
-    0x008, // 3  night
-    0x002, // 4  daytime
-    0x020, // 5  active
-    0x040, // 6  slow
-    0x100, // 7  happy
-    0x1000,// 8  rock
-    0x004, // 9  twilight
-    0x080, // 10 sad
-    0x200, // 11 ballad
-    0x800, // 12 dance
+    0x400,  // 0  jazz
+    0x010,  // 1  midnight
+    0x001,  // 2  morning
+    0x008,  // 3  night
+    0x002,  // 4  daytime
+    0x020,  // 5  active
+    0x040,  // 6  slow
+    0x100,  // 7  happy
+    0x1000, // 8  rock
+    0x004,  // 9  twilight
+    0x080,  // 10 sad
+    0x200,  // 11 ballad
+    0x800,  // 12 dance
 ];
 
 pub fn categories_to_mask(a: &[i32], b: &[i32]) -> u32 {
@@ -1171,10 +1208,17 @@ pub fn resample_to_22050(pcm: &[i16], rate: u32, channels: u32) -> Vec<i16> {
     let mono: Vec<f64> = if ch == 1 {
         pcm.iter().map(|&s| s as f64).collect()
     } else {
-        pcm.chunks_exact(2).map(|p| (p[0] as f64 + p[1] as f64) * 0.5).collect()
+        pcm.as_chunks::<2>()
+            .0
+            .iter()
+            .map(|p| (p[0] as f64 + p[1] as f64) * 0.5)
+            .collect()
     };
     if rate == 22050 {
-        return mono.iter().map(|&v| v.clamp(i16::MIN as f64, i16::MAX as f64) as i16).collect();
+        return mono
+            .iter()
+            .map(|&v| v.clamp(i16::MIN as f64, i16::MAX as f64) as i16)
+            .collect();
     }
     let ratio = 22050.0 / rate as f64;
     let taps = 64usize;
@@ -1250,7 +1294,7 @@ pub fn fallback_mask(pairs: &[i64; 20]) -> u32 {
             continue;
         }
         let v = pairs[s];
-        if best.map_or(true, |(bv, _)| v < bv) {
+        if best.is_none_or(|(bv, _)| v < bv) {
             best = Some((v, cat as usize));
         }
     }
@@ -1258,7 +1302,8 @@ pub fn fallback_mask(pairs: &[i64; 20]) -> u32 {
 }
 
 /// Channel names enabled by a mask.
-pub fn mask_names(mask: u32) -> Vec<&'static str> {    (0..13)
+pub fn mask_names(mask: u32) -> Vec<&'static str> {
+    (0..13)
         .filter(|i| mask >> i & 1 == 1)
         .map(|i| CATEGORY_NAMES[i])
         .collect()
@@ -1272,7 +1317,11 @@ fn first_content_chunk(mono: &[i16]) -> usize {
     let mut i = 0usize;
     while i * NCHUNK < mono.len() {
         let end = ((i + 1) * NCHUNK).min(mono.len());
-        let rms = mono[i * NCHUNK..end].iter().map(|s| (*s as i64) * (*s as i64)).sum::<i64>() / (end - i * NCHUNK) as i64;
+        let rms = mono[i * NCHUNK..end]
+            .iter()
+            .map(|s| (*s as i64) * (*s as i64))
+            .sum::<i64>()
+            / (end - i * NCHUNK) as i64;
         if rms >= 1_000 {
             break;
         }
@@ -1369,5 +1418,3 @@ mod tests {
         assert_ne!(s1.debug_pairs(), s2.debug_pairs(), "pairs must differ");
     }
 }
-
-
