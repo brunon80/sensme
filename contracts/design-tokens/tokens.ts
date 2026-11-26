@@ -109,6 +109,10 @@ export const tokens = {
   },
   "layout": {
     "waterlineY": 0.55,
+    "backdropCrop": {
+      "top": 0.2,
+      "bottom": 0.7
+    },
     "edgePad": 0.045,
     "art": {
       "size": 0.59,

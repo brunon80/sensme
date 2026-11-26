@@ -70,10 +70,12 @@ export function loadPhoto(url: string): Promise<HTMLImageElement> {
   return p;
 }
 
-/** Render a photo backdrop: cover-crop into the region above the waterline,
- * anchored at the photo's TOP edge so its upper half (50%→100% of the image)
- * is what shows; the water below mirrors that same region (product-owner
- * request 2026-11-26, UI_SPEC §0). */
+/** Render a photo backdrop: crop a fixed vertical band of the photo into
+ * the region above the waterline. The band is `layout.backdropCrop`
+ * (fractions of the photo height, measured from its top edge); the water
+ * below mirrors whatever this renders. Product-owner framing: the band is
+ * the photo's 30%→80% of height counting from the bottom (request
+ * 2026-11-26, UI_SPEC §0) — i.e. rows 0.2→0.7 from the top. */
 export function renderBackdropPhoto(img: HTMLImageElement, w: number, h: number): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = w;
@@ -82,13 +84,22 @@ export function renderBackdropPhoto(img: HTMLImageElement, w: number, h: number)
   const waterY = Math.round(h * tokens.layout.waterlineY);
   const iw = img.naturalWidth;
   const ih = img.naturalHeight;
-  const scale = Math.max(w / iw, waterY / ih);
-  const sw = w / scale;
-  const sh = waterY / scale;
-  // Top-anchored crop: the photo's upper portion meets the waterline, and
-  // the reflection below mirrors it.
+  const crop = tokens.layout.backdropCrop;
+  // Fit the band's height to the region above the waterline.
+  let scale = waterY / ((crop.bottom - crop.top) * ih);
+  let sw = w / scale;
+  let sh = waterY / scale;
+  let sy = crop.top * ih;
+  if (sw > iw) {
+    // Photo too narrow to cover the screen width with this band: widen the
+    // band symmetrically about its centre until the width is covered.
+    sw = iw;
+    scale = w / iw;
+    sh = Math.min(waterY / scale, ih);
+    sy = ((crop.top + crop.bottom) / 2) * ih - sh / 2;
+  }
+  sy = Math.min(Math.max(sy, 0), ih - sh);
   const sx = (iw - sw) / 2;
-  const sy = 0;
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, waterY);
   return cv;
 }

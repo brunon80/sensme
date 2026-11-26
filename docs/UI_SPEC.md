@@ -18,11 +18,14 @@ The whole app is one continuous scene:
 
 - **Backdrop**: each channel owns a static backdrop image (photo or
   generated bokeh field) filling the screen above the waterline. Photo
-  backdrops are cover-cropped **anchored at the photo's top edge**, so the
-  photo's upper portion (50%→100% of the image) is what shows above the
-  waterline; the water below mirrors that same region. (Product-owner
-  decision 2026-11-26 — previously the crop was bottom-anchored, putting
-  the photo's lower half at the waterline.)
+  backdrops are cropped to a fixed vertical band — the photo's **30%→80%
+  of height counting from the bottom** (token `layout.backdropCrop`,
+  expressed as rows 0.2→0.7 from the top edge) — fit to the region above
+  the waterline; the water below mirrors that same band. If a photo is
+  too narrow to cover the screen width at that band, the band widens
+  symmetrically about its centre until the width is covered. (Product-owner
+  decision 2026-11-26 — previously bottom-anchored, then top-anchored
+  cover crops.)
 - **Water**: from `waterline.y` (55% of height) down, the backdrop is
   mirrored as a rippling water reflection (horizontal streaking,
   ~55% opacity, subtle continuous ripple ~4 s loop).

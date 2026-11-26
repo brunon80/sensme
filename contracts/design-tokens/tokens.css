@@ -66,6 +66,8 @@
   --sensme-color-channelHues-midnight-1: #E06CE0;
   --sensme-color-channelHues-midnight-2: #0B0D12;
   --sensme-layout-waterlineY: 0.55;
+  --sensme-layout-backdropCrop-top: 0.2;
+  --sensme-layout-backdropCrop-bottom: 0.7;
   --sensme-layout-edgePad: 0.045;
   --sensme-layout-art-size: 0.59;
   --sensme-layout-art-centerX: 0.34;
