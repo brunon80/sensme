@@ -81,12 +81,7 @@ pub fn normalizer_gain(l: &Loudness) -> f32 {
         return 1.0;
     }
     let mut g = TARGET_RMS / l.rms;
-    if g < MIN_GAIN {
-        g = MIN_GAIN;
-    }
-    if g > MAX_GAIN {
-        g = MAX_GAIN;
-    }
+    g = g.clamp(MIN_GAIN, MAX_GAIN);
     if l.peak > 0.0 {
         let ceiling = PEAK_CEILING / l.peak;
         if g > ceiling {
