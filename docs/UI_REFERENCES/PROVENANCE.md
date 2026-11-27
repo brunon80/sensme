@@ -75,6 +75,11 @@ distribution if licensing is unclear.
 the six large ones (`morning`, `day`, `evening`, `upbeat`, `favorite`,
 `new_additions`) to 2800px for 1440p+ displays. Placeholders until
 final licensed art.
+- `night.jpg` is original AI-generated art (not a placeholder): Flux.2
+  Klein 4B txt2img at 1344×768 (seed 33003, prompt: star-blazing night
+  sky, Milky Way branch, shooting star, cyan highlights, mountain
+  ridge), then RealESRGAN x4 → 2800px. Generated locally; no third-party
+  assets.
 
 ## Favicon
 
