@@ -4,6 +4,7 @@
 import { useEffect, useRef } from "react";
 import { tokens } from "../../../../contracts/design-tokens/tokens";
 import { crossfade, DEFAULT_PHOTO, drawScene, loadPhoto, PHOTO_MAP, photoUrlFor, renderBackdrop, renderBackdropPhoto } from "./scene";
+import { WaterRenderer } from "./water";
 
 interface Props {
   /** Backdrop identity key (channel id); changing it crossfades the scene. */
@@ -55,7 +56,10 @@ export function Scene({ sceneKey, hues }: Props) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
+    // WebGL water (per-pixel 3D ripple distortion); Canvas-2D fallback
+    // when WebGL is unavailable.
+    const water = WaterRenderer.create(canvas);
+    const ctx = water ? null : canvas.getContext("2d")!;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -81,17 +85,21 @@ export function Scene({ sceneKey, hues }: Props) {
       if (cur) {
         let backdrop = cur;
         const prev = prevRef.current;
+        let fading = false;
         if (prev && fadeStartRef.current >= 0) {
           const p = Math.min(1, (performance.now() - fadeStartRef.current) / tokens.motion.channelSwitchMs);
           const mix = mixRef.current!;
           crossfade(mix, prev, cur, p);
           backdrop = mix;
+          fading = p < 1;
           if (p >= 1) {
             prevRef.current = null;
             fadeStartRef.current = -1;
           }
         }
-        drawScene(ctx, backdrop, canvas.width, canvas.height, (performance.now() - t0) / 1000);
+        const t = (performance.now() - t0) / 1000;
+        if (water) water.draw(backdrop, canvas.width, canvas.height, t, fading);
+        else if (ctx) drawScene(ctx, backdrop, canvas.width, canvas.height, t);
       }
       raf = requestAnimationFrame(frame);
     };

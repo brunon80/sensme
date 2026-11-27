@@ -187,15 +187,10 @@ export function renderBackdrop(
 }
 
 /**
- * Draw one animation frame: static backdrop on top, mirrored + rippling
- * water below the waterline. `t` is seconds (ripple loop ~motion.rippleLoopS).
- *
- * Real-water look (UI_SPEC §0, product-owner request 2026-11-27): two
- * horizontal wave trains + vertical wobble (all depth-scaled, so the
- * surface chop is gentle at the waterline and grows with distance),
- * perspective compression of the mirrored source, depth opacity fade,
- * a cheap two-tap horizontal softening per band, and drifting specular
- * glints near the waterline. All parameters in `tokens.water`.
+ * Canvas-2D fallback for the WebGL water renderer (water.ts): same token
+ * set, coarser model — per-band displacement from the wave trains with
+ * depth-scaled amplitude and frequency warp, continuous time (no loop
+ * seam). Used only when WebGL is unavailable.
  */
 export function drawScene(
   ctx: CanvasRenderingContext2D,
@@ -210,56 +205,31 @@ export function drawScene(
   ctx.drawImage(backdrop, 0, 0, w, waterY, 0, 0, w, waterY);
 
   const W = tokens.water;
-  const loop = tokens.motion.rippleLoopS;
-  const phase = (t % loop) / loop * Math.PI * 2;
-  const band = W.bandH;
+  const band = 2;
   const wh = h - waterY;
 
-  // Glossy floor: vertical mirror of the backdrop, sliced into bands.
-  // Horizontal displacement = two wave trains at different speeds and
-  // wavelengths; the source row also wobbles vertically so the mirrored
-  // image flows instead of sliding; amplitude and opacity scale with
-  // depth; a second offset draw softens each band (cheap blur).
+  const waveAt = (x: number, y: number, d: number) => {
+    const px = x * (1 + 0.5 * d);
+    const py = y * (1 + W.freqGrow * d);
+    let s = 0;
+    for (const wv of W.waves) s += wv.amp * Math.sin(wv.kx * px + wv.ky * py - wv.speed * t);
+    return s;
+  };
+
   ctx.save();
   for (let y = 0; y < wh; y += band) {
     const depth = y / wh;
     const amp = W.ampNear + (W.ampFar - W.ampNear) * depth;
-    const dx =
-      Math.sin(phase + y * W.wave1K) * amp +
-      Math.sin(phase * W.wave2Speed + y * W.wave2K) * amp * W.wave2Amp;
-    const wob =
-      Math.sin(phase * W.wobbleSpeed + y * W.wobbleK) *
-      (W.wobbleNear + (W.wobbleFar - W.wobbleNear) * depth);
+    const hC = waveAt(w / 2, y, depth);
+    const dx = hC * amp;
+    const wob = hC * amp * 0.55;
     const srcY = Math.max(0, waterY - (y * W.compress + wob) - band);
     ctx.globalAlpha = W.opacityNear + (W.opacityFar - W.opacityNear) * depth;
     ctx.drawImage(backdrop, 0, srcY, w, band, dx, waterY + y, w, band);
-    ctx.globalAlpha *= W.softAlpha;
-    ctx.drawImage(backdrop, 0, srcY, w, band, dx + 1.5, waterY + y, w, band);
-  }
-  ctx.restore();
-
-  // Specular glints: deterministic positions (stable per resize), each
-  // twinkling on its own cycle and drifting with the surface — reads as
-  // moving light on water. Additive, strongest near the waterline.
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  const rnd = mulberry32(hashStr("water-sparkles"));
-  for (let i = 0; i < W.sparkleCount; i++) {
-    const sx = rnd() * w;
-    const sy = waterY + rnd() * wh * W.sparkleMaxDepth;
-    const speed = 0.6 + rnd() * 0.8;
-    const off = rnd() * Math.PI * 2;
-    const tw = Math.sin(t * W.sparkleSpeed * speed + off);
-    const a = Math.max(0, tw);
-    const A = a * a * W.glintAlpha * (1 - sy / h);
-    if (A <= 0.01) continue;
-    const drift = Math.sin(phase + sy * 0.05) * 3;
-    const g = ctx.createLinearGradient(sx - 14 + drift, 0, sx + 14 + drift, 0);
-    g.addColorStop(0, "rgba(255,255,255,0)");
-    g.addColorStop(0.5, `rgba(255,255,255,${A.toFixed(3)})`);
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(sx - 14 + drift, sy, 28, 1.5);
+    const streak = W.streakNear + (W.streakFar - W.streakNear) * depth;
+    ctx.globalAlpha *= 0.35;
+    ctx.drawImage(backdrop, 0, srcY, w, band, dx + streak, waterY + y, w, band);
+    ctx.drawImage(backdrop, 0, srcY, w, band, dx - streak, waterY + y, w, band);
   }
   ctx.restore();
 
@@ -270,8 +240,6 @@ export function drawScene(
   g.addColorStop(1, "rgba(0,0,0,0.28)");
   ctx.fillStyle = g;
   ctx.fillRect(0, waterY, w, h - waterY);
-  ctx.fillStyle = "rgba(255,255,255,0.35)";
-  ctx.fillRect(0, waterY - 1, w, 2);
 }
 
 /** Blend two same-size backdrops into `out` at mix `p` (0 = a, 1 = b).

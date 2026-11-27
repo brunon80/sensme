@@ -94,3 +94,8 @@ final licensed art.
 - Historical: until 2026-11-27 the favicon was the SensMe heart-and-note
   mark supplied by the product owner (2026-11-25), a documented deviation
   from AGENTS.md §7. Removed with the rebrand; never distributed.
+- Water-reflection behavior (2026-11-27) tuned against a product-owner
+  photo of a real PSP running SensMe Channels Now Playing
+  (`IMG_7532.MOV`, kept locally, not committed): long slow wavefronts,
+  strong vertical compression, near-opaque mirror, no waterline line.
+  Behavior only — no assets taken.
