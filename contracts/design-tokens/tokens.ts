@@ -254,6 +254,27 @@ export const tokens = {
     "channelSwitchMs": 320,
     "menuOpenMs": 220,
     "rippleLoopS": 4
+  },
+  "water": {
+    "bandH": 2,
+    "opacityNear": 0.62,
+    "opacityFar": 0.28,
+    "compress": 0.94,
+    "ampNear": 1.2,
+    "ampFar": 7.5,
+    "wave1K": 0.085,
+    "wave2K": 0.23,
+    "wave2Speed": 1.7,
+    "wave2Amp": 0.55,
+    "wobbleK": 0.13,
+    "wobbleSpeed": 0.8,
+    "wobbleNear": 0.8,
+    "wobbleFar": 6,
+    "softAlpha": 0.35,
+    "sparkleCount": 26,
+    "sparkleMaxDepth": 0.55,
+    "sparkleSpeed": 1.4,
+    "glintAlpha": 0.35
   }
 } as const;
 

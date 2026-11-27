@@ -189,6 +189,13 @@ export function renderBackdrop(
 /**
  * Draw one animation frame: static backdrop on top, mirrored + rippling
  * water below the waterline. `t` is seconds (ripple loop ~motion.rippleLoopS).
+ *
+ * Real-water look (UI_SPEC §0, product-owner request 2026-11-27): two
+ * horizontal wave trains + vertical wobble (all depth-scaled, so the
+ * surface chop is gentle at the waterline and grows with distance),
+ * perspective compression of the mirrored source, depth opacity fade,
+ * a cheap two-tap horizontal softening per band, and drifting specular
+ * glints near the waterline. All parameters in `tokens.water`.
  */
 export function drawScene(
   ctx: CanvasRenderingContext2D,
@@ -202,21 +209,60 @@ export function drawScene(
   // Top: static image.
   ctx.drawImage(backdrop, 0, 0, w, waterY, 0, 0, w, waterY);
 
-  // Glossy floor: vertical mirror of the backdrop, sliced into bands with a
-  // gentle horizontal ripple. Bright (not blackened) — the PSP floor is a
-  // luminous reflective surface.
-  const band = 3;
+  const W = tokens.water;
   const loop = tokens.motion.rippleLoopS;
   const phase = (t % loop) / loop * Math.PI * 2;
+  const band = W.bandH;
+  const wh = h - waterY;
+
+  // Glossy floor: vertical mirror of the backdrop, sliced into bands.
+  // Horizontal displacement = two wave trains at different speeds and
+  // wavelengths; the source row also wobbles vertically so the mirrored
+  // image flows instead of sliding; amplitude and opacity scale with
+  // depth; a second offset draw softens each band (cheap blur).
   ctx.save();
-  ctx.globalAlpha = 0.6;
-  for (let y = 0; y < h - waterY; y += band) {
-    const srcY = Math.max(0, waterY - y - band); // mirrored source row
-    const depth = y / (h - waterY);
-    const dx = Math.sin(phase + y * 0.1) * (1 + depth * 4);
+  for (let y = 0; y < wh; y += band) {
+    const depth = y / wh;
+    const amp = W.ampNear + (W.ampFar - W.ampNear) * depth;
+    const dx =
+      Math.sin(phase + y * W.wave1K) * amp +
+      Math.sin(phase * W.wave2Speed + y * W.wave2K) * amp * W.wave2Amp;
+    const wob =
+      Math.sin(phase * W.wobbleSpeed + y * W.wobbleK) *
+      (W.wobbleNear + (W.wobbleFar - W.wobbleNear) * depth);
+    const srcY = Math.max(0, waterY - (y * W.compress + wob) - band);
+    ctx.globalAlpha = W.opacityNear + (W.opacityFar - W.opacityNear) * depth;
     ctx.drawImage(backdrop, 0, srcY, w, band, dx, waterY + y, w, band);
+    ctx.globalAlpha *= W.softAlpha;
+    ctx.drawImage(backdrop, 0, srcY, w, band, dx + 1.5, waterY + y, w, band);
   }
   ctx.restore();
+
+  // Specular glints: deterministic positions (stable per resize), each
+  // twinkling on its own cycle and drifting with the surface — reads as
+  // moving light on water. Additive, strongest near the waterline.
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const rnd = mulberry32(hashStr("water-sparkles"));
+  for (let i = 0; i < W.sparkleCount; i++) {
+    const sx = rnd() * w;
+    const sy = waterY + rnd() * wh * W.sparkleMaxDepth;
+    const speed = 0.6 + rnd() * 0.8;
+    const off = rnd() * Math.PI * 2;
+    const tw = Math.sin(t * W.sparkleSpeed * speed + off);
+    const a = Math.max(0, tw);
+    const A = a * a * W.glintAlpha * (1 - sy / h);
+    if (A <= 0.01) continue;
+    const drift = Math.sin(phase + sy * 0.05) * 3;
+    const g = ctx.createLinearGradient(sx - 14 + drift, 0, sx + 14 + drift, 0);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.5, `rgba(255,255,255,${A.toFixed(3)})`);
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(sx - 14 + drift, sy, 28, 1.5);
+  }
+  ctx.restore();
+
   // Floor sheen: bright near the waterline, gently deepening downward.
   const g = ctx.createLinearGradient(0, waterY, 0, h);
   g.addColorStop(0, "rgba(255,255,255,0.18)");

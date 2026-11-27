@@ -27,8 +27,15 @@ The whole app is one continuous scene:
   decision 2026-11-26 — previously bottom-anchored, then top-anchored
   cover crops.)
 - **Water**: from `waterline.y` (55% of height) down, the backdrop is
-  mirrored as a rippling water reflection (horizontal streaking,
-  ~55% opacity, subtle continuous ripple ~4 s loop).
+  mirrored as a rippling water reflection: two horizontal wave trains at
+  different speeds/wavelengths plus a vertical wobble of the sampled
+  source row, all depth-scaled (gentle chop at the waterline, growing
+  with distance), with perspective compression of the mirrored source,
+  an opacity fade from ~62% near the waterline to ~28% at the bottom, a
+  cheap two-tap horizontal softening per band, and drifting specular
+  glints near the waterline. Continuous ~4 s loop (`motion.rippleLoopS`);
+  all parameters in `tokens.water`. (Product-owner request 2026-11-27 —
+  previously a single flat sine ripple.)
 - **Floating content**: channel tiles and album artwork float above the
   water, casting their own reflection downward from their bottom edge.
 - **Text**: white, humanist sans (clean-room stand-in for Sony's
