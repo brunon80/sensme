@@ -468,12 +468,6 @@
   flex-direction: column;
   gap: 1dvh;
 }
-.menu-caption {
-  position: absolute;
-  bottom: calc((1 - var(--moodwave-layout-caption-baselineY)) * 100dvh);
-  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
-  color: var(--moodwave-color-textSecondary);
-}
 
 /* ---- empty state ---- */
 .empty-card {

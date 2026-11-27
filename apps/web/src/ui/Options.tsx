@@ -103,7 +103,6 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
             {item("Back", () => setPage("root"))}
           </div>
         )}
-        <div className="menu-caption">✕ Select&nbsp;&nbsp;&nbsp;◯ Close</div>
       </div>
     </div>
   );
