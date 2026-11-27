@@ -70,6 +70,11 @@ distribution if licensing is unclear.
 | `shuffle_all.jpg` | Shuffle All |
 | `new_additions.webp` | Newly Added |
 
+2026-11-27: the ten backdrops under ~750px (`relax`, `energetic`, `mellow`,
+`lounge`, `emotional`, `dance`, `extreme`, `night`, `midnight`,
+`shuffle_all`) were AI-upscaled 4× with RealESRGAN x4plus (local ComfyUI)
+and downsampled to 1400px wide — placeholders until final licensed art.
+
 ## Favicon
 
 - `apps/web/public/icon.svg` — **Moodwave wave-bars mark** (2026-11-27):
