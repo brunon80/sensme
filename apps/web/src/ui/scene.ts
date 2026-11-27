@@ -227,11 +227,9 @@ export function drawScene(
     const wob = gy * slope * 0.6;
     const srcY = Math.max(0, waterY - (y * W.compress + wob) - band);
     ctx.globalAlpha = W.opacityNear + (W.opacityFar - W.opacityNear) * depth;
+    ctx.filter = `blur(${(W.blurNear + (W.blurFar - W.blurNear) * depth).toFixed(1)}px)`;
     ctx.drawImage(backdrop, 0, srcY, w, band, dx, waterY + y, w, band);
-    const streak = W.streakNear + (W.streakFar - W.streakNear) * depth;
-    ctx.globalAlpha *= 0.35;
-    ctx.drawImage(backdrop, 0, srcY, w, band, dx + streak, waterY + y, w, band);
-    ctx.drawImage(backdrop, 0, srcY, w, band, dx - streak, waterY + y, w, band);
+    ctx.filter = "none";
   }
   ctx.restore();
 

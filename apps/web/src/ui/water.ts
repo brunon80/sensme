@@ -27,7 +27,7 @@ uniform float uCompress, uFreqGrow;
 uniform float uOpacNear, uOpacFar;
 uniform float uNormalNear, uNormalFar;
 uniform float uSpecPow, uSpecAmp;
-uniform float uStreakNear, uStreakFar;
+uniform float uBlurNear, uBlurFar;
 
 float waveH(vec2 p) {
   float s = 0.0;
@@ -77,16 +77,15 @@ void main() {
   float srcX = clamp(gl_FragCoord.x + grad.x * slope, 0.0, uW);
   vec2 base = vec2(srcX / uW, srcY / uH);
 
-  // Horizontal streaking + vertical softening, both widening with depth
-  // (distant water is blurrier).
-  float streak = mix(uStreakNear, uStreakFar, d) / uW;
-  vec3 c = texture2D(uTex, base).rgb;
-  c += texture2D(uTex, base + vec2(streak, 0.0)).rgb;
-  c += texture2D(uTex, base - vec2(streak, 0.0)).rgb;
-  c /= 3.0;
-  float vs = 2.0 / uH;
-  c = mix(c, (texture2D(uTex, base + vec2(0.0, vs)).rgb +
-              texture2D(uTex, base - vec2(0.0, vs)).rgb) * 0.5, 0.35 + 0.4 * d);
+  // Reflection blur: 5-tap kernel, widening with depth (distant water is
+  // blurrier); also hides source-pixel aliasing under the displacement.
+  float blx = mix(uBlurNear, uBlurFar, d) / uW;
+  float bly = mix(uBlurNear, uBlurFar, d) / uH;
+  vec3 c = texture2D(uTex, base).rgb * 0.4;
+  c += texture2D(uTex, base + vec2(blx, 0.0)).rgb * 0.15;
+  c += texture2D(uTex, base - vec2(blx, 0.0)).rgb * 0.15;
+  c += texture2D(uTex, base + vec2(0.0, bly)).rgb * 0.15;
+  c += texture2D(uTex, base - vec2(0.0, bly)).rgb * 0.15;
 
   // Specular glints from the wave normal (light from above/behind viewer).
   float ns = mix(uNormalNear, uNormalFar, d);
@@ -125,7 +124,7 @@ export class WaterRenderer {
   private u = {} as Record<
     | "uTex" | "uW" | "uH" | "uWaterY" | "uT" | "uWaves"
     | "uAmpNear" | "uAmpFar" | "uCompress" | "uFreqGrow" | "uOpacNear" | "uOpacFar"
-    | "uNormalNear" | "uNormalFar" | "uSpecPow" | "uSpecAmp" | "uStreakNear" | "uStreakFar",
+    | "uNormalNear" | "uNormalFar" | "uSpecPow" | "uSpecAmp" | "uBlurNear" | "uBlurFar",
     WebGLUniformLocation | null
   >;
   private lastSource: HTMLCanvasElement | null = null;
@@ -137,7 +136,7 @@ export class WaterRenderer {
     const names = [
       "uTex", "uW", "uH", "uWaterY", "uT", "uWaves",
       "uAmpNear", "uAmpFar", "uCompress", "uFreqGrow", "uOpacNear", "uOpacFar",
-      "uNormalNear", "uNormalFar", "uSpecPow", "uSpecAmp", "uStreakNear", "uStreakFar",
+      "uNormalNear", "uNormalFar", "uSpecPow", "uSpecAmp", "uBlurNear", "uBlurFar",
     ] as const;
     for (const name of names) {
       this.u[name] = gl.getUniformLocation(prog, name);
@@ -214,8 +213,8 @@ export class WaterRenderer {
     gl.uniform1f(this.u.uNormalFar, W.normalFar);
     gl.uniform1f(this.u.uSpecPow, W.specPow);
     gl.uniform1f(this.u.uSpecAmp, W.specAmp);
-    gl.uniform1f(this.u.uStreakNear, W.streakNear);
-    gl.uniform1f(this.u.uStreakFar, W.streakFar);
+    gl.uniform1f(this.u.uBlurNear, W.blurNear);
+    gl.uniform1f(this.u.uBlurFar, W.blurFar);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 }
