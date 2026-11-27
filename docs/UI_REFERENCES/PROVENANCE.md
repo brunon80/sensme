@@ -74,7 +74,10 @@ distribution if licensing is unclear.
 
 - `apps/web/public/icon.svg` — **Moodwave wave-bars mark** (2026-11-27):
   twelve spectrum-ordered bars (one per channel) rising and falling as a
-  wave, using only `dotPalette` colors from `contracts/design-tokens/`.
+  wave, using only `dotPalette` colors from `contracts/design-tokens/`,
+  on a white rounded-square tile. PNGs are full-bleed white (no
+  transparency — platform masks give the rounded/circular shape;
+  maskable keeps the bare mark in the safe zone via `icon-mark.svg`).
   Clean-room original; concept exploration in `docs/branding/concepts/`
   (ADR-020). Source of truth: `icon.svg` + `scripts/gen-icons.mjs`.
 - Historical: until 2026-11-27 the favicon was the SensMe heart-and-note

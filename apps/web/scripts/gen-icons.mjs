@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const svgPath = path.join(root, "../public/icon.svg");
 const outDir = path.join(root, "../public/icons");
 mkdirSync(outDir, { recursive: true });
 
@@ -17,12 +16,12 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage();
 
-async function render(size, pad) {
+async function render(svgFile, size, pad, fill) {
   const dataUrl =
     "data:image/svg+xml;base64," +
-    Buffer.from(await import("node:fs/promises").then((fs) => fs.readFile(svgPath))).toString("base64");
+    Buffer.from(await import("node:fs/promises").then((fs) => fs.readFile(path.join(root, "../public", svgFile)))).toString("base64");
   return page.evaluate(
-    async ([src, size, pad]) => {
+    async ([src, size, pad, fill]) => {
       const img = new Image();
       await new Promise((res, rej) => {
         img.onload = res;
@@ -33,7 +32,7 @@ async function render(size, pad) {
       c.width = size;
       c.height = size;
       const x = c.getContext("2d");
-      x.fillStyle = "#000";
+      x.fillStyle = fill;
       x.fillRect(0, 0, size, size);
       const s = size * pad;
       const ar = img.width / img.height;
@@ -44,16 +43,19 @@ async function render(size, pad) {
       x.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
       return c.toDataURL("image/png");
     },
-    [dataUrl, size, pad],
+    [dataUrl, size, pad, fill],
   );
 }
 
-for (const [name, size, pad] of [
-  ["icon-192.png", 192, 0.88],
-  ["icon-512.png", 512, 0.88],
-  ["icon-maskable-512.png", 512, 0.62],
+// Regular icons: the tile (white rounded square) fills the canvas.
+// Maskable: full-bleed white with the bare mark inside the safe zone, so
+// launcher circular/squircle masks never cut the bars.
+for (const [name, svg, size, pad, fill] of [
+  ["icon-192.png", "icon.svg", 192, 1.0, "#fff"],
+  ["icon-512.png", "icon.svg", 512, 1.0, "#fff"],
+  ["icon-maskable-512.png", "icon-mark.svg", 512, 0.62, "#fff"],
 ]) {
-  const dataUrl = await render(size, pad);
+  const dataUrl = await render(svg, size, pad, fill);
   writeFileSync(path.join(outDir, name), Buffer.from(dataUrl.split(",")[1], "base64"));
   console.log("wrote", name);
 }

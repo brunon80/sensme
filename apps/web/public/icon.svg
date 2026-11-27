@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <!-- Moodwave mark: 12 channel bars (one per channel) rising and falling as a wave.
        Colors are the dotPalette from contracts/design-tokens/tokens.json, spectrum order.
-       Clean-room original (docs/branding/BRANDING_PROPOSAL.md). -->
+       White rounded-square tile (app-icon shape). Clean-room original
+       (docs/branding/BRANDING_PROPOSAL.md). -->
+  <rect width="512" height="512" rx="112" fill="#FFFFFF"/>
   <g>
     <rect x="69"  y="181" width="22" height="150" rx="11" fill="#E06A6A"/>
     <rect x="101" y="111" width="22" height="290" rx="11" fill="#E89A55"/>

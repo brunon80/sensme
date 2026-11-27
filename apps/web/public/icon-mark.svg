@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Moodwave mark without the tile background (maskable rendering draws it
+       onto a full-bleed white canvas; see scripts/gen-icons.mjs). -->
+  <g>
+    <rect x="69"  y="181" width="22" height="150" rx="11" fill="#E06A6A"/>
+    <rect x="101" y="111" width="22" height="290" rx="11" fill="#E89A55"/>
+    <rect x="133" y="111" width="22" height="290" rx="11" fill="#E8B455"/>
+    <rect x="165" y="181" width="22" height="150" rx="11" fill="#E8D26A"/>
+    <rect x="197" y="281" width="22" height="150" rx="11" fill="#B8D25E"/>
+    <rect x="229" y="316" width="22" height="80"  rx="11" fill="#7CC96F"/>
+    <rect x="261" y="181" width="22" height="150" rx="11" fill="#5FC2B8"/>
+    <rect x="293" y="111" width="22" height="290" rx="11" fill="#6FC7E8"/>
+    <rect x="325" y="111" width="22" height="290" rx="11" fill="#6FA8F0"/>
+    <rect x="357" y="181" width="22" height="150" rx="11" fill="#9A8CF5"/>
+    <rect x="389" y="281" width="22" height="150" rx="11" fill="#E06CE0"/>
+    <rect x="421" y="316" width="22" height="80"  rx="11" fill="#E87BA8"/>
+  </g>
+</svg>
