@@ -95,8 +95,8 @@ void main() {
   c *= 0.90 + 0.16 * n.z;                    // gentle crest/trough shading
 
   float alpha = mix(uOpacNear, uOpacFar, d);
-  c += vec3(0.10) * pow(1.0 - d, 2.5);       // sheen near the waterline
-  c *= 1.0 - 0.25 * d * d;                   // deepen toward the bottom
+  c += vec3(0.06) * pow(1.0 - d, 2.5);       // faint sheen near the waterline
+  c *= 1.0 - 0.08 * d * d;                   // barely deepen toward the bottom
   c += vec3(spec);
   gl_FragColor = vec4(c * alpha, alpha);     // premultiplied
 }

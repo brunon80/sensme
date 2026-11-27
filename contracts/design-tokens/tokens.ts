@@ -257,8 +257,8 @@ export const tokens = {
   },
   "water": {
     "compress": 0.82,
-    "opacityNear": 0.72,
-    "opacityFar": 0.5,
+    "opacityNear": 0.85,
+    "opacityFar": 0.7,
     "ampNear": 75,
     "ampFar": 300,
     "freqGrow": 0.3,
@@ -304,8 +304,8 @@ export const tokens = {
     "normalFar": 8,
     "specPow": 40,
     "specAmp": 0.05,
-    "blurNear": 1.5,
-    "blurFar": 5
+    "blurNear": 2,
+    "blurFar": 3.5
   }
 } as const;
 
