@@ -70,10 +70,11 @@ distribution if licensing is unclear.
 | `shuffle_all.jpg` | Shuffle All |
 | `new_additions.webp` | Newly Added |
 
-2026-11-27: the ten backdrops under ~750px (`relax`, `energetic`, `mellow`,
-`lounge`, `emotional`, `dance`, `extreme`, `night`, `midnight`,
-`shuffle_all`) were AI-upscaled 4× with RealESRGAN x4plus (local ComfyUI)
-and downsampled to 1400px wide — placeholders until final licensed art.
+2026-11-27: all 16 backdrops were AI-upscaled with RealESRGAN x4plus
+(local ComfyUI) and downsampled — the ten under ~750px to 1400px wide,
+the six large ones (`morning`, `day`, `evening`, `upbeat`, `favorite`,
+`new_additions`) to 2800px for 1440p+ displays. Placeholders until
+final licensed art.
 
 ## Favicon
 
