@@ -17,6 +17,14 @@ interface Props {
   /** Screen-transition phase (UI_SPEC §1): dim = channel grid open,
    * elements scaled down + faded but still visible. */
   phase?: "enter" | "dim";
+  /** Mouse click on a track card (UI_SPEC §9): App stages a candidate or
+   * confirms/plays, reusing the two-step L/R + START semantics. */
+  onCardClick?: (queueIndex: number) => void;
+  /** Live drag progress in slot units (UI_SPEC §9 mouse drag): the whole
+   * stack renders at fractional slot offsets so it follows the pointer. */
+  dragFrac?: number;
+  /** Drag in progress: slot transitions off, so cards track the pointer. */
+  dragging?: boolean;
 }
 
 interface Slot {
@@ -43,7 +51,7 @@ function useAspect(): number {
  * does not stop at the token slots: scales continue geometrically (ratio
  * of the last two token slots) until the card is fully past the right
  * edge, so the stack runs to the screen edge at any aspect (UI_SPEC §2). */
-function slotChain(aspect: number): Slot[] {
+export function slotChain(aspect: number): Slot[] {
   const np = tokens.layout.np;
   const rightEdge = aspect; // screen width in vh-fraction units (×100 at render)
   const ratio = np.slots[np.slots.length - 1]!.scale / np.slots[np.slots.length - 2]!.scale;
@@ -70,6 +78,22 @@ function slotFor(k: number, pending: boolean, slots: Slot[], aspect: number): Sl
   if (k >= 0 && k < slots.length) return slots[k]!;
   if (k === -1) return { ...np.prev, centerX: np.prev.centerX * aspect }; // glides out
   return null;
+}
+
+/** Slot at a fractional offset (mouse drag, UI_SPEC §9): linear blend
+ * between the two neighbouring integer slots, so the stack follows the
+ * pointer continuously and lands exactly on a real slot at whole steps. */
+function slotForFrac(k: number, pending: boolean, slots: Slot[], aspect: number): Slot | null {
+  const lo = slotFor(Math.floor(k), pending, slots, aspect);
+  if (Number.isInteger(k)) return lo;
+  const hi = slotFor(Math.ceil(k), pending, slots, aspect);
+  if (!lo || !hi) return lo ?? hi;
+  const t = k - Math.floor(k);
+  return {
+    centerX: lo.centerX + (hi.centerX - lo.centerX) * t,
+    scale: lo.scale + (hi.scale - lo.scale) * t,
+    opacity: lo.opacity + (hi.opacity - lo.opacity) * t,
+  };
 }
 
 /** Shared document timeline: every marquee animation is pinned to it so
@@ -138,7 +162,7 @@ function Marquee({ text, className }: { text: string; className?: string }) {
   );
 }
 
-export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props) {
+export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardClick, dragFrac = 0, dragging = false }: Props) {
   const n = queue.length;
   const current = queue[pos] ?? null;
   const dots = useMemo(() => (current ? membershipDots(current) : []), [current]);
@@ -154,12 +178,12 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
   const offsets = [-1, ...slots.map((_, k) => k)];
 
   return (
-    <div className={`nowplaying ${phase ?? ""}`}>
+    <div className={`nowplaying ${phase ?? ""} ${dragging ? "dragging" : ""}`}>
       {n > 0 &&
         offsets.map((k) => {
           const idx = pos + k;
           if (idx < 0 || idx >= n) return null; // non-cyclic: clamp at the ends
-          const slot = slotFor(k, pending ?? false, slots, aspect);
+          const slot = slotForFrac(k - dragFrac, pending ?? false, slots, aspect);
           if (!slot) return null;
           const rec = queue[idx]!;
           return (
@@ -172,6 +196,8 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase }: Props
               centerY={np.centerY}
               z={10 - Math.abs(k)}
               reflect={k >= 0}
+              queueIdx={idx}
+              onClick={onCardClick}
             />
           );
         })}
@@ -213,6 +239,8 @@ function TrackCard({
   centerY,
   z,
   reflect,
+  queueIdx,
+  onClick,
 }: {
   record: LibraryRecord;
   entry: CarouselEntry;
@@ -221,6 +249,9 @@ function TrackCard({
   centerY: number;
   z: number;
   reflect: boolean;
+  /** Position in the queue, reported on click (UI_SPEC §9 mouse input). */
+  queueIdx: number;
+  onClick?: (queueIndex: number) => void;
 }) {
   const [artUrl, setArtUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -236,6 +267,8 @@ function TrackCard({
   return (
     <div
       className="np-track"
+      data-np-idx={queueIdx}
+      onClick={onClick ? () => onClick(queueIdx) : undefined}
       style={{
         width: `${size * 100}dvh`,
         height: `${size * 100}dvh`,

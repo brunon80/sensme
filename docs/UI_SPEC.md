@@ -272,13 +272,49 @@ touch devices (product-owner decision 2026-11-26):
 | Tap a tile                   | move selection to that tile    | —                               |
 | Swipe ← / →                  | D-pad column left/right        | L / R stage prev/next candidate |
 | Swipe ↑ / ↓                  | D-pad row up/down              | SELECT → channel carousel       |
-| Caption chip (now a button)  | ✕ Back · ◯ Select              | SELECT · START · L · R · ♥ · OPTIONS |
+| Caption chip (now a button)  | ✕ Back · ◯ Select              | SELECT · START · L · R · ♥ · OPTIONS · ⚙ |
 
-Caption chips render as buttons on coarse-pointer devices and trigger
-exactly the same actions as the keyboard bindings; on desktop they stay
-static help text. All touch actions go through the same action
-dispatcher as the keyboard map (`interaction-model.md`), so behaviour
-cannot drift between platforms.
+Caption chips render as buttons on every platform (mouse click or touch
+tap) and trigger exactly the same actions as the keyboard bindings. All
+touch actions go through the same action dispatcher as the keyboard map
+(`interaction-model.md`), so behaviour cannot drift between platforms.
+
+### Mouse input map (identical semantics to the PSP buttons)
+
+Desktop keeps the keyboard map; the mouse adds pointing without changing
+any screen or animation (product-owner request 2026-11-27):
+
+| Mouse action                    | Carousel (SELECT)                     | Now playing                                |
+| ------------------------------- | ------------------------------------- | ------------------------------------------ |
+| Wheel ↓ / → (or ↓ accumulated)  | D-pad column right (globe rotates)    | R: stage next candidate (pending scale)    |
+| Wheel ↑ / ←                     | D-pad column left                     | L: stage prev candidate                    |
+| Press-hold + drag ← / →         | globe rotates live, snaps to nearest column on release | stack follows live, snaps to nearest track (stages candidate) |
+| Click a tile                    | move selection to that tile           | —                                          |
+| Click the selected tile         | ◯ enter channel                       | —                                          |
+| Click a side card               | —                                     | stage that track as the candidate          |
+| Click the big card              | —                                     | START: confirm candidate / play · pause    |
+| Caption chip (button)           | Esc Back · Enter Select               | Esc · Space · ← · → · F · C · O Options    |
+
+- The wheel accumulates deltas and fires one step per notch (≈50 px), so
+  trackpads cannot burst-step; wheel events are swallowed (the app never
+  scrolls).
+- Drag scrub: a press that travels ≥ 6 px becomes a drag — the globe/slot
+  geometry is driven by a fractional column offset, so the whole view
+  follows the pointer live (step transitions off while dragging). Release
+  always settles centered on the **nearest** element: ≥ half a step
+  commits via the shared dispatcher (same step animation as wheel/
+  keyboard), less springs back. Progress is clamped at the queue/grid
+  ends, and the click a drag ends with is swallowed so it cannot
+  double-fire as select/enter.
+- Clicking a now-playing card reuses the two-step selection: side cards
+  stage a candidate at `np.pendingScale` (same animation as L/R), and the
+  big card confirms (scales up + plays) or toggles play/pause.
+- The now-playing captions carry an Options chip (desktop `O`, touch `⚙`)
+  that opens the settings menu — the mouse equivalent of the PSP △ button.
+- Empty channels stay dimmed and unclickable; dimmed now-playing cards
+  behind the open grid ignore clicks.
+- Mouse affordances are cursor-only (`pointer` on tiles/cards, chip hover
+  mirrors the touch `:active` state): no visual redesign.
 
 ### Viewport handling
 

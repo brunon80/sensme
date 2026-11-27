@@ -72,6 +72,7 @@ export function captionsFor(screen: CaptionScreen, state: CaptionState, platform
           { key: "→", desc: "Next", action: "next" },
           { key: "F", desc: "Favourites", action: "favourite" },
           { key: "C", desc: "Add Music", action: "add" },
+          { key: "O", desc: "Options", action: "menu" },
         ];
     }
   }
@@ -98,6 +99,7 @@ export function captionsFor(screen: CaptionScreen, state: CaptionState, platform
         { key: "R", desc: "Next", action: "next" },
         { key: "♥", desc: "Favourites", action: "favourite" },
         { key: "OPTIONS", desc: "Add Music", action: "add" },
+        { key: "⚙", desc: "Settings", action: "menu" },
       ];
   }
 }

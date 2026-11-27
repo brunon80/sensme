@@ -17,7 +17,8 @@ import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
 import { carouselGrid, entryHues, entryTracks, shuffledQueue, todForHour, type CarouselEntry } from "./ui/channels";
 import { captionsFor, detectPlatform, type ActionId } from "./ui/controls";
-import { NowPlaying } from "./ui/NowPlaying";
+import { useMouseDrag, useWheelSteps } from "./ui/mouse";
+import { NowPlaying, slotChain } from "./ui/NowPlaying";
 import { Options, type Settings } from "./ui/Options";
 import { RotateHint } from "./ui/RotateHint";
 import { Scene } from "./ui/Scene";
@@ -566,6 +567,88 @@ export default function App() {
     runAction("play"); // now-playing tap = START
   });
 
+  // ---- mouse wheel (UI_SPEC §9) ----
+  // The wheel steps the same actions as the D-pad: on the grid it rotates
+  // the globe one column (right/down = next column, matching the touch
+  // flick direction); on now-playing it stages the next/prev candidate, so
+  // the two-step L/R animation plays for mouse users too.
+  useWheelSteps((dir) => {
+    if (menuOpenRef.current) return; // the menu owns the screen while open
+    if (screen === "carousel") {
+      if (dir === "right" || dir === "down") runAction("colRight");
+      else runAction("colLeft");
+    } else if (screen === "nowplaying" || screen === "boot") {
+      if (dir === "right" || dir === "down") runAction("next");
+      else runAction("prev");
+    }
+  });
+
+  // ---- mouse drag (UI_SPEC §9) ----
+  // Press-hold-drag scrubs the channel globe or the now-playing stack
+  // fractionally under the pointer; release always settles centered on the
+  // nearest element: at half a step or more it commits through the shared
+  // dispatcher (same step animation as wheel/keyboard), below it springs
+  // back. Progress is clamped so the view can never drag past the ends.
+  const [dragFrac, setDragFrac] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  useMouseDrag({
+    enabled: () =>
+      !menuOpenRef.current &&
+      (screen === "carousel" || ((screen === "nowplaying" || screen === "boot") && queue.length > 0)),
+    pitch: () => {
+      if (screen === "carousel") {
+        const t = tokens.layout.carousel;
+        return (t.card.w + t.colGap) * window.innerWidth; // one column step
+      }
+      const s = slotChain(window.innerWidth / window.innerHeight);
+      return (s[1]!.centerX - s[0]!.centerX) * window.innerHeight; // one slot step
+    },
+    bounds: () => {
+      if (screen === "carousel") {
+        const cur = grid[Math.min(entryIndex, grid.length - 1)];
+        if (!cur) return { min: 0, max: 0 };
+        const has = (d: number) => grid.some((c) => c.col === cur.col + d);
+        return { min: has(-1) ? -1 : 0, max: has(1) ? 1 : 0 };
+      }
+      const base = pending ?? queuePos;
+      return { min: base - 1 >= 0 ? -1 : 0, max: base + 1 < queue.length ? 1 : 0 };
+    },
+    onProgress: (f) => {
+      setDragging(true);
+      setDragFrac(f);
+    },
+    onRelease: (f) => {
+      setDragging(false);
+      setDragFrac(0); // snap: transitions are back on, so the remainder animates
+      if (Math.abs(f) < 0.5) return; // under half a step: spring back to current
+      if (screen === "carousel") runAction(f > 0 ? "colRight" : "colLeft");
+      else runAction(f > 0 ? "next" : "prev");
+    },
+  });
+
+  // ---- mouse clicks (UI_SPEC §9) ----
+  // Grid tile: same semantics as a touch tap — clicking an unselected tile
+  // moves the selection (the globe rotates), clicking the selected tile
+  // enters the channel (◯). Empty channels stay dimmed and unclickable.
+  function onTileClick(idx: number) {
+    if (menuOpenRef.current || screen !== "carousel") return;
+    const cell = grid[idx];
+    if (!cell || entryTracks(cell.entry, records).length === 0) return;
+    if (idx === entryIndex) runAction("select");
+    else setEntryIndex(idx);
+  }
+
+  // Now-playing card: clicking a side card stages it as the candidate (the
+  // L/R pending animation); clicking the big card confirms the candidate or
+  // toggles play/pause (START). Ignored while the grid is open: dimmed
+  // cards sit behind the tiles and must not swallow grid clicks.
+  function onNpCardClick(idx: number) {
+    if (menuOpenRef.current) return;
+    if (screen !== "nowplaying" && screen !== "boot") return;
+    if (idx === (pending ?? queuePos)) runAction("play");
+    else setPending(idx);
+  }
+
   async function toggleFavourite(rec: LibraryRecord, fav: boolean) {
     await updateRecord({ ...rec, favourite: fav });
     await reload();
@@ -622,8 +705,8 @@ export default function App() {
       <RotateHint />
 
       {showCarousel && <div className={`grid-scrim ${screen === "carousel" ? "on" : ""}`} />}
-      {showCarousel && <Carousel grid={grid} selected={entryIndex} counts={counts} phase={carPhase} />}
-      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={sceneEntry} playing={playing} phase={npPhase} />}
+      {showCarousel && <Carousel grid={grid} selected={entryIndex} counts={counts} phase={carPhase} onSelect={onTileClick} dragFrac={screen === "carousel" ? dragFrac : 0} dragging={dragging && screen === "carousel"} />}
+      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={sceneEntry} playing={playing} phase={npPhase} onCardClick={onNpCardClick} dragFrac={screen === "carousel" ? 0 : dragFrac} dragging={dragging && screen !== "carousel"} />}
 
       {screen === "empty" && (
         <div className="empty-card">
@@ -679,19 +762,13 @@ export default function App() {
       {settings.showCaptions && captionSegs.length > 0 && (
         <div className="captions">
           {captionSegs.map((c) =>
-            // Touch platforms: chips are real controls (UI_SPEC §9); desktop
-            // keeps them as static help text.
-            platform === "touch" ? (
-              <button className="cap cap-btn" key={`${c.key}-${c.desc}`} onClick={() => runAction(c.action)}>
-                <span className="cap-key">{c.key}</span>
-                <span className="cap-desc">{c.desc}</span>
-              </button>
-            ) : (
-              <span className="cap" key={`${c.key}-${c.desc}`}>
-                <span className="cap-key">{c.key}</span>
-                <span className="cap-desc">{c.desc}</span>
-              </span>
-            ),
+            // Chips are real controls on every platform (UI_SPEC §9): touch
+            // taps them, mouse clicks them, and the keyboard bindings stay
+            // identical — all three resolve to the same dispatcher.
+            <button className="cap cap-btn" key={`${c.key}-${c.desc}`} onClick={() => runAction(c.action)}>
+              <span className="cap-key">{c.key}</span>
+              <span className="cap-desc">{c.desc}</span>
+            </button>,
           )}
         </div>
       )}
