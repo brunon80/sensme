@@ -276,3 +276,33 @@ stays removed until it does something). Gated by
 `apps/web/scripts/normalizer.mjs` (gain applied at play, toggle restores
 unity live, setting persists across reload) plus Rust unit tests in
 `sensme-audio::loudness`.
+
+## ADR-019 — Metadata enrichment via MusicBrainz + Cover Art Archive
+
+Context: many imported files lack tags/artwork. Streaming-service APIs
+(Spotify/Apple/YouTube) were evaluated and rejected for this: full
+catalog metadata needs OAuth or paid developer tokens, artwork URLs are
+not cacheable long-term, and their ToS restrict building a competing
+local library — plus they are proprietary services (AGENTS §2 spirit).
+
+Decision: enrichment uses **MusicBrainz** (recording/release search,
+labels + catalog numbers) and **Cover Art Archive** (cover images),
+both free, open-data, CORS-enabled, no auth. Rules:
+- Strictly user-initiated (Options → Metadata Lookup). The app never
+  touches the network by itself (offline-always, AGENTS §2).
+- Results are cached in the record (artwork bytes included), so the
+  app is offline again immediately after.
+- Only missing fields are filled; existing tags are never overwritten.
+- Provenance recorded (`metaSource: "musicbrainz"`); new record fields
+  `label`, `catalogNumber`, `releaseYear` (optional — old records
+  deserialize fine, IndexedDB needs no version bump).
+- MusicBrainz rate limit honored (≤1 req/s, module-global throttle).
+- Filename convention "Artist - Title.ext" feeds the query for
+  untagged files.
+
+Consequences: `LibraryRecord` gains the optional fields above;
+`UpdateState` gains `kind` (scan/rebuild/metadata) so each operation
+has its own discreet corner status wording ("Updating track metadata…
+n/m") — only the first-run scan keeps the modal card. Gated by
+`apps/web/scripts/metadata.mjs` (menu path, mocked API fixtures,
+fill-missing-only, persistence, artwork renders).

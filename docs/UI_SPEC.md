@@ -186,7 +186,10 @@ Reference: R-6 photos 7520–7521; item list from R-2.
   Day Channels ON/OFF, default OFF — OFF shows only the time-of-day
   channel matching the clock),
   Sound Settings (Dynamic Normalizer ON/OFF, default ON — functional,
-  ADR-018), Music Scan, Favourites Setting, Block List Settings,
+  ADR-018), Music Scan, Metadata Lookup (fill missing tags/artwork/label
+  from MusicBrainz + Cover Art Archive, ADR-019 — user-initiated only;
+  progress is the discreet corner indicator, never the first-run modal),
+  Favourites Setting, Block List Settings,
   Database Settings (rebuild/wipe), Help, About. Check for Updates and
   Sound Effects stay omitted until they actually do something.
 - Layer: the menu sits above every scene layer (z 50: backdrop →

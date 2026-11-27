@@ -4,6 +4,7 @@ import { tokens } from "../../../contracts/design-tokens/tokens";
 import { engine } from "./engine/engine";
 import { allRecords, clearLibrary, getAudioBytes, updateRecord } from "./engine/library";
 import { importFiles, pickAudioFiles, rebuildLibrary, type ImportProgress } from "./engine/importer";
+import { enrichMissing } from "./engine/metadata";
 import {
   registerMediaControls,
   setPlaybackState,
@@ -37,6 +38,8 @@ interface UpdateState {
   total: number;
   errors: number;
   skipped: number;
+  /** Which operation is running: drives the status wording. */
+  kind: "scan" | "rebuild" | "metadata";
 }
 
 export default function App() {
@@ -57,7 +60,7 @@ export default function App() {
   // Two-step track selection (now-playing): L/R stages a candidate at a
   // smaller scale in the big slot; START/◯ confirms (scales up + plays).
   const [pending, setPending] = useState<number | null>(null);
-  const [update, setUpdate] = useState<UpdateState>({ active: false, done: 0, total: 0, errors: 0, skipped: 0 });
+  const [update, setUpdate] = useState<UpdateState>({ active: false, done: 0, total: 0, errors: 0, skipped: 0, kind: "scan" });
   // Settings persist across sessions (the original stores them in
   // property.xml; we use localStorage). Defaults match the PSP's
   // MenuParam*_DefaultCheck (all ON).
@@ -304,12 +307,12 @@ export default function App() {
     // Rescan semantics: files already in the library (same path + size +
     // mtime) are skipped, so re-importing only adds new/changed tracks.
     const seen = new Set(records.map((r) => `${r.path}|${r.sizeBytes}|${r.modifiedEpoch}`));
-    setUpdate({ active: true, done: 0, total: files.length, errors: 0, skipped: 0 });
+    setUpdate({ active: true, done: 0, total: files.length, errors: 0, skipped: 0, kind: "scan" });
     cancelImportRef.current = false;
     await importFiles(
       files,
       (p: ImportProgress) =>
-        setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: p.skipped }),
+        setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: p.skipped, kind: "scan" }),
       () => cancelImportRef.current,
       (path, sizeBytes, modifiedEpoch) => seen.has(`${path}|${sizeBytes}|${modifiedEpoch}`),
     );
@@ -328,17 +331,35 @@ export default function App() {
     if (recs.length === 0) return;
     // Clear every stored analysis/classification and recreate them from the
     // stored audio bytes with the faithful PSP engine.
-    setUpdate({ active: true, done: 0, total: recs.length, errors: 0, skipped: 0 });
+    setUpdate({ active: true, done: 0, total: recs.length, errors: 0, skipped: 0, kind: "rebuild" });
     cancelImportRef.current = false;
     await rebuildLibrary(
       recs,
-      (p) => setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: 0 }),
+      (p) => setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: 0, kind: "rebuild" }),
       () => cancelImportRef.current,
     );
     setUpdate((u) => ({ ...u, active: false }));
     const fresh = await reload();
     if (fresh.length > 0 && npEntry) rebuildQueue(npEntry, selection, fresh);
   }, [update.active, reload, npEntry, selection]);
+
+  // Options → Metadata Lookup (ADR-019): fill missing tags/artwork/label
+  // from MusicBrainz + Cover Art Archive. User-initiated only; the app
+  // never reaches for the network by itself.
+  const doEnrich = useCallback(async () => {
+    if (update.active) return;
+    const recs = await allRecords();
+    if (recs.length === 0) return;
+    setUpdate({ active: true, done: 0, total: recs.length, errors: 0, skipped: 0, kind: "metadata" });
+    cancelImportRef.current = false;
+    await enrichMissing(
+      recs,
+      (p) => setUpdate({ active: true, done: p.done, total: p.total, errors: p.errors, skipped: p.skipped, kind: "metadata" }),
+      () => cancelImportRef.current,
+    );
+    setUpdate((u) => ({ ...u, active: false }));
+    await reload();
+  }, [update.active, reload]);
 
   const doWipe = useCallback(async () => {
     if (update.active) return;
@@ -372,7 +393,7 @@ export default function App() {
       if (id === "back") setMenuOpen(false);
       return;
     }
-    if (update.active && id === "back") {
+    if (update.active && update.kind !== "metadata" && id === "back") {
       cancelImportRef.current = true; // ✕ Cancel (UI_SPEC §4)
       return;
     }
@@ -445,7 +466,7 @@ export default function App() {
         setMenuOpen(false);
         return;
       }
-      if (update.active && (e.key === "x" || e.key === "X")) {
+      if (update.active && update.kind !== "metadata" && (e.key === "x" || e.key === "X")) {
         cancelImportRef.current = true; // ✕ Cancel (UI_SPEC §4)
         return;
       }
@@ -615,9 +636,11 @@ export default function App() {
 
       {/* furniture (R-2) */}
       {settings.showClock && screen !== "empty" && <div className="clock">{clock}</div>}
-      {update.active && screen === "empty" ? (
+      {update.active && screen === "empty" && update.kind === "scan" ? (
         // First-run progress card (UI_SPEC §4, R-6 7509): dim scene,
-        // centered logo + progress bar + ✕ Cancel.
+        // centered logo + progress bar + ✕ Cancel. Only the first-run
+        // scan gets the modal; every later operation is a discreet
+        // corner indicator.
         <>
           <div className="update-scrim" />
           <div className="update-card">
@@ -643,7 +666,11 @@ export default function App() {
         <>
           <div className="update-icon">◌</div>
           <div className="status">
-            Updating channels… {update.done}/{update.total}
+            {update.kind === "metadata"
+              ? `Updating track metadata… ${update.done}/${update.total}`
+              : update.kind === "rebuild"
+                ? `Rebuilding channels… ${update.done}/${update.total}`
+                : `Updating channels… ${update.done}/${update.total}`}
             {update.skipped > 0 ? ` (${update.skipped} already in library)` : ""}
             {update.errors > 0 ? ` (${update.errors} failed)` : ""}
           </div>
@@ -677,6 +704,10 @@ export default function App() {
           onRebuild={() => {
             setMenuOpen(false);
             void doRebuild();
+          }}
+          onEnrich={() => {
+            setMenuOpen(false);
+            void doEnrich();
           }}
           onWipe={() => {
             setMenuOpen(false);

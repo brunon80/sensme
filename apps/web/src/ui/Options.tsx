@@ -18,6 +18,7 @@ interface Props {
   onClearFavourites: () => void;
   onClearBlocked: () => void;
   onRebuild: () => void;
+  onEnrich: () => void;
   onWipe: () => void;
   onImport: () => void;
   meta: { algorithmVersion: string; featureVectorVersion: number; axisWeightsVersion: string; channelWeightsVersion: string; pspAlgorithmVersion?: string } | null;
@@ -26,7 +27,7 @@ interface Props {
 
 type Page = "root" | "view" | "sound" | "database" | "help" | "about";
 
-export function Options({ settings, onSettings, onClearFavourites, onClearBlocked, onRebuild, onWipe, onImport, meta, onClose }: Props) {
+export function Options({ settings, onSettings, onClearFavourites, onClearBlocked, onRebuild, onEnrich, onWipe, onImport, meta, onClose }: Props) {
   const [page, setPage] = useState<Page>("root");
 
   const item = (label: string, action: () => void, note?: string) => (
@@ -44,6 +45,7 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
             {item("View Settings", () => setPage("view"))}
             {item("Sound Settings", () => setPage("sound"))}
             {item("Music Scan", onImport, "add new music")}
+            {item("Metadata Lookup", onEnrich, "fill missing tags")}
             {item("Favourites Setting", onClearFavourites, "delete all")}
             {item("Block List Settings", onClearBlocked, "delete all")}
             {item("Database Settings", () => setPage("database"), "rebuild / wipe")}

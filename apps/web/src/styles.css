@@ -315,10 +315,11 @@
 }
 .status {
   position: absolute;
-  left: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
+  right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
   bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100dvh);
   font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
   color: var(--sensme-color-textSecondary);
+  text-align: right;
 }
 
 /* ---- first-run progress card (UI_SPEC §4, R-6 7509) ---- */

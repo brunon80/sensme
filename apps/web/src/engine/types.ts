@@ -42,6 +42,14 @@ export interface LibraryRecord {
   loudness: Loudness | null;
   /** Static playback gain from the versioned Rust mapping (ADR-018). */
   normalizerGain: number | null;
+  /** Record label from metadata enrichment (ADR-019); null when unknown. */
+  label?: string | null;
+  /** Release catalog number alongside the label (ADR-019). */
+  catalogNumber?: string | null;
+  /** Release year (ADR-019). */
+  releaseYear?: number | null;
+  /** Provenance of enrichment fields ("musicbrainz"); null = local tags. */
+  metaSource?: string | null;
 }
 
 /** Per-track loudness measured in the Rust core (normalized −1..=1). */
