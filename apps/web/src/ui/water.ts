@@ -44,10 +44,9 @@ vec2 wcoord(vec2 p, float d) {
 }
 
 float waveAt(vec2 p, float d) {
-  vec2 q = wcoord(p, d);
-  // Very light domain warp — keeps wavefronts organic without noise.
-  q += 2.0 * vec2(sin(q.y * 0.04 + uT * 0.6), cos(q.x * 0.03 - uT * 0.5));
-  return waveH(q);
+  // No domain warp: its gradient showed up as dash artifacts under the
+  // crest shading. Wavefront curvature comes from the kx terms instead.
+  return waveH(wcoord(p, d));
 }
 
 void main() {
@@ -82,9 +81,9 @@ void main() {
   c += texture2D(uTex, base + vec2(streak, 0.0)).rgb;
   c += texture2D(uTex, base - vec2(streak, 0.0)).rgb;
   c /= 3.0;
-  float vs = 1.5 / uH;
+  float vs = 2.0 / uH;
   c = mix(c, (texture2D(uTex, base + vec2(0.0, vs)).rgb +
-              texture2D(uTex, base - vec2(0.0, vs)).rgb) * 0.5, 0.4 * d);
+              texture2D(uTex, base - vec2(0.0, vs)).rgb) * 0.5, 0.35 + 0.4 * d);
 
   // Specular glints from the wave normal (light from above/behind viewer).
   float ns = mix(uNormalNear, uNormalFar, d);

@@ -260,26 +260,26 @@ export const tokens = {
     "opacityNear": 0.72,
     "opacityFar": 0.5,
     "ampNear": 3,
-    "ampFar": 12,
-    "freqGrow": 0.35,
+    "ampFar": 16,
+    "freqGrow": 0.3,
     "waves": [
       {
-        "kx": 0.01,
-        "ky": 0.05,
-        "speed": 1.2,
-        "amp": 0.5
+        "kx": -0.008,
+        "ky": 0.095,
+        "speed": 1.5,
+        "amp": 0.68
       },
       {
-        "kx": -0.016,
-        "ky": 0.032,
-        "speed": 0.8,
-        "amp": 0.3
+        "kx": -0.012,
+        "ky": 0.055,
+        "speed": 1,
+        "amp": 0.32
       },
       {
-        "kx": 0.006,
-        "ky": 0.085,
-        "speed": 1.8,
-        "amp": 0.2
+        "kx": 0,
+        "ky": 0,
+        "speed": 0,
+        "amp": 0
       },
       {
         "kx": 0,
@@ -301,11 +301,11 @@ export const tokens = {
       }
     ],
     "normalNear": 4,
-    "normalFar": 10,
+    "normalFar": 8,
     "specPow": 40,
-    "specAmp": 0.12,
-    "streakNear": 1,
-    "streakFar": 4
+    "specAmp": 0.05,
+    "streakNear": 0.5,
+    "streakFar": 2
   }
 } as const;
 
