@@ -55,10 +55,13 @@ export function slotChain(aspect: number): Slot[] {
   const np = tokens.layout.np;
   const rightEdge = aspect; // screen width in vh-fraction units (×100 at render)
   const ratio = np.slots[np.slots.length - 1]!.scale / np.slots[np.slots.length - 2]!.scale;
+  // Geometric decay clamped at np.minScale: like the PSP, far cards stop
+  // shrinking at a floor and keep stacking horizontally along the water
+  // (product-owner reference photo 2026-11-27).
   const scaleOf = (k: number) =>
     k < np.slots.length
-      ? np.slots[k]!.scale
-      : np.slots[np.slots.length - 1]!.scale * Math.pow(ratio, k - np.slots.length + 1);
+      ? Math.max(np.minScale, np.slots[k]!.scale)
+      : Math.max(np.minScale, np.slots[np.slots.length - 1]!.scale * Math.pow(ratio, k - np.slots.length + 1));
   const out: Slot[] = [{ centerX: np.anchorX * aspect, scale: scaleOf(0), opacity: np.slots[0]!.opacity }];
   for (let k = 1; ; k++) {
     const scale = scaleOf(k);

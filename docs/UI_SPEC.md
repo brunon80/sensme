@@ -137,7 +137,9 @@ Layout:
   converge to the waterline as cards recede while the big foreground
   card dips below it (PSP reference photo, product owner 2026-11-27);
   the chain continues geometrically (ratio of the last
-  two token scales) until cards run fully past the RIGHT EDGE — the
+  two token scales) but clamps at `np.minScale` 0.26 — like the PSP, far
+  cards stop shrinking at that floor and keep stacking horizontally
+  along the waterline — until cards run fully past the RIGHT EDGE — the
   stack always reaches the screen edge at any aspect. The previous card
   glides out left. Non-cyclic: clamped at both ends — a one-track
   channel shows a single card; next at the end stops.

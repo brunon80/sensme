@@ -182,7 +182,8 @@ export const tokens = {
         "scale": 0.78,
         "opacity": 0.3
       },
-      "floorExp": 2
+      "floorExp": 2,
+      "minScale": 0.26
     },
     "carousel": {
       "centerY": 0.5,
