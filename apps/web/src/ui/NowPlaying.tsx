@@ -186,6 +186,7 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
         offsets.map((k) => {
           const idx = pos + k;
           if (idx < 0 || idx >= n) return null; // non-cyclic: clamp at the ends
+          const fk = k - dragFrac; // fractional slot (drag/morph position)
           const slot = slotForFrac(k - dragFrac, pending ?? false, slots, aspect);
           if (!slot) return null;
           const rec = queue[idx]!;
@@ -195,6 +196,7 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
               record={rec}
               entry={entry}
               slot={slot}
+              fk={fk}
               size={np.size}
               centerY={np.centerY}
               z={10 - Math.abs(k)}
@@ -237,11 +239,15 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
  * the card's bottom edge sits at `waterlineY + (npBottom − waterlineY)
  * · scale^floorExp`, so receding cards stand ON the water (bottom edges
  * converge to the waterline) while the big foreground card dips below
- * it — PSP reference IMG_7535 photo, product owner 2026-11-27. */
+ * it — PSP reference IMG_7535 photo, product owner 2026-11-27.
+ * Yawed in 3D (np.tiltDeg) so the row reads as a fan, not flat paper:
+ * receding cards angle toward the current one, the current card tilts
+ * the opposite way (PSP reference photo, product owner 2026-11-27). */
 function TrackCard({
   record,
   entry,
   slot,
+  fk,
   size,
   centerY,
   z,
@@ -252,6 +258,8 @@ function TrackCard({
   record: LibraryRecord;
   entry: CarouselEntry;
   slot: Slot;
+  /** Fractional slot offset (k − dragFrac): drives the 3D yaw blend. */
+  fk: number;
   size: number;
   centerY: number;
   z: number;
@@ -278,6 +286,9 @@ function TrackCard({
   const bottomNear = centerY + size / 2;
   const bottom = tokens.layout.waterlineY + (bottomNear - tokens.layout.waterlineY) * Math.pow(s, np.floorExp);
   const cardCenterY = bottom - (size * s) / 2;
+  // 3D yaw: current slot (fk<=0) tilts -tiltDeg, receding cards +tiltDeg,
+  // blended across fk so morphs/drag pass smoothly through 0.
+  const tilt = np.tiltDeg * (2 * Math.min(Math.max(fk, 0), 1) - 1);
 
   return (
     <div
@@ -291,7 +302,7 @@ function TrackCard({
         // changes animate; transitioning `left` would teleport the card.
         // X is in vh (the unit card sizes live in) so the stack overlap
         // is aspect-independent.
-        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale})`,
+        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale}) rotateY(${tilt}deg)`,
         opacity: slot.opacity,
         zIndex: z,
       }}
