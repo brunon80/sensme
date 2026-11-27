@@ -304,8 +304,8 @@ export const tokens = {
     "normalFar": 8,
     "specPow": 40,
     "specAmp": 0.05,
-    "blurNear": 2,
-    "blurFar": 3.5
+    "blurNear": 3,
+    "blurFar": 5
   }
 } as const;
 
