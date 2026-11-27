@@ -17,7 +17,6 @@ import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
 import { carouselGrid, entryHues, entryTracks, shuffledQueue, todForHour, type CarouselEntry } from "./ui/channels";
 import { captionsFor, detectPlatform, type ActionId } from "./ui/controls";
-import { Mark } from "./ui/Mark";
 import { useMouseDrag, useWheelSteps } from "./ui/mouse";
 import { NowPlaying, slotChain } from "./ui/NowPlaying";
 import { Options, type Settings } from "./ui/Options";
@@ -513,9 +512,9 @@ export default function App() {
           break;
         case "f":
         case "F":
-          // f favours, shift+F unfavours (keyboard-only nuance; the touch
-          // caption button toggles).
-          if (!menuOpenRef.current && current) void toggleFavourite(current, !e.shiftKey);
+          // F toggles the favourite (the caption chip shows the action
+          // the press performs; same dispatcher as the chip buttons).
+          if (!menuOpenRef.current && current) void toggleFavourite(current, !current.favourite);
           break;
       }
     };
@@ -765,30 +764,20 @@ export default function App() {
       ) : null}
       {settings.showCaptions && captionSegs.length > 0 && (
         // Keyed on the favourite state: toggling it remounts the row so
-        // the whole caption strip crossfades between controls and the
-        // Favourited label (PSP behavior, IMG_7534.MOV).
+        // the whole caption strip crossfades between the Favourite and
+        // Unfavourite chips (PSP behavior, IMG_7534.MOV).
         <div
           className={`captions ${screen === "nowplaying" ? "cap-fade" : ""}`}
           key={`caps-${screen}-${current?.favourite ? "fav" : "plain"}`}
         >
           {captionSegs.map((c) =>
-            // Favourited state label: Moodwave mark + text, replacing the
-            // favourite chip (PSP behavior; same mount animation whether
-            // the track was already favourited or was just added).
-            c.label ? (
-              <button className="cap cap-btn cap-label" key={`${c.key}-${c.desc}`} onClick={() => runAction(c.action)}>
-                <Mark className="cap-mark" />
-                <span className="cap-desc">{c.desc}</span>
-              </button>
-            ) : (
-              // Chips are real controls on every platform (UI_SPEC §9): touch
-              // taps them, mouse clicks them, and the keyboard bindings stay
-              // identical — all three resolve to the same dispatcher.
-              <button className="cap cap-btn" key={`${c.key}-${c.desc}`} onClick={() => runAction(c.action)}>
-                <span className="cap-key">{c.key}</span>
-                <span className="cap-desc">{c.desc}</span>
-              </button>
-            ),
+            // Chips are real controls on every platform (UI_SPEC §9): touch
+            // taps them, mouse clicks them, and the keyboard bindings stay
+            // identical — all three resolve to the same dispatcher.
+            <button className="cap cap-btn" key={`${c.key}-${c.desc}`} onClick={() => runAction(c.action)}>
+              <span className="cap-key">{c.key}</span>
+              <span className="cap-desc">{c.desc}</span>
+            </button>,
           )}
         </div>
       )}

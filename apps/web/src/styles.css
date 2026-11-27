@@ -326,20 +326,11 @@
   line-height: 1;
   white-space: nowrap;
 }
-/* Favourited state label: Moodwave mark + text (replaces the favourite
- * chip). PSP reference IMG_7534.MOV: the caption row FADES between the
- * controls and the label — the whole row crossfades whenever the
- * favourite state changes (App keys the row on it), same transition
- * whether the track was already favourited or was just added. */
-.cap-label {
-  gap: 0.6dvw;
-  color: var(--moodwave-color-textPrimary);
-}
-.cap-mark {
-  height: 2.1em;
-  width: auto;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
-}
+/* Favourite toggle chip: when the track is a favourite the chip reads
+ * "Unfavourite". PSP reference IMG_7534.MOV: the caption row FADES
+ * between the states — the whole row crossfades whenever the favourite
+ * state changes (App keys the row on it), same transition whether the
+ * track was already favourited or was just added. */
 .captions.cap-fade {
   animation: captions-fade calc(var(--moodwave-motion-npStepMs) * 1ms)
     cubic-bezier(0.25, 0.1, 0.25, 1) both;

@@ -158,7 +158,7 @@ Layout:
   on channel switch; rippling floor reflection below the waterline.
 - Captions bottom-left, chip style (key chip + help text): desktop
   shows `[Esc] Change Channels [Space] Play/Pause [←] Prev [→] Next
-  [F] Favourites [C] Add Music`; touch/console keeps PSP glyph chips
+  [F] Favourite [C] Add Music`; touch/console keeps PSP glyph chips
   (`SELECT`/`START`/`L`/`R`/`♥`/`OPTIONS`). Esc toggles the channel
   grid from now-playing (and back). The Add Music chip makes the
   rescan entry point discoverable (Options menu → "Music Scan").
@@ -173,15 +173,13 @@ Interaction (R-2):
   title/artist block re-fades (`fadeUp`) on every focus change.
 - START/◯ confirms: the candidate scales up to full size and playback
   starts. ✕/Esc cancels the candidate (the current card returns).
-- START/Space with no candidate toggles play/pause; `F` favourites,
-  `⇧F` removes.
-- Favourited state label (PSP reference IMG_7534.MOV, 2026-11-27): when
-  the current track is a favourite, the `[F] Favourites` chip is
-  replaced by a static label — the Moodwave mark + "Favourited" — and
-  the whole caption strip crossfades between the controls row and the
-  label row (`motion.npStepMs`, same fade whether the track was already
-  favourited on entry or was just added). The label stays clickable:
-  clicking it removes the favourite (row fades back to the chip).
+- START/Space with no candidate toggles play/pause; `F` toggles the
+  favourite (the chip shows the action the press performs).
+- Favourite toggle chip (PSP reference IMG_7534.MOV, 2026-11-27): when
+  the current track is a favourite, the chip reads `[F] Unfavourite`
+  (touch: `♥ Unfavourite`) instead of `[F] Favourite`, and the whole
+  caption strip crossfades on the change (`motion.npStepMs`, same fade
+  whether the track was already favourited on entry or was just added).
 - △/`O` or right-click opens options menu (dim scrim, panel slides in
   from right, 220 ms).
 - Per-selection shuffle order (R-2 hint).

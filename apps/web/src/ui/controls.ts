@@ -20,8 +20,9 @@ export interface CaptionState {
   playing: boolean;
   /** Two-step selection candidate staged (now-playing). */
   pending: boolean;
-  /** Current track is a favourite (now-playing): the favourite control
-   * chip becomes a static "Favourited" label (PSP behavior, product-owner
+  /** Current track is a favourite (now-playing): the favourite chip
+   * becomes a toggle showing the action the press performs
+   * ("Unfavourite"); the caption row crossfades on the change (PSP
    * reference IMG_7534.MOV 2026-11-27). */
   favourite: boolean;
 }
@@ -34,9 +35,6 @@ export interface CaptionSeg {
   /** Action fired when the chip is tapped (touch platforms render chips
    * as buttons; UI_SPEC §9). */
   action: ActionId;
-  /** Render as a state label (Moodwave mark + text) instead of a key
-   * chip; still clickable (toggles the state back). */
-  label?: boolean;
 }
 
 /** Shared action vocabulary: every keyboard binding, caption button and
@@ -77,9 +75,11 @@ export function captionsFor(screen: CaptionScreen, state: CaptionState, platform
           { key: "Space", desc: state.playing ? "Pause" : "Play", action: "play" },
           { key: "←", desc: "Prev", action: "prev" },
           { key: "→", desc: "Next", action: "next" },
+          // Toggle chip: the description reflects the action the press
+          // performs (PSP-faithful state-aware caption).
           state.favourite
-            ? { key: "", desc: "Favourited", action: "favourite", label: true }
-            : { key: "F", desc: "Favourites", action: "favourite" },
+            ? { key: "F", desc: "Unfavourite", action: "favourite" }
+            : { key: "F", desc: "Favourite", action: "favourite" },
           { key: "C", desc: "Add Music", action: "add" },
           { key: "O", desc: "Options", action: "menu" },
         ];
@@ -107,8 +107,8 @@ export function captionsFor(screen: CaptionScreen, state: CaptionState, platform
         { key: "L", desc: "Prev", action: "prev" },
         { key: "R", desc: "Next", action: "next" },
         state.favourite
-          ? { key: "", desc: "Favourited", action: "favourite", label: true }
-          : { key: "♥", desc: "Favourites", action: "favourite" },
+          ? { key: "♥", desc: "Unfavourite", action: "favourite" }
+          : { key: "♥", desc: "Favourite", action: "favourite" },
         { key: "OPTIONS", desc: "Add Music", action: "add" },
         { key: "⚙", desc: "Settings", action: "menu" },
       ];
