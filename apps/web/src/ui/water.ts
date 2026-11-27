@@ -59,19 +59,22 @@ void main() {
   float wh = uH - uWaterY;
   float d = y / wh;                          // 0 at waterline, 1 at bottom
   vec2 p = vec2(gl_FragCoord.x, y);
-  float amp = mix(uAmpNear, uAmpFar, d);     // chop grows with distance
-
-  float hC = waveAt(p, d);
+  // Refraction/reflection displacement is proportional to surface SLOPE
+  // (a facet tilted by theta deflects the ray by 2*theta, so the apparent
+  // offset is ~2*theta*distance), NOT wave height. Height-based shifts
+  // just slide the image; slope-based breaks it at crests/troughs like
+  // the PSP original (IMG_7532.MOV, product-owner note 2026-11-27).
   float e = 1.0;
   vec2 grad = vec2(
     waveAt(p + vec2(e, 0.0), d) - waveAt(p - vec2(e, 0.0), d),
     waveAt(p + vec2(0.0, e), d) - waveAt(p - vec2(0.0, e), d)
   ) / (2.0 * e);
+  float slope = mix(uAmpNear, uAmpFar, d);   // px of image offset per unit slope
 
-  // Distorted mirror: displaced in x AND y (the 3D read), source row
-  // compressed by perspective.
-  float srcY = clamp(uWaterY - (y * uCompress + hC * amp * 0.55), 1.0, uWaterY - 1.0);
-  float srcX = clamp(gl_FragCoord.x + hC * amp, 0.0, uW);
+  // Distorted mirror: displaced in x AND y by the surface gradient,
+  // source row compressed by perspective.
+  float srcY = clamp(uWaterY - (y * uCompress + grad.y * slope * 0.6), 1.0, uWaterY - 1.0);
+  float srcX = clamp(gl_FragCoord.x + grad.x * slope, 0.0, uW);
   vec2 base = vec2(srcX / uW, srcY / uH);
 
   // Horizontal streaking + vertical softening, both widening with depth

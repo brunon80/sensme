@@ -259,8 +259,8 @@ export const tokens = {
     "compress": 0.82,
     "opacityNear": 0.72,
     "opacityFar": 0.5,
-    "ampNear": 3,
-    "ampFar": 16,
+    "ampNear": 75,
+    "ampFar": 300,
     "freqGrow": 0.3,
     "waves": [
       {

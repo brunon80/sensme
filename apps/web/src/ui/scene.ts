@@ -219,10 +219,12 @@ export function drawScene(
   ctx.save();
   for (let y = 0; y < wh; y += band) {
     const depth = y / wh;
-    const amp = W.ampNear + (W.ampFar - W.ampNear) * depth;
-    const hC = waveAt(w / 2, y, depth);
-    const dx = hC * amp;
-    const wob = hC * amp * 0.55;
+    const slope = W.ampNear + (W.ampFar - W.ampNear) * depth;
+    const e = 1;
+    const gx = (waveAt(w / 2 + e, y, depth) - waveAt(w / 2 - e, y, depth)) / (2 * e);
+    const gy = (waveAt(w / 2, y + e, depth) - waveAt(w / 2, y - e, depth)) / (2 * e);
+    const dx = gx * slope;
+    const wob = gy * slope * 0.6;
     const srcY = Math.max(0, waterY - (y * W.compress + wob) - band);
     ctx.globalAlpha = W.opacityNear + (W.opacityFar - W.opacityNear) * depth;
     ctx.drawImage(backdrop, 0, srcY, w, band, dx, waterY + y, w, band);
