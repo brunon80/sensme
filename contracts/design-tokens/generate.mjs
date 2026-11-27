@@ -10,7 +10,7 @@ export const tokens = ${JSON.stringify(t, null, 2)} as const;
 
 export type Tokens = typeof tokens;
 export const cssVar = (path: string): string =>
-  \`--sensme-\${path.replace(/\\./g, "-")}\`;
+  \`--moodwave-\${path.replace(/\\./g, "-")}\`;
 `;
 writeFileSync(new URL("./tokens.ts", import.meta.url), ts);
 
@@ -20,9 +20,9 @@ const flat = (prefix, obj) => {
   for (const [k, v] of Object.entries(obj)) {
     const name = prefix ? `${prefix}-${k}` : k;
     if (typeof v === "number" || typeof v === "string") {
-      lines.push(`  --sensme-${name}: ${v};`);
+      lines.push(`  --moodwave-${name}: ${v};`);
     } else if (Array.isArray(v)) {
-      v.forEach((item, i) => lines.push(`  --sensme-${name}-${i}: ${item};`));
+      v.forEach((item, i) => lines.push(`  --moodwave-${name}-${i}: ${item};`));
     } else {
       flat(name, v);
     }

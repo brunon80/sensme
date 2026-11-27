@@ -3,7 +3,7 @@
 // (mocked with fixtures), never overwrites existing tags, and persists
 // across reloads. Run against `pnpm preview`.
 import { chromium } from "playwright";
-const URL = process.env.SENSME_URL ?? "http://127.0.0.1:4173/";
+const URL = process.env.MOODWAVE_URL ?? "http://127.0.0.1:4173/";
 
 function ok(msg) {
   console.log(`  ✓ ${msg}`);
@@ -62,9 +62,9 @@ await page.route("**/coverartarchive.org/**", (route) => route.fulfill({ content
 // (filename convention feeds the lookup) and one tagged file whose tags
 // must NOT be overwritten.
 await page.goto(URL, { waitUntil: "load" });
-await page.waitForFunction(() => !!window.__sensme?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
+await page.waitForFunction(() => !!window.__moodwave?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
 await page.evaluate(async () => {
-  const db = await new Promise((res, rej) => { const q = indexedDB.open("sensme", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const db = await new Promise((res, rej) => { const q = indexedDB.open("moodwave", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
   for (const s of ["tracks", "audio"]) await new Promise((res, rej) => { const t = db.transaction(s, "readwrite"); t.objectStore(s).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); });
 });
 await page.evaluate(async () => {
@@ -84,7 +84,7 @@ await page.evaluate(async () => {
   tag.set([0x49, 0x44, 0x33, 0x03, 0x00, 0x00], 0);
   tag[6] = (bodyLen >> 21) & 0x7f; tag[7] = (bodyLen >> 14) & 0x7f; tag[8] = (bodyLen >> 7) & 0x7f; tag[9] = bodyLen & 0x7f;
   let off = 10; for (const f of frames) { tag.set(f, off); off += f.length; }
-  await window.__sensme.importFiles([
+  await window.__moodwave.importFiles([
     { file: new File([mp3], "Test Artist - Test Song.mp3", { type: "audio/mpeg" }), path: "Test Artist - Test Song.mp3" },
     { file: new File([tag, mp3], "tagged.mp3", { type: "audio/mpeg" }), path: "tagged.mp3" },
   ], () => {});
@@ -113,7 +113,7 @@ ok("Esc/✕ does not cancel metadata lookup");
 
 // 2. Wait for completion, then check the untagged record was enriched.
 await page.waitForFunction(() => !document.querySelector(".status"), null, { timeout: 30000 });
-const recs = await page.evaluate(async () => Object.fromEntries((await window.__sensme.allRecords()).map((r) => [r.name, r])));
+const recs = await page.evaluate(async () => Object.fromEntries((await window.__moodwave.allRecords()).map((r) => [r.name, r])));
 const untagged = recs["Test Artist - Test Song.mp3"];
 if (!untagged) throw new Error("untagged record missing");
 if (untagged.title !== "Test Song" || untagged.artist !== "Test Artist" || untagged.album !== "Test Album")
@@ -136,7 +136,7 @@ ok("existing tags never overwritten");
 // 4. Enrichment persists across reload (cached locally, offline afterwards).
 await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => (document.querySelector(".np-title")?.textContent ?? "").length > 0, null, { timeout: 20000 });
-const after = await page.evaluate(async () => Object.fromEntries((await window.__sensme.allRecords()).map((r) => [r.name, r])));
+const after = await page.evaluate(async () => Object.fromEntries((await window.__moodwave.allRecords()).map((r) => [r.name, r])));
 const a = after["Test Artist - Test Song.mp3"];
 if (a.title !== "Test Song" || a.label !== "Test Label" || !(a.artwork && a.artwork.length > 0))
   throw new Error("enrichment did not persist");

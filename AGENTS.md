@@ -1,4 +1,4 @@
-# AGENTS.md — Engineering rules for SensMe
+# AGENTS.md — Engineering rules for Moodwave
 
 Rules for every human or AI agent working in this repository. Read this fully
 before making changes. When rules conflict, this file wins over habits;
@@ -23,7 +23,7 @@ no proprietary services, no cloud dependency.
 - **The analysis engine must be deterministic and identical across
   platforms.** Use `f32` in the analysis path. Never call platform-native
   audio DSP from the core. Golden feature-vector tests (`fixtures/`) are the
-  acceptance gate for any change to `sensme-audio` or `sensme-classify`.
+  acceptance gate for any change to `moodwave-audio` or `moodwave-classify`.
 - **Versioned algorithms.** Every analysis run records
   `algorithm_version` (pipeline) and `weights_version` (classifier). Changing
   analysis semantics requires bumping the version. Never mutate a released
@@ -57,7 +57,7 @@ no proprietary services, no cloud dependency.
 - Sony reference labels are directional evidence, not ground truth. Do not
   optimize blindly to match Sony; the goal is a coherent, useful classifier.
 - Any classifier change must report benchmark deltas (per-channel
-  precision/recall vs. the previous weights version) using `sensme-bench`.
+  precision/recall vs. the previous weights version) using `moodwave-bench`.
 - Reference datasets live in `bench/` with the format documented in
   `docs/BENCHMARK_FORMAT.md`; every dataset records its provenance.
 

@@ -1,0 +1,21 @@
+[package]
+name = "moodwave-ffi"
+description = "UniFFI bindings surface for Moodwave shells (RN, desktop, web)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[dependencies]
+moodwave-audio.workspace = true
+moodwave-classify.workspace = true
+moodwave-core.workspace = true
+thiserror.workspace = true
+uniffi.workspace = true
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"

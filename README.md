@@ -1,10 +1,10 @@
-# SensMe
+# Moodwave
 
 A cross-platform music intelligence and player application — an independent,
 modern reimplementation of the spirit and experience of Sony's SensMe Channels
 (PlayStation Portable, 2009).
 
-SensMe analyzes your local music library, classifies every track along twelve
+Moodwave analyzes your local music library, classifies every track along twelve
 perceptual **tone axes**, and organizes it into **mood and time-of-day
 channels** (Energetic, Relax, Upbeat, Mellow, Lounge, Emotional, Dance,
 Extreme, Morning, Daytime, Evening, Night, Midnight). The UI is a faithful
@@ -26,7 +26,7 @@ Phase 1 — architecture and workspace skeleton. See [docs/ROADMAP.md](docs/ROAD
 | Phase | Scope | Status |
 |---|---|---|
 | 0/1 | Toolchain, architecture, docs, workspace skeleton | in progress |
-| 2 | SensMe core: decode → features → SQLite → CLI | planned |
+| 2 | Moodwave core: decode → features → SQLite → CLI | planned |
 | 3 | Benchmarking and calibration vs. reference labels | planned |
 | 4 | Application (Tauri desktop, PSP-faithful UI) | planned |
 | 5 | Cross-platform (React Native mobile, WASM web) | planned |
@@ -35,13 +35,13 @@ Phase 1 — architecture and workspace skeleton. See [docs/ROADMAP.md](docs/ROAD
 
 ```
 crates/
-  sensme-core/        domain models, library management, persistence
-  sensme-audio/       decoding, resampling, STFT, feature extraction
-  sensme-classify/    tone axes + channel scoring (versioned weights)
-  sensme-bench/       reference datasets, agreement metrics, calibration
-  sensme-ffi/         UniFFI bindings (Kotlin / Swift)
-  sensme-wasm/        wasm-bindgen surface for the web app
-  sensme-cli/         `sensme analyze | classify | bench | tune`
+  moodwave-core/        domain models, library management, persistence
+  moodwave-audio/       decoding, resampling, STFT, feature extraction
+  moodwave-classify/    tone axes + channel scoring (versioned weights)
+  moodwave-bench/       reference datasets, agreement metrics, calibration
+  moodwave-ffi/         UniFFI bindings (Kotlin / Swift)
+  moodwave-wasm/        wasm-bindgen surface for the web app
+  moodwave-cli/         `moodwave analyze | classify | bench | tune`
 apps/
   desktop/            Tauri + React (PSP-faithful UI)
   mobile/             React Native (iOS / Android)
@@ -73,13 +73,13 @@ docs/                 ARCHITECTURE, ROADMAP, TECHNICAL_DECISIONS, UI_SPEC, UI_RE
 ```sh
 cargo build                 # workspace
 cargo test                  # all tests
-cargo run -p sensme-cli     # CLI (Phase 2+)
+cargo run -p moodwave-cli     # CLI (Phase 2+)
 pnpm install                # JS/TS workspaces
 ```
 
 ## Legal
 
-SensMe is an independent implementation. It is not affiliated with, endorsed
+Moodwave is an independent implementation. It is not affiliated with, endorsed
 by, or containing code or assets from Sony Corporation. Original Sony assets
 (icons, fonts, backgrounds) are used only as internal study references and are
 never shipped; all shipped visual assets are clean-room reimplementations.

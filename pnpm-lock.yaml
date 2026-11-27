@@ -19,9 +19,9 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      sensme-wasm:
-        specifier: file:../../crates/sensme-wasm/pkg
-        version: file:crates/sensme-wasm/pkg
+      moodwave-wasm:
+        specifier: file:../../crates/moodwave-wasm/pkg
+        version: file:crates/moodwave-wasm/pkg
     devDependencies:
       '@types/react':
         specifier: ^18.3.12
@@ -629,8 +629,8 @@ packages:
     resolution: {integrity: sha512-GYrCADwpu6yV5OAvchkQ27Z5wwMxWAEMg5NNWjyHh/5DboFFqbdbvYNIvZouQpxXyeMPoTOh0vdPYKlf0ZswdQ==}
     hasBin: true
 
-  sensme-wasm@file:crates/sensme-wasm/pkg:
-    resolution: {directory: crates/sensme-wasm/pkg, type: directory}
+  moodwave-wasm@file:crates/moodwave-wasm/pkg:
+    resolution: {directory: crates/moodwave-wasm/pkg, type: directory}
 
   source-map-js@1.2.4:
     resolution: {integrity: sha512-J7ZjMvHd9O1fcT/5V09QWaaSl2BbWx3F6O08spde82Namf9UB0GxRVIPiNbVsdKkoizHiSpTodo3vp2bAy91MA==}
@@ -1235,7 +1235,7 @@ snapshots:
 
   semver@6.3.2: {}
 
-  sensme-wasm@file:crates/sensme-wasm/pkg: {}
+  moodwave-wasm@file:crates/moodwave-wasm/pkg: {}
 
   source-map-js@1.2.4: {}
 

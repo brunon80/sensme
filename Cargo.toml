@@ -24,12 +24,12 @@ ts-rs = "12"
 wasm-bindgen = "0.2"
 serde-wasm-bindgen = "0.6"
 
-sensme-audio = { path = "crates/sensme-audio" }
-sensme-bench = { path = "crates/sensme-bench" }
-sensme-classify = { path = "crates/sensme-classify" }
-sensme-core = { path = "crates/sensme-core" }
-sensme-psp = { path = "crates/sensme-psp" }
-sensme-wasm = { path = "crates/sensme-wasm" }
+moodwave-audio = { path = "crates/moodwave-audio" }
+moodwave-bench = { path = "crates/moodwave-bench" }
+moodwave-classify = { path = "crates/moodwave-classify" }
+moodwave-core = { path = "crates/moodwave-core" }
+moodwave-psp = { path = "crates/moodwave-psp" }
+moodwave-wasm = { path = "crates/moodwave-wasm" }
 
 [profile.release]
 lto = "thin"

@@ -1,4 +1,4 @@
-# SensMe UI specification (Phase 4b)
+# Moodwave UI specification (Phase 4b)
 
 Derived exclusively from the references in `docs/UI_REFERENCES/`
 (R-1…R-6; see PROVENANCE.md). All visual values are tokens in
@@ -40,7 +40,7 @@ Tokens: `tokens.json` (canonical), `tokens.css`, `tokens.ts`.
 
 ## 1. Channel selection grid (SELECT)
 
-Reference: R-1 `sensme_cp1.jpg`, R-6 photos 7501/7503–7507, IMG_7506,
+Reference: R-1 `moodwave_cp1.jpg`, R-6 photos 7501/7503–7507, IMG_7506,
 IMG_7510, demo_ref_video (52–58 s).
 
 Layout (rest state):
@@ -113,7 +113,7 @@ Fidelity checklist: [ ] layout [ ] color [ ] typography [ ] icons
 
 ## 2. Now playing (home screen)
 
-Reference: R-1 `sensme_cp2.jpg`, R-6 photos 7509–7519.
+Reference: R-1 `moodwave_cp2.jpg`, R-6 photos 7509–7519.
 
 Layout:
 - Track carousel (R-6 7508/7509, demo_ref_video 32–46 s): current track

@@ -6,7 +6,7 @@
 //   node scripts/mediasession.mjs
 import { chromium } from "playwright";
 
-const URL = process.env.SENSME_URL ?? "http://127.0.0.1:4173/";
+const URL = process.env.MOODWAVE_URL ?? "http://127.0.0.1:4173/";
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -14,11 +14,11 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 
 await page.goto(URL, { waitUntil: "load" });
-await page.waitForFunction(() => !!window.__sensme?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
+await page.waitForFunction(() => !!window.__moodwave?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
 
 // Fresh library.
 await page.evaluate(async () => {
-  const db = await new Promise((res, rej) => { const q = indexedDB.open("sensme", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const db = await new Promise((res, rej) => { const q = indexedDB.open("moodwave", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
   for (const s of ["tracks", "audio"]) await new Promise((res, rej) => { const t = db.transaction(s, "readwrite"); t.objectStore(s).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); });
 });
 
@@ -31,7 +31,7 @@ await page.evaluate(async () => {
     file: new File([blob], name, { type: "audio/mpeg" }),
     path: name,
   }));
-  await window.__sensme.importFiles(files, () => {});
+  await window.__moodwave.importFiles(files, () => {});
 });
 
 // Reload: boot into now-playing, then open the channel carousel (Escape =
@@ -41,33 +41,33 @@ await page.waitForFunction(() => (document.querySelector(".np-title")?.textConte
 await page.keyboard.press("Escape");
 await page.waitForSelector(".carousel-name");
 await page.keyboard.press("Enter");
-await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+await page.waitForFunction(() => window.__moodwave.player.state === "playing", null, { timeout: 10000 });
 
 const snap = () =>
   page.evaluate(() => ({
-    playerState: window.__sensme.player.state,
+    playerState: window.__moodwave.player.state,
     pbState: navigator.mediaSession.playbackState,
     title: navigator.mediaSession.metadata?.title ?? null,
     artwork: (navigator.mediaSession.metadata?.artwork ?? []).length,
     npTitle: document.querySelector(".np-title")?.textContent ?? null,
-    duration: window.__sensme.player.durationSec(),
+    duration: window.__moodwave.player.durationSec(),
   }));
 
 // Metadata + playback state published to the OS while playing.
 const playing = await snap();
 const posState = await page
-  .waitForFunction(() => window.__sensme.mediaSession.lastPositionState(), null, { timeout: 5000 })
+  .waitForFunction(() => window.__moodwave.mediaSession.lastPositionState(), null, { timeout: 5000 })
   .then((h) => h.jsonValue());
 
 // The OS controls drive the app: pause / play round-trip.
-await page.evaluate(() => window.__sensme.media.pause());
+await page.evaluate(() => window.__moodwave.media.pause());
 const paused = await snap();
-await page.evaluate(() => window.__sensme.media.play());
-await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 5000 });
+await page.evaluate(() => window.__moodwave.media.play());
+await page.waitForFunction(() => window.__moodwave.player.state === "playing", null, { timeout: 5000 });
 
 // Next / previous skip immediately (hardware-key semantics, no staging).
 const beforeNext = await page.evaluate(() => navigator.mediaSession.metadata?.title ?? null);
-await page.evaluate(() => window.__sensme.media.next());
+await page.evaluate(() => window.__moodwave.media.next());
 await page.waitForFunction(
   (t) => (navigator.mediaSession.metadata?.title ?? null) !== t,
   beforeNext,
@@ -75,8 +75,8 @@ await page.waitForFunction(
 );
 const afterNext = await page.evaluate(() => navigator.mediaSession.metadata?.title ?? null);
 await page.evaluate(() => {
-  window.__sensme.player.seek(0); // at the start, prev means "previous track"
-  window.__sensme.media.prev();
+  window.__moodwave.player.seek(0); // at the start, prev means "previous track"
+  window.__moodwave.media.prev();
 });
 await page.waitForFunction(
   (t) => (navigator.mediaSession.metadata?.title ?? null) === t,
@@ -98,7 +98,7 @@ await page.waitForTimeout(500);
 const sceneAfter = await page.evaluate(() => document.querySelector(".app")?.dataset.sceneKey ?? null);
 
 // OS stop clears the session.
-await page.evaluate(() => window.__sensme.media.stop());
+await page.evaluate(() => window.__moodwave.media.stop());
 const stopped = await snap();
 
 await browser.close();

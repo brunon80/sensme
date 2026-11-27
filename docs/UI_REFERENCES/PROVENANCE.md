@@ -72,8 +72,11 @@ distribution if licensing is unclear.
 
 ## Favicon
 
-- `apps/web/public/icon.svg` — SensMe heart-and-note icon supplied by the
-  product owner (2026-11-25) for use as the favicon. **Deviation from
-  AGENTS.md §7** (product-owner decision): this is the SensMe mark, not
-  a clean-room reimplementation. Must be replaced before any public
-  distribution.
+- `apps/web/public/icon.svg` — **Moodwave wave-bars mark** (2026-11-27):
+  twelve spectrum-ordered bars (one per channel) rising and falling as a
+  wave, using only `dotPalette` colors from `contracts/design-tokens/`.
+  Clean-room original; concept exploration in `docs/branding/concepts/`
+  (ADR-020). Source of truth: `icon.svg` + `scripts/gen-icons.mjs`.
+- Historical: until 2026-11-27 the favicon was the SensMe heart-and-note
+  mark supplied by the product owner (2026-11-25), a documented deviation
+  from AGENTS.md §7. Removed with the rebrand; never distributed.

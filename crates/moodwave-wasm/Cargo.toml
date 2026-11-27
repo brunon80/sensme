@@ -1,0 +1,20 @@
+[package]
+name = "moodwave-wasm"
+description = "WebAssembly surface over the Moodwave analysis/classification core (ADR-016)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+moodwave-audio = { workspace = true }
+moodwave-classify = { workspace = true }
+moodwave-core = { path = "../moodwave-core", default-features = false }
+moodwave-psp = { workspace = true }
+serde = { workspace = true }
+serde-wasm-bindgen.workspace = true
+wasm-bindgen.workspace = true
+console_error_panic_hook = "0.1"

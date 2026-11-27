@@ -1,11 +1,11 @@
 /* Layout and chrome for the PSP-faithful scene. All visual *values* come
-   from --sensme-* tokens (contracts/design-tokens, AGENTS §6). */
+   from --moodwave-* tokens (contracts/design-tokens, AGENTS §6). */
 
 .app {
   position: fixed;
   inset: 0;
-  font-family: var(--sensme-type-family);
-  color: var(--sensme-color-textPrimary);
+  font-family: var(--moodwave-type-family);
+  color: var(--moodwave-color-textPrimary);
   user-select: none;
   /* Mobile (UI_SPEC §9): the app owns every gesture (ui/touch.ts) and never
      scrolls, so `touch-action: none` keeps Chromium from stealing touch
@@ -32,7 +32,7 @@
      now-playing and its scrim. */
   z-index: 30;
   /* Globe effect: tiles sit on a cylinder seen from `perspVh` away. */
-  perspective: calc(var(--sensme-layout-carousel-globe-perspVh) * 100dvh);
+  perspective: calc(var(--moodwave-layout-carousel-globe-perspVh) * 100dvh);
 }
 /* Dark layer between the dimmed now-playing (z 10) and the grid (z 30):
    keeps the two screens from visually mixing (UI_SPEC §1). */
@@ -43,11 +43,11 @@
   background: #000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity calc(var(--sensme-motion-enterNowPlayingMs) * 1ms)
+  transition: opacity calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms)
     cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .grid-scrim.on {
-  opacity: var(--sensme-layout-carousel-scrim);
+  opacity: var(--moodwave-layout-carousel-scrim);
 }
 .tile {
   position: absolute;
@@ -61,10 +61,10 @@
   touch-action: none;
   /* Mouse (UI_SPEC §9): tiles are clickable (select / enter channel). */
   cursor: pointer;
-  transition: transform calc(var(--sensme-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1),
-    opacity calc(var(--sensme-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: transform calc(var(--moodwave-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity calc(var(--moodwave-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
   /* Tiles newly scrolled into view fade in instead of popping at the edge. */
-  animation: tileIn calc(var(--sensme-motion-tileInMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation: tileIn calc(var(--moodwave-motion-tileInMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 @keyframes tileIn {
   from {
@@ -80,8 +80,8 @@
   box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.35);
 }
 .tile-sel img {
-  border: 2px solid var(--sensme-color-tileBorder);
-  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.85), 0 0 34px 8px var(--sensme-color-tileGlow);
+  border: 2px solid var(--moodwave-color-tileBorder);
+  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.85), 0 0 34px 8px var(--moodwave-color-tileGlow);
 }
 /* Empty channels stay dimmed and unclickable (R-2 hint): no pointer cue. */
 .tile-empty {
@@ -113,11 +113,11 @@
   left: 0;
   right: 0;
   z-index: 40;
-  animation: fadeUp calc(var(--sensme-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation: fadeUp calc(var(--moodwave-motion-carouselStepMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
   text-align: center;
-  top: calc(var(--sensme-layout-carousel-nameY) * 100dvh);
-  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-title-weight);
+  top: calc(var(--moodwave-layout-carousel-nameY) * 100dvh);
+  font-size: calc(var(--moodwave-type-title-sizeH) * 100dvh);
+  font-weight: var(--moodwave-type-title-weight);
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 14px rgba(0, 0, 0, 0.6);
 }
@@ -141,14 +141,14 @@
   z-index: 10;
   /* Grid open/close morph (UI_SPEC §1): scale + opacity of the elements
      only — the backdrop is a separate layer and never moves. */
-  transition: transform calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1),
-    opacity calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: transform calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms) cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 /* Channel grid open: now-playing scales to np.dim.scale and dims to
    np.dim.opacity but stays visible behind the grid; ✕/Esc reverses. */
 .nowplaying.dim {
-  transform: scale(var(--sensme-layout-np-dim-scale));
-  opacity: var(--sensme-layout-np-dim-opacity);
+  transform: scale(var(--moodwave-layout-np-dim-scale));
+  opacity: var(--moodwave-layout-np-dim-opacity);
 }
 .np-track {
   position: absolute;
@@ -159,8 +159,8 @@
   /* Mouse (UI_SPEC §9): side cards stage a candidate, the big card
      confirms/plays. */
   cursor: pointer;
-  transition: transform calc(var(--sensme-motion-npStepMs) * 1ms) cubic-bezier(0.45, 0, 0.25, 1),
-    opacity calc(var(--sensme-motion-npStepMs) * 1ms) cubic-bezier(0.45, 0, 0.25, 1);
+  transition: transform calc(var(--moodwave-motion-npStepMs) * 1ms) cubic-bezier(0.45, 0, 0.25, 1),
+    opacity calc(var(--moodwave-motion-npStepMs) * 1ms) cubic-bezier(0.45, 0, 0.25, 1);
 }
 /* Mouse drag (UI_SPEC §9): the stack tracks the pointer; on release the
    snap to the nearest slot animates with the normal step transition. */
@@ -196,14 +196,14 @@
   justify-content: center;
 }
 .art-placeholder span {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh * 3);
+  font-size: calc(var(--moodwave-type-title-sizeH) * 100dvh * 3);
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 .np-text {
   position: absolute;
-  right: calc(var(--sensme-layout-title-rightMargin) * 100dvw);
-  top: calc(var(--sensme-layout-title-baselineY) * 100dvh - calc(var(--sensme-type-title-sizeH) * 100dvh));
+  right: calc(var(--moodwave-layout-title-rightMargin) * 100dvw);
+  top: calc(var(--moodwave-layout-title-baselineY) * 100dvh - calc(var(--moodwave-type-title-sizeH) * 100dvh));
   max-width: 44dvw;
   text-align: right;
   z-index: 20;
@@ -211,8 +211,8 @@
 /* Title/artist mirrored on the glossy floor (PSP reflection). */
 .np-text-reflect {
   position: absolute;
-  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-npTitle-weight);
+  font-size: calc(var(--moodwave-type-npTitle-sizeH) * 100dvh);
+  font-weight: var(--moodwave-type-npTitle-weight);
   left: 0;
   right: 0;
   top: 100%;
@@ -245,26 +245,26 @@
 }
 .np-title,
 .np-title .marquee-inner {
-  font-size: calc(var(--sensme-type-npTitle-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-npTitle-weight);
+  font-size: calc(var(--moodwave-type-npTitle-sizeH) * 100dvh);
+  font-weight: var(--moodwave-type-npTitle-weight);
 }
 .np-title {
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
 .np-rule {
   height: 1px;
-  background: var(--sensme-color-rule);
+  background: var(--moodwave-color-rule);
   margin: 0.4dvh 0;
 }
 .np-second,
 .np-second .marquee-inner {
-  font-size: calc(var(--sensme-type-npBody-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  font-size: calc(var(--moodwave-type-npBody-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
 }
 .dotgrid {
   position: absolute;
-  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh + 4dvh);
-  right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
+  top: calc(var(--moodwave-layout-clock-topMargin) * 100dvh + 4dvh);
+  right: calc(var(--moodwave-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.2dvh;
@@ -279,10 +279,10 @@
 }
 .np-playing-tag {
   position: absolute;
-  left: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
-  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
-  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  left: calc(var(--moodwave-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
+  top: calc(var(--moodwave-layout-clock-topMargin) * 100dvh);
+  font-size: calc(var(--moodwave-type-body-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
 }
 
 /* ---- furniture (R-2) ---- */
@@ -291,23 +291,23 @@
   /* Furniture sits above every scene layer (backdrop/now-playing/scrim/
      grid), like the PSP overlay. */
   z-index: 60;
-  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
-  right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
-  font-size: calc(var(--sensme-type-clock-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-clock-weight);
+  top: calc(var(--moodwave-layout-clock-topMargin) * 100dvh);
+  right: calc(var(--moodwave-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
+  font-size: calc(var(--moodwave-type-clock-sizeH) * 100dvh);
+  font-weight: var(--moodwave-type-clock-weight);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 .captions {
   position: absolute;
   z-index: 60;
-  left: calc(var(--sensme-layout-edgePad) * 100dvw + env(safe-area-inset-left));
-  top: calc(var(--sensme-layout-caption-baselineY) * 100dvh);
+  left: calc(var(--moodwave-layout-edgePad) * 100dvw + env(safe-area-inset-left));
+  top: calc(var(--moodwave-layout-caption-baselineY) * 100dvh);
   display: flex;
   align-items: center;
   gap: 1.4dvw;
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-caption-weight);
-  color: var(--sensme-color-textSecondary);
+  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
+  font-weight: var(--moodwave-type-caption-weight);
+  color: var(--moodwave-color-textSecondary);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 /* Key chip: the button; next to it, plain help text. */
@@ -321,16 +321,16 @@
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 0.7vmin;
   background: rgba(255, 255, 255, 0.14);
-  color: var(--sensme-color-textPrimary);
+  color: var(--moodwave-color-textPrimary);
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
 }
 .update-icon {
   position: absolute;
-  left: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
-  top: calc(var(--sensme-layout-clock-topMargin) * 100dvh);
-  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh);
+  left: calc(var(--moodwave-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-left));
+  top: calc(var(--moodwave-layout-clock-topMargin) * 100dvh);
+  font-size: calc(var(--moodwave-type-title-sizeH) * 100dvh);
   animation: spin 1.2s linear infinite;
 }
 @keyframes spin {
@@ -340,10 +340,10 @@
 }
 .status {
   position: absolute;
-  right: calc(var(--sensme-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
-  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100dvh);
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  right: calc(var(--moodwave-layout-clock-rightMargin) * 100dvw + env(safe-area-inset-right));
+  bottom: calc((1 - var(--moodwave-layout-caption-baselineY)) * 100dvh);
+  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
   text-align: right;
 }
 
@@ -351,8 +351,8 @@
 .update-scrim {
   position: absolute;
   inset: 0;
-  background: var(--sensme-color-menuScrim);
-  animation: fadein calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+  background: var(--moodwave-color-menuScrim);
+  animation: fadein calc(var(--moodwave-motion-menuOpenMs) * 1ms) ease-out;
   z-index: 45;
 }
 .update-card {
@@ -360,50 +360,50 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: calc(var(--sensme-layout-update-cardW) * 100dvw);
+  width: calc(var(--moodwave-layout-update-cardW) * 100dvw);
   box-sizing: border-box;
   padding: 3.2dvh 2.6dvw;
   text-align: center;
-  background: var(--sensme-color-menuPanel);
-  border: 1px solid var(--sensme-color-tileBorderDim);
+  background: var(--moodwave-color-menuPanel);
+  border: 1px solid var(--moodwave-color-tileBorderDim);
   border-radius: 1.4vmin;
   backdrop-filter: blur(6px);
   z-index: 50;
-  animation: fadeUp calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+  animation: fadeUp calc(var(--moodwave-motion-menuOpenMs) * 1ms) ease-out;
 }
 .update-card-logo {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh * 1.6);
-  font-weight: var(--sensme-type-title-weight);
+  font-size: calc(var(--moodwave-type-title-sizeH) * 100dvh * 1.6);
+  font-weight: var(--moodwave-type-title-weight);
   letter-spacing: 0.08em;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
 }
 .update-card-label {
   margin-top: 1.6dvh;
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
 }
 .update-bar {
-  height: calc(var(--sensme-layout-update-barH) * 100dvh);
+  height: calc(var(--moodwave-layout-update-barH) * 100dvh);
   margin: 2dvh 0 1.2dvh;
-  background: var(--sensme-color-barTrack);
-  border-radius: calc(var(--sensme-layout-update-barRadius) * 100vmin);
+  background: var(--moodwave-color-barTrack);
+  border-radius: calc(var(--moodwave-layout-update-barRadius) * 100vmin);
   overflow: hidden;
 }
 .update-bar-fill {
   height: 100%;
-  background: var(--sensme-color-barFill);
+  background: var(--moodwave-color-barFill);
   border-radius: inherit;
   box-shadow: 0 0 10px rgba(234, 244, 255, 0.55);
-  transition: width calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+  transition: width calc(var(--moodwave-motion-menuOpenMs) * 1ms) ease-out;
 }
 .update-card-errors {
-  font-size: calc(var(--sensme-type-small-sizeH) * 100dvh);
-  color: var(--sensme-color-textTertiary);
+  font-size: calc(var(--moodwave-type-small-sizeH) * 100dvh);
+  color: var(--moodwave-color-textTertiary);
   margin-bottom: 0.8dvh;
 }
 .update-card-cancel {
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
-  color: var(--sensme-color-textTertiary);
+  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
+  color: var(--moodwave-color-textTertiary);
 }
 
 /* ---- options menu (UI_SPEC §3) ---- */
@@ -413,8 +413,8 @@
   /* Above the scene layers (backdrop/now-playing/scrim/grid), below the
      furniture overlay (z 60). */
   z-index: 50;
-  background: var(--sensme-color-menuScrim);
-  animation: fadein calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+  background: var(--moodwave-color-menuScrim);
+  animation: fadein calc(var(--moodwave-motion-menuOpenMs) * 1ms) ease-out;
 }
 @keyframes fadein {
   from {
@@ -425,15 +425,15 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--sensme-layout-menu-panelLeft) * 100dvw);
+  left: calc(var(--moodwave-layout-menu-panelLeft) * 100dvw);
   right: 0;
-  background: var(--sensme-color-menuPanel);
+  background: var(--moodwave-color-menuPanel);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc((var(--sensme-layout-menu-itemLineHeight) - var(--sensme-type-body-sizeH)) * 100dvh);
-  animation: slidein calc(var(--sensme-motion-menuOpenMs) * 1ms) ease-out;
+  gap: calc((var(--moodwave-layout-menu-itemLineHeight) - var(--moodwave-type-body-sizeH)) * 100dvh);
+  animation: slidein calc(var(--moodwave-motion-menuOpenMs) * 1ms) ease-out;
 }
 @keyframes slidein {
   from {
@@ -443,26 +443,26 @@
 .menu-item {
   background: none;
   border: none;
-  color: var(--sensme-color-textSecondary);
+  color: var(--moodwave-color-textSecondary);
   font-family: inherit;
-  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
+  font-size: calc(var(--moodwave-type-body-sizeH) * 100dvh);
   cursor: pointer;
   padding: 0.4dvh 1dvw;
 }
 .menu-item:hover {
-  color: var(--sensme-color-textPrimary);
+  color: var(--moodwave-color-textPrimary);
   font-weight: 600;
 }
 .menu-note {
-  font-size: calc(var(--sensme-type-small-sizeH) * 100dvh);
-  color: var(--sensme-color-textTertiary);
+  font-size: calc(var(--moodwave-type-small-sizeH) * 100dvh);
+  color: var(--moodwave-color-textTertiary);
   margin-left: 0.6dvw;
 }
 .menu-text {
   max-width: 80%;
   text-align: center;
-  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  font-size: calc(var(--moodwave-type-body-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
   line-height: 1.6;
   display: flex;
   flex-direction: column;
@@ -470,9 +470,9 @@
 }
 .menu-caption {
   position: absolute;
-  bottom: calc((1 - var(--sensme-layout-caption-baselineY)) * 100dvh);
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  bottom: calc((1 - var(--moodwave-layout-caption-baselineY)) * 100dvh);
+  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
 }
 
 /* ---- empty state ---- */
@@ -486,23 +486,23 @@
   gap: 2dvh;
 }
 .empty-logo {
-  font-size: calc(var(--sensme-type-title-sizeH) * 100dvh * 2.4);
+  font-size: calc(var(--moodwave-type-title-sizeH) * 100dvh * 2.4);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 .empty-sub {
-  font-size: calc(var(--sensme-type-body-sizeH) * 100dvh);
-  color: var(--sensme-color-textSecondary);
+  font-size: calc(var(--moodwave-type-body-sizeH) * 100dvh);
+  color: var(--moodwave-color-textSecondary);
 }
 .empty-btn {
   margin-top: 2dvh;
   padding: 1.2dvh 2.4dvw;
   font-family: inherit;
-  font-size: calc(var(--sensme-type-caption-sizeH) * 100dvh);
-  font-weight: var(--sensme-type-caption-weight);
-  color: var(--sensme-color-textPrimary);
+  font-size: calc(var(--moodwave-type-caption-sizeH) * 100dvh);
+  font-weight: var(--moodwave-type-caption-weight);
+  color: var(--moodwave-color-textPrimary);
   background: rgba(255, 255, 255, 0.12);
-  border: 1px solid var(--sensme-color-tileBorderDim);
+  border: 1px solid var(--moodwave-color-tileBorderDim);
   border-radius: 8px;
   cursor: pointer;
 }
@@ -510,18 +510,18 @@
   background: rgba(255, 255, 255, 0.2);
 }
 .empty-hint {
-  font-size: calc(var(--sensme-type-small-sizeH) * 100dvh);
-  color: var(--sensme-color-textTertiary);
+  font-size: calc(var(--moodwave-type-small-sizeH) * 100dvh);
+  color: var(--moodwave-color-textTertiary);
 }
 
 /* ---- screen-to-screen transitions (UI_SPEC §1: enterNowPlaying 380 ms) ---- */
 /* Grid enter/exit are exact reverses (UI_SPEC §1): scale 0.82 ↔ 1 + fade.
    No sideways slide — the exit must mirror the entering. */
 .carousel.enter {
-  animation: carouselIn calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-out;
+  animation: carouselIn calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms) ease-out;
 }
 .carousel.exit {
-  animation: carouselOut calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-in forwards;
+  animation: carouselOut calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms) ease-in forwards;
   pointer-events: none;
 }
 @keyframes carouselIn {
@@ -537,11 +537,11 @@
   }
 }
 .nowplaying.enter {
-  animation: fadeUp calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-out;
+  animation: fadeUp calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms) ease-out;
 }
 .nowplaying.enter .np-text,
 .nowplaying.enter .dotgrid {
-  animation: fadeUp calc(var(--sensme-motion-enterNowPlayingMs) * 1ms) ease-out;
+  animation: fadeUp calc(var(--moodwave-motion-enterNowPlayingMs) * 1ms) ease-out;
 }
 @keyframes fadeUp {
   from {
@@ -615,7 +615,7 @@
   }
 }
 .rotate-text {
-  font-size: calc(var(--sensme-type-body-sizeH) * 100vmin);
-  color: var(--sensme-color-textSecondary);
+  font-size: calc(var(--moodwave-type-body-sizeH) * 100vmin);
+  color: var(--moodwave-color-textSecondary);
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }

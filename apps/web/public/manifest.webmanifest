@@ -1,6 +1,6 @@
 {
-  "name": "SensMe",
-  "short_name": "SensMe",
+  "name": "Moodwave",
+  "short_name": "Moodwave",
   "description": "Offline-first music channels inspired by Sony's SensMe",
   "id": "./",
   "start_url": "./",

@@ -2,8 +2,8 @@
 /target
 **/*.rs.bk
 
-# Generated wasm package (regenerate: wasm-pack build crates/sensme-wasm --target web --out-dir pkg)
-crates/sensme-wasm/pkg/
+# Generated wasm package (regenerate: wasm-pack build crates/moodwave-wasm --target web --out-dir pkg)
+crates/moodwave-wasm/pkg/
 
 # Node
 node_modules/
@@ -11,7 +11,7 @@ dist/
 .turbo/
 *.tsbuildinfo
 
-# Generated contracts (regenerate with `cargo run -p sensme-core --bin export-ts`)
+# Generated contracts (regenerate with `cargo run -p moodwave-core --bin export-ts`)
 /contracts/generated/*.ts
 
 # App artifacts

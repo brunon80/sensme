@@ -2,19 +2,19 @@
 
 Date: 2026-11-25. Dataset: `bench/datasets/synthetic-v1.json` (216 tracks,
 by-construction intent labels; see provenance in the file and
-docs/BENCHMARK_FORMAT.md). Tooling: `sensme bench` / `sensme tune`
-(`crates/sensme-bench`).
+docs/BENCHMARK_FORMAT.md). Tooling: `moodwave bench` / `moodwave tune`
+(`crates/moodwave-bench`).
 
 Per AGENTS.md §4 these numbers are **directional evidence**, not ground
 truth: the labels encode synthesis intent, not human listening judgments.
 
 ## Method
 
-`sensme tune` runs coordinate-descent over the 12 axis biases, the sparse
+`moodwave tune` runs coordinate-descent over the 12 axis biases, the sparse
 axis feature weights, and the sparse channel→axis weights, maximizing
 macro F1 at threshold 0.5 (deltas ±0.07/±0.2/±0.4, up to 5 sweeps). The
 tuned weights were rounded to 2 decimals and shipped as weights version
-**1.0.0** in `sensme-classify`; the v0 sets (0.1.0) remain available via
+**1.0.0** in `moodwave-classify`; the v0 sets (0.1.0) remain available via
 `v0_axis_weights()` / `v0_channel_weights()` for regression comparison.
 
 ## Measured delta (per-channel F1, threshold 0.5)

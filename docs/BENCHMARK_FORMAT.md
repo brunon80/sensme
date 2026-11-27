@@ -44,7 +44,7 @@ Datasets live in `bench/datasets/*.json`, UTF-8 JSON:
 - **No copyrighted audio committed.** Audio fixtures, when used, must be
   self-generated or CC-licensed, noted in provenance.
 
-## Metrics produced by `sensme bench`
+## Metrics produced by `moodwave bench`
 
 - Per-channel precision / recall / F1 at score threshold 0.5, plus
   macro-average.
@@ -57,4 +57,4 @@ Datasets live in `bench/datasets/*.json`, UTF-8 JSON:
 
 | dataset | tracks | provenance |
 |---|---|---|
-| `bench/datasets/synthetic-v1.json` | 216 | Self-generated synthetic clips rendered deterministically in code (`sensme-bench` generator); labels are by-construction intent labels, **not** human listening labels. Useful as a regression/calibration harness; weak evidence for real-world channel semantics. |
+| `bench/datasets/synthetic-v1.json` | 216 | Self-generated synthetic clips rendered deterministically in code (`moodwave-bench` generator); labels are by-construction intent labels, **not** human listening labels. Useful as a regression/calibration harness; weak evidence for real-world channel semantics. |

@@ -588,6 +588,99 @@ dependencies = [
 ]
 
 [[package]]
+name = "moodwave-audio"
+version = "0.1.0"
+dependencies = [
+ "moodwave-core",
+ "moodwave-psp",
+ "rubato",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "symphonia",
+ "thiserror",
+]
+
+[[package]]
+name = "moodwave-bench"
+version = "0.1.0"
+dependencies = [
+ "moodwave-audio",
+ "moodwave-classify",
+ "moodwave-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "moodwave-classify"
+version = "0.1.0"
+dependencies = [
+ "moodwave-core",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "moodwave-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "moodwave-audio",
+ "moodwave-bench",
+ "moodwave-classify",
+ "moodwave-core",
+ "moodwave-psp",
+ "serde_json",
+]
+
+[[package]]
+name = "moodwave-core"
+version = "0.1.0"
+dependencies = [
+ "lofty",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "ts-rs",
+]
+
+[[package]]
+name = "moodwave-ffi"
+version = "0.1.0"
+dependencies = [
+ "moodwave-audio",
+ "moodwave-classify",
+ "moodwave-core",
+ "thiserror",
+ "uniffi",
+]
+
+[[package]]
+name = "moodwave-psp"
+version = "0.1.0"
+dependencies = [
+ "libm",
+]
+
+[[package]]
+name = "moodwave-wasm"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "moodwave-audio",
+ "moodwave-classify",
+ "moodwave-core",
+ "moodwave-psp",
+ "serde",
+ "serde-wasm-bindgen",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -830,99 +923,6 @@ checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
 dependencies = [
  "serde",
  "serde_core",
-]
-
-[[package]]
-name = "sensme-audio"
-version = "0.1.0"
-dependencies = [
- "rubato",
- "rustfft",
- "sensme-core",
- "sensme-psp",
- "serde",
- "serde_json",
- "symphonia",
- "thiserror",
-]
-
-[[package]]
-name = "sensme-bench"
-version = "0.1.0"
-dependencies = [
- "sensme-audio",
- "sensme-classify",
- "sensme-core",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "sensme-classify"
-version = "0.1.0"
-dependencies = [
- "sensme-core",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "sensme-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "sensme-audio",
- "sensme-bench",
- "sensme-classify",
- "sensme-core",
- "sensme-psp",
- "serde_json",
-]
-
-[[package]]
-name = "sensme-core"
-version = "0.1.0"
-dependencies = [
- "lofty",
- "rusqlite",
- "serde",
- "serde_json",
- "thiserror",
- "ts-rs",
-]
-
-[[package]]
-name = "sensme-ffi"
-version = "0.1.0"
-dependencies = [
- "sensme-audio",
- "sensme-classify",
- "sensme-core",
- "thiserror",
- "uniffi",
-]
-
-[[package]]
-name = "sensme-psp"
-version = "0.1.0"
-dependencies = [
- "libm",
-]
-
-[[package]]
-name = "sensme-wasm"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "sensme-audio",
- "sensme-classify",
- "sensme-core",
- "sensme-psp",
- "serde",
- "serde-wasm-bindgen",
- "wasm-bindgen",
 ]
 
 [[package]]

@@ -4,7 +4,7 @@
 // cards/tiles are clickable with the PSP two-step semantics, and the
 // Options caption opens the settings menu. Run against `pnpm preview`.
 import { chromium } from "playwright";
-const URL = process.env.SENSME_URL ?? "http://127.0.0.1:4173/";
+const URL = process.env.MOODWAVE_URL ?? "http://127.0.0.1:4173/";
 
 function ok(msg) {
   console.log(`  ✓ ${msg}`);
@@ -21,15 +21,15 @@ page.on("pageerror", (e) => {
 // Energetic (index 0) so both channels are populated (clickable) and the
 // now-playing queue has a next/prev candidate to stage.
 await page.goto(URL, { waitUntil: "load" });
-await page.waitForFunction(() => !!window.__sensme?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
+await page.waitForFunction(() => !!window.__moodwave?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
 await page.evaluate(async () => {
-  const db = await new Promise((res, rej) => { const q = indexedDB.open("sensme", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const db = await new Promise((res, rej) => { const q = indexedDB.open("moodwave", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
   for (const s of ["tracks", "audio"]) await new Promise((res, rej) => { const t = db.transaction(s, "readwrite"); t.objectStore(s).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); });
-  localStorage.setItem("sensme.settings", JSON.stringify({ showClock: true, showCaptions: true, dynamicNormalizer: true, allDayChannels: false }));
+  localStorage.setItem("moodwave.settings", JSON.stringify({ showClock: true, showCaptions: true, dynamicNormalizer: true, allDayChannels: false }));
 });
 await page.evaluate(async () => {
   const blob = await (await fetch("/tone.mp3")).blob();
-  await window.__sensme.importFiles(
+  await window.__moodwave.importFiles(
     [
       { file: new File([blob], "tone1.mp3", { type: "audio/mpeg" }), path: "tone1.mp3" },
       { file: new File([blob], "tone2.mp3", { type: "audio/mpeg" }), path: "tone2.mp3" },
@@ -38,7 +38,7 @@ await page.evaluate(async () => {
   );
 });
 await page.evaluate(async () => {
-  const db = await new Promise((res, rej) => { const q = indexedDB.open("sensme", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const db = await new Promise((res, rej) => { const q = indexedDB.open("moodwave", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
   const recs = await new Promise((res, rej) => { const t = db.transaction("tracks", "readonly"); const r = t.objectStore("tracks").getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
   const t = db.transaction("tracks", "readwrite");
   for (const rec of recs) {
@@ -52,7 +52,7 @@ await page.evaluate(async () => {
 await page.clock.install({ time: new Date("2026-06-01T07:30:00") });
 await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => (document.querySelector(".np-title")?.textContent ?? "").length > 0, null, { timeout: 20000 });
-await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+await page.waitForFunction(() => window.__moodwave.player.state === "playing", null, { timeout: 10000 });
 
 const captionText = () => page.evaluate(() => document.querySelector(".captions")?.innerText ?? "");
 // .carousel-name carries a mirrored reflection span: read only the label.
@@ -143,7 +143,7 @@ await page.waitForFunction(() => (document.querySelector(".carousel-name")?.firs
 ok("clicking a tile moves the selection");
 await page.locator('.tile[data-entry="morning"]').click();
 await page.waitForFunction(() => !document.querySelector(".carousel"), null, { timeout: 5000 });
-await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+await page.waitForFunction(() => window.__moodwave.player.state === "playing", null, { timeout: 10000 });
 ok("clicking the selected tile enters the channel and plays");
 
 // 7. Empty channels stay unclickable: a click on a dimmed tile is a no-op

@@ -1,4 +1,4 @@
-# SensMe Architecture
+# Moodwave Architecture
 
 Status: approved (Phase 1). Changes to anything marked **Decision** require a new ADR in `docs/TECHNICAL_DECISIONS.md`.
 
@@ -10,9 +10,9 @@ Status: approved (Phase 1). Changes to anything marked **Decision** require a ne
 │          React web (secondary)                              │
 │  All UI logic thin; all domain logic in core                │
 ├─────────────────────────────────────────────────────────────┤
-│  sensme-ffi (UniFFI)  │  Tauri commands  │  WASM bindings   │
+│  moodwave-ffi (UniFFI)  │  Tauri commands  │  WASM bindings   │
 ├─────────────────────────────────────────────────────────────┤
-│                    sensme-core (Rust)                       │
+│                    moodwave-core (Rust)                       │
 │  ├─ library:     scanning, tagging, SQLite persistence      │
 │  ├─ audioio:     decode (symphonia), resample, normalize    │
 │  ├─ analysis:    feature extraction pipeline (versioned)    │
@@ -20,7 +20,7 @@ Status: approved (Phase 1). Changes to anything marked **Decision** require a ne
 │  ├─ bench:       reference import, agreement metrics        │
 │  └─ contract:    serde + ts-rs shared data models           │
 ├─────────────────────────────────────────────────────────────┤
-│  sensme-cli: analyze / classify / bench / tune commands     │
+│  moodwave-cli: analyze / classify / bench / tune commands     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -33,13 +33,13 @@ and store tooling; see ADR-008).
 
 | Crate | Responsibility | Key deps |
 |---|---|---|
-| `sensme-core` | Domain models, library scanning, SQLite persistence, config | rusqlite (bundled), lofty, serde, ts-rs |
-| `sensme-audio` | Decode, resample, STFT, all feature extractors | symphonia, rustfft, fundsp, rubato |
-| `sensme-classify` | Tone-axis scoring, channel mapping, weight configs | sensme-core (models) |
-| `sensme-bench` | Reference dataset import, agreement metrics, calibration | sensme-core, sensme-classify |
-| `sensme-ffi` | UniFFI interface for Kotlin/Swift | uniffi, sensme-core |
-| `sensme-wasm` | wasm-bindgen surface | wasm-bindgen, sensme-core |
-| `sensme-cli` | CLI: `analyze`, `classify`, `bench`, `tune` | clap, all of the above |
+| `moodwave-core` | Domain models, library scanning, SQLite persistence, config | rusqlite (bundled), lofty, serde, ts-rs |
+| `moodwave-audio` | Decode, resample, STFT, all feature extractors | symphonia, rustfft, fundsp, rubato |
+| `moodwave-classify` | Tone-axis scoring, channel mapping, weight configs | moodwave-core (models) |
+| `moodwave-bench` | Reference dataset import, agreement metrics, calibration | moodwave-core, moodwave-classify |
+| `moodwave-ffi` | UniFFI interface for Kotlin/Swift | uniffi, moodwave-core |
+| `moodwave-wasm` | wasm-bindgen surface | wasm-bindgen, moodwave-core |
+| `moodwave-cli` | CLI: `analyze`, `classify`, `bench`, `tune` | clap, all of the above |
 
 Dependency direction is strictly one-way: `audio → core`, `classify → core`,
 `bench → {core, classify}`, shells → `{core, ffi, wasm}`. No cycles.
@@ -51,14 +51,14 @@ Mirrors Sony's 12 TONE ANALYSIS concept: continuous scores on 12 perceptual
 tone axes, then a separately versioned mapping from axes to channels.
 Channels stay interpretable and weights evolve independently of features.
 
-### Stage A — decode and normalize (sensme-audio)
+### Stage A — decode and normalize (moodwave-audio)
 
 1. Decode with **symphonia** (pure Rust: MP3, FLAC, OGG, M4A, WAV; SSE/AVX/NEON SIMD).
 2. Downmix to mono, resample to **22 050 Hz** (standard MIR practice; ~4× cheaper than 44.1 kHz, no perceptible loss for features) via **rubato**.
 3. Peak-normalize; compute loudness stats (RMS, dynamic range) before normalization.
 4. One shared **STFT stage** (rustfft; Hann window, 2048 frame / 512 hop at 22.05 kHz) feeds all spectral features. Never decode twice.
 
-### Stage B — feature extraction (sensme-audio)
+### Stage B — feature extraction (moodwave-audio)
 
 | Feature group | Method | Notes |
 |---|---|---|
@@ -74,7 +74,7 @@ Channels stay interpretable and weights evolve independently of features.
 All features are stored as a **versioned, normalized feature vector**
 (`feature_vector_version`) in SQLite. `f32` throughout the analysis path.
 
-### Stage C — tone axes (sensme-classify, `axes` module)
+### Stage C — tone axes (moodwave-classify, `axes` module)
 
 12 tone axes (working set, to be validated in Phase 3 benchmarking):
 Energetic, Excited, Groovy, Danceable, Sensual, Sweet, Bittersweet, Mellow,
@@ -83,7 +83,7 @@ Dreamy, Chillout, Tough, Aggressive.
 Each axis is a weighted, differentiable-in-weights function of the feature
 vector. Weights live in versioned config (`weights_version`), not code.
 
-### Stage D — channels (sensme-classify, `channels` module)
+### Stage D — channels (moodwave-classify, `channels` module)
 
 Channels: Energetic, Relax, Upbeat, Mellow, Lounge, Emotional, Dance,
 Extreme, Morning, Daytime, Evening, Night, Midnight.
@@ -97,7 +97,7 @@ Extreme, Morning, Daytime, Evening, Night, Midnight.
   minimum-score floor. Scores are exposed to the UI (channel strength
   visualization).
 
-## 4. Persistence (sensme-core)
+## 4. Persistence (moodwave-core)
 
 SQLite (rusqlite, bundled). Core schema (evolves via migrations):
 
@@ -138,8 +138,8 @@ IP: clean-room asset reimplementation only; provenance log mandatory. ADR-013.
 ## 7. Data flow (happy path)
 
 ```
-scan → tags (lofty) → decode+features (sensme-audio, versioned) → SQLite
-     → axes+channels (sensme-classify, versioned weights) → SQLite
+scan → tags (lofty) → decode+features (moodwave-audio, versioned) → SQLite
+     → axes+channels (moodwave-classify, versioned weights) → SQLite
      → UI channel list → artwork browsing → playback (shell player)
 ```
 

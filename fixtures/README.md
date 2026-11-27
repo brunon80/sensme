@@ -6,5 +6,5 @@
   (self-generated content; no third-party or copyrighted material).
 - `golden_v1.json` — golden feature vector for the deterministic synthetic
   clip rendered by `tests/golden.rs`. Regenerate with
-  `UPDATE_GOLDEN=1 cargo test -p sensme-audio --test golden` (only when the
+  `UPDATE_GOLDEN=1 cargo test -p moodwave-audio --test golden` (only when the
   pipeline version is intentionally bumped; CI compares within ±1e-4).

@@ -31,10 +31,10 @@ jobs:
 
       # ts-rs `#[ts(export)]` writes contracts/generated/*.ts during tests.
       - name: Generate TS contracts
-        run: cargo test -p sensme-core
+        run: cargo test -p moodwave-core
 
       - name: Build wasm package (web target)
-        run: wasm-pack build crates/sensme-wasm --target web --out-dir pkg
+        run: wasm-pack build crates/moodwave-wasm --target web --out-dir pkg
 
       - uses: pnpm/action-setup@v4 # version from package.json packageManager
         with:
@@ -46,7 +46,7 @@ jobs:
           cache: pnpm
 
       - name: Build web app
-        run: pnpm install --frozen-lockfile && pnpm --filter @sensme/web build
+        run: pnpm install --frozen-lockfile && pnpm --filter @moodwave/web build
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -4,7 +4,7 @@
 // megabytes). Classification is read back, never recomputed (AGENTS §2).
 import type { LibraryRecord } from "./types";
 
-const DB_NAME = "sensme";
+const DB_NAME = "moodwave";
 const TRACKS = "tracks";
 const AUDIO = "audio";
 const DB_VERSION = 1;

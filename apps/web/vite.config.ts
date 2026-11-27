@@ -6,7 +6,7 @@ export default defineConfig({
   // path (/<repo>/) as well as at a domain root.
   base: "./",
   plugins: [react()],
-  // sensme-wasm (web target) is initialized manually with its .wasm URL
+  // moodwave-wasm (web target) is initialized manually with its .wasm URL
   // (see src/engine/worker.ts); keep it out of dep pre-bundling.
-  optimizeDeps: { exclude: ["sensme-wasm"] },
+  optimizeDeps: { exclude: ["moodwave-wasm"] },
 });

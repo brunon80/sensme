@@ -1,5 +1,5 @@
 {
-  "name": "@sensme/web",
+  "name": "@moodwave/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,13 +8,13 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "wasm": "wasm-pack build ../../crates/sensme-wasm --target web --out-dir ../../crates/sensme-wasm/pkg && pnpm install"
+    "wasm": "wasm-pack build ../../crates/moodwave-wasm --target web --out-dir ../../crates/moodwave-wasm/pkg && pnpm install"
   },
   "dependencies": {
     "music-metadata": "^11.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "sensme-wasm": "file:../../crates/sensme-wasm/pkg"
+    "moodwave-wasm": "file:../../crates/moodwave-wasm/pkg"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

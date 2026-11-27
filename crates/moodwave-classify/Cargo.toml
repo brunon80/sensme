@@ -1,0 +1,12 @@
+[package]
+name = "moodwave-classify"
+description = "Tone-axis scoring and channel classification for Moodwave"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+moodwave-core = { path = "../moodwave-core", default-features = false }
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true

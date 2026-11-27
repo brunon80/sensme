@@ -1,0 +1,21 @@
+[package]
+name = "moodwave-cli"
+description = "Command-line interface for Moodwave analysis and benchmarking"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+moodwave-audio.workspace = true
+moodwave-bench.workspace = true
+moodwave-classify.workspace = true
+moodwave-core.workspace = true
+moodwave-psp.workspace = true
+serde_json.workspace = true
+
+[[bin]]
+name = "moodwave"
+path = "src/main.rs"

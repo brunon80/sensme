@@ -73,7 +73,7 @@ export class Player {
   }
 
   /** PSP mixer ramp interval: 0x70 chunks × 28 samples = 3136 samples
-   * ≈ 71 ms @44.1 kHz (RE report §5; sensme-psp port). Gain changes glide
+   * ≈ 71 ms @44.1 kHz (RE report §5; moodwave-psp port). Gain changes glide
    * over the same interval the original's ramp engine uses. */
   private static readonly RAMP_SEC = 3136 / 44100;
 

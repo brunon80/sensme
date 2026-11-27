@@ -1,7 +1,7 @@
 // GENERATED from tokens.json by generate.mjs — do not edit by hand.
 export const tokens = {
   "$schema": "./tokens.schema.json",
-  "name": "sensme-design-tokens",
+  "name": "moodwave-design-tokens",
   "version": "0.1.0",
   "source": "docs/UI_SPEC.md (refs R-1..R-6, docs/UI_REFERENCES/PROVENANCE.md)",
   "canvas": {
@@ -259,4 +259,4 @@ export const tokens = {
 
 export type Tokens = typeof tokens;
 export const cssVar = (path: string): string =>
-  `--sensme-${path.replace(/\./g, "-")}`;
+  `--moodwave-${path.replace(/\./g, "-")}`;

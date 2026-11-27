@@ -1,4 +1,4 @@
-# SensMe Roadmap
+# Moodwave Roadmap
 
 Each phase has a **done gate** — measurable criteria. A phase is not done
 until every criterion passes. Phases may overlap where noted.
@@ -16,25 +16,25 @@ Done gate:
 - [x] `cargo check --workspace && cargo test --workspace` green on skeleton
 - [x] git repo initialized, first commit tagged `phase-1`
 
-## Phase 2 — SensMe Core
+## Phase 2 — Moodwave Core
 
 Scope: decode → features → SQLite → classification v0 → CLI.
 
 Work items:
-1. `sensme-audio`: symphonia decode, mono/22.05 kHz resample (rubato), shared STFT stage.
+1. `moodwave-audio`: symphonia decode, mono/22.05 kHz resample (rubato), shared STFT stage.
 2. Feature extractors (see ARCHITECTURE §3B): tempo/beat tracking, onset
    stats, energy, spectral, chroma/mode, HPSS, MFCC.
-3. `sensme-core`: library scan, lofty tags, SQLite schema + migrations, versioned analysis records.
-4. `sensme-classify`: tone-axis scoring v0 + channel mapping v0 (hand-tuned weights).
-5. `sensme-cli`: `analyze`, `classify`, `library scan`, `export`.
+3. `moodwave-core`: library scan, lofty tags, SQLite schema + migrations, versioned analysis records.
+4. `moodwave-classify`: tone-axis scoring v0 + channel mapping v0 (hand-tuned weights).
+5. `moodwave-cli`: `analyze`, `classify`, `library scan`, `export`.
 6. UniFFI spike: core callable from a minimal RN screen (de-risked early, not in Phase 5).
 7. Golden-vector fixtures: synthetic + real CC-licensed audio; CI on x86-64 + aarch64.
 
 Done gate:
-- [x] `sensme analyze <file>` prints a versioned feature vector for MP3/FLAC/OGG/M4A/WAV
+- [x] `moodwave analyze <file>` prints a versioned feature vector for MP3/FLAC/OGG/M4A/WAV
 - [x] Tempo within ±2 BPM on 20 synthetic click-track fixtures (all common BPMs 60–180)
 - [x] ≥100 unit tests passing; golden vectors identical (±1e-4) on x86-64 and aarch64
-- [x] `sensme classify` assigns channels from stored vectors without re-decoding
+- [x] `moodwave classify` assigns channels from stored vectors without re-decoding
 - [ ] UniFFI spike demonstrates typed calls from RN on an Android emulator or device
       (spike done: typed API, Kotlin binding generation, typed calls over JNA on the
       JVM, and aarch64-linux-android cdylib build — see `spike/rn-spike/README.md`;
@@ -47,7 +47,7 @@ Scope: reference datasets, agreement metrics, weight tuning.
 Work items:
 1. `docs/BENCHMARK_FORMAT.md` + `bench/` dataset format (JSON/CSV, provenance required).
 2. Importers: Media Go-era exports, manual labels, community labels.
-3. `sensme-bench`: per-channel precision/recall/F1, confusion matrix, systematic-error report.
+3. `moodwave-bench`: per-channel precision/recall/F1, confusion matrix, systematic-error report.
 4. Calibration tool: grid/coordinate search over axis weights with bench delta report.
 5. Validate the 12 tone-axis working set; rename/merge axes if evidence demands.
 6. Classifier v1 with tuned weights.
@@ -56,7 +56,7 @@ Done gate:
 - [x] ≥200 labeled tracks in `bench/` with recorded provenance (216 in
       `bench/datasets/synthetic-v1.json`; synthetic intent labels — human-labeled
       data still needed, follow-up F-1 in docs/BENCH_FINDINGS.md)
-- [x] `sensme bench` produces per-channel agreement report vs. reference labels
+- [x] `moodwave bench` produces per-channel agreement report vs. reference labels
 - [x] A documented v0→v1 weights change shows measured improvement on the bench
       (macro F1 0.510 → 0.984; docs/BENCH_FINDINGS.md)
 - [x] Report identifies ≥3 systematic error classes with follow-up issues
@@ -75,7 +75,7 @@ Sub-phases (gates between each):
 - **4b Visual spec**: `docs/UI_SPEC.md` — per-screen layout, tokens,
   interaction flows; `contracts/design-tokens/` generated.
   Gate: spec approved by product owner; tokens package published.
-- **4c Implementation** *(done)*: `sensme-wasm` crate (wasm-bindgen surface
+- **4c Implementation** *(done)*: `moodwave-wasm` crate (wasm-bindgen surface
   over the core) + React shell: folder import (File System Access API /
   directory input), analysis progress, channel carousel → now-playing →
   Web Audio playback, options menu.
@@ -109,7 +109,7 @@ Scope: Tauri desktop (reuses the Phase 4 React UI), React Native mobile.
 
 Work items:
 1. Tauri shell embedding the same React UI; native backend via Tauri
-   commands → `sensme-core` (rusqlite library, folder scanning).
+   commands → `moodwave-core` (rusqlite library, folder scanning).
 2. Desktop playback: rodio/cpal with gapless-tolerant queue.
 3. Windows, Linux, macOS installers built in CI.
 4. UniFFI production bindings (Kotlin/Swift) + RN Turbo Module bridge.

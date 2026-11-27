@@ -30,7 +30,7 @@ export type Hues = readonly string[];
  * by file name; see docs/UI_REFERENCES/PROVENANCE.md). Every channel has
  * its own photo; unmapped entries fall back to the default photo. Paths
  * are resolved against the document base so they work under the GitHub
- * Pages project path (`/sensme/`), not just at the site root. */
+ * Pages project path (`/moodwave/`), not just at the site root. */
 const bg = (p: string) => new URL(p, document.baseURI).href;
 export const PHOTO_MAP: Record<string, string> = {
   relax: bg("bg/relax.jpg"),

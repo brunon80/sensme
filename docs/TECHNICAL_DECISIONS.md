@@ -46,7 +46,7 @@ profiling demands it.
 Status: accepted — 2026-11-25
 
 Decision: Implement spectral-flux onset detection + dynamic-programming beat
-tracking (Ellis 2007 style) in `sensme-audio`.
+tracking (Ellis 2007 style) in `moodwave-audio`.
 
 Rationale: No mature pure-Rust crate exists (aubio bindings stale, require
 C). The algorithm is well documented (~500 LOC) and is core IP for a
@@ -187,8 +187,8 @@ analysis) requires a second higher-rate pass — new ADR then.
 ## ADR-016 — Web-first shell; wasm core; IndexedDB persistence
 Status: accepted — 2026-11-25 (product owner decision)
 
-Decision: Phase 4 ships the web app first: React shell + `sensme-wasm`
-(wasm-bindgen surface over sensme-audio/classify/core models). Audio is
+Decision: Phase 4 ships the web app first: React shell + `moodwave-wasm`
+(wasm-bindgen surface over moodwave-audio/classify/core models). Audio is
 decoded in wasm from bytes (symphonia is pure Rust); playback uses Web
 Audio; the library persists in IndexedDB storing the same versioned
 feature/classification records as SQLite. Tauri desktop (Phase 5) embeds
@@ -242,7 +242,7 @@ Status: accepted — 2026-11-26
 
 Decision: Implement the PSP "Dynamic Normalizer" Sound Settings feature as
 a per-track static playback gain: the Rust core measures loudness
-(peak + RMS over the deterministic mono decode, `sensme-audio::loudness`,
+(peak + RMS over the deterministic mono decode, `moodwave-audio::loudness`,
 versioned by `LOUDNESS_VERSION`) at analysis time, maps it to a gain
 (target RMS 0.10, bounds 0.2–3.0, post-gain peak ceiling 0.99, silence
 guard), stores both on the record, and the web shell applies it through a
@@ -275,7 +275,7 @@ Normalizer (the previously removed no-op is now real; Sound Effects
 stays removed until it does something). Gated by
 `apps/web/scripts/normalizer.mjs` (gain applied at play, toggle restores
 unity live, setting persists across reload) plus Rust unit tests in
-`sensme-audio::loudness`.
+`moodwave-audio::loudness`.
 
 ## ADR-019 — Metadata enrichment via MusicBrainz + Cover Art Archive
 
@@ -306,3 +306,35 @@ has its own discreet corner status wording ("Updating track metadata…
 n/m") — only the first-run scan keeps the modal card. Gated by
 `apps/web/scripts/metadata.mjs` (menu path, mocked API fixtures,
 fill-missing-only, persistence, artwork renders).
+
+## ADR-020 — Rebrand: product name "Moodwave", clean-room wave-bars mark
+Status: accepted — 2026-11-27
+
+Decision: the product is renamed from the working name "SensMe" to
+**Moodwave**. Logo: clean-room "wave-bars" mark — twelve spectrum-ordered
+bars (one per channel, `dotPalette` colors) rising and falling as a wave
+(concepts + rationale in `docs/branding/BRANDING_PROPOSAL.md`). The old
+favicon (the actual SensMe heart-and-note mark, a documented §7 deviation)
+is removed.
+
+Rename scope: crates `sensme-*` → `moodwave-*`; npm root `moodwave`, scope
+`@moodwave/*`, wasm package `moodwave-wasm`; CLI binary `moodwave`;
+IndexedDB database `moodwave`; settings key `moodwave.settings`;
+`window.__moodwave`; SW cache `moodwave-v2`; design-token prefix
+`--moodwave-*`. "SensMe" survives only as nominative reference to Sony's
+product (README, in-app About, `docs/UI_REFERENCES/`, this file).
+
+Rationale: "SensMe" is Sony's trademark and cannot be product branding
+(AGENTS §7); the open legal question flagged in ADR-013 is resolved by
+choosing a distinct, ownable brand. The in-app About page now also
+discloses what was reverse-engineered — the analysis algorithm and the
+Dynamic Normalizer, recovered from the original PSP application
+(NPIA00013) for interoperability, a lawful purpose; no Sony code, assets,
+or services are used (ADR-013/018).
+
+Consequences: pre-release dev installs do not migrate (IndexedDB and
+settings start fresh; re-scan required); Cargo.lock regenerated; golden
+fixtures unaffected (algorithm/weights version strings unchanged — no
+analysis semantics changed, so no version bump per §2). Trademark
+clearance (USPTO/EUIPO/TMDN) and domain/store handles remain a
+pre-distribution checklist item (`docs/branding/BRANDING_PROPOSAL.md`).

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Auralight concept: a prism refracting one sound beam into the 12 channel colors.
+       dotPalette colors from contracts/design-tokens/tokens.json, spectrum order. -->
+  <rect width="512" height="512" rx="112" fill="#0B0D12"/>
+  <line x1="70" y1="256" x2="200" y2="256" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+  <polygon points="256,140 170,330 342,330" fill="rgba(255,255,255,0.06)" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+  <g stroke-width="5" stroke-linecap="round">
+    <line x1="310" y1="256" x2="442" y2="149" stroke="#E06A6A"/>
+    <line x1="310" y1="256" x2="442" y2="168" stroke="#E89A55"/>
+    <line x1="310" y1="256" x2="442" y2="188" stroke="#E8B455"/>
+    <line x1="310" y1="256" x2="442" y2="207" stroke="#E8D26A"/>
+    <line x1="310" y1="256" x2="442" y2="227" stroke="#B8D25E"/>
+    <line x1="310" y1="256" x2="442" y2="246" stroke="#7CC96F"/>
+    <line x1="310" y1="256" x2="442" y2="266" stroke="#5FC2B8"/>
+    <line x1="310" y1="256" x2="442" y2="285" stroke="#6FC7E8"/>
+    <line x1="310" y1="256" x2="442" y2="305" stroke="#6FA8F0"/>
+    <line x1="310" y1="256" x2="442" y2="324" stroke="#9A8CF5"/>
+    <line x1="310" y1="256" x2="442" y2="344" stroke="#E06CE0"/>
+    <line x1="310" y1="256" x2="442" y2="363" stroke="#E87BA8"/>
+  </g>
+</svg>

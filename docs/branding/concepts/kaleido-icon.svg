@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Kaleido concept: the channel dots of the PSP UI arranged as a kaleidoscope rosette.
+       12 outer + 12 inner dots = the 12 channels; dotPalette colors from design tokens. -->
+  <rect width="512" height="512" rx="112" fill="#0B0D12"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+  <g>
+    <circle cx="256" cy="106" r="36" fill="#E06A6A"/>
+    <circle cx="331" cy="126" r="36" fill="#E89A55"/>
+    <circle cx="386" cy="181" r="36" fill="#E8B455"/>
+    <circle cx="406" cy="256" r="36" fill="#E8D26A"/>
+    <circle cx="386" cy="331" r="36" fill="#B8D25E"/>
+    <circle cx="331" cy="386" r="36" fill="#7CC96F"/>
+    <circle cx="256" cy="406" r="36" fill="#5FC2B8"/>
+    <circle cx="181" cy="386" r="36" fill="#6FC7E8"/>
+    <circle cx="126" cy="331" r="36" fill="#6FA8F0"/>
+    <circle cx="106" cy="256" r="36" fill="#9A8CF5"/>
+    <circle cx="126" cy="181" r="36" fill="#E06CE0"/>
+    <circle cx="181" cy="126" r="36" fill="#E87BA8"/>
+  </g>
+  <g>
+    <circle cx="275" cy="186" r="16" fill="#E06A6A"/>
+    <circle cx="307" cy="205" r="16" fill="#E89A55"/>
+    <circle cx="326" cy="237" r="16" fill="#E8B455"/>
+    <circle cx="326" cy="275" r="16" fill="#E8D26A"/>
+    <circle cx="307" cy="307" r="16" fill="#B8D25E"/>
+    <circle cx="275" cy="326" r="16" fill="#7CC96F"/>
+    <circle cx="237" cy="326" r="16" fill="#5FC2B8"/>
+    <circle cx="205" cy="307" r="16" fill="#6FC7E8"/>
+    <circle cx="186" cy="275" r="16" fill="#6FA8F0"/>
+    <circle cx="186" cy="237" r="16" fill="#9A8CF5"/>
+    <circle cx="205" cy="205" r="16" fill="#E06CE0"/>
+    <circle cx="237" cy="186" r="16" fill="#E87BA8"/>
+  </g>
+  <circle cx="256" cy="256" r="12" fill="#FFFFFF"/>
+</svg>

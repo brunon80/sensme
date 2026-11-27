@@ -1,7 +1,7 @@
 // Marquee gate (UI_SPEC §2): now-playing text auto-scrolls when it does not
 // fit and stays static when it does. Run against `pnpm preview`.
 import { chromium } from "playwright";
-const URL = process.env.SENSME_URL ?? "http://127.0.0.1:4173/";
+const URL = process.env.MOODWAVE_URL ?? "http://127.0.0.1:4173/";
 
 function ok(msg) {
   console.log(`  ✓ ${msg}`);
@@ -19,11 +19,11 @@ page.on("pageerror", (e) => {
   process.exit(1);
 });
 await page.goto(URL, { waitUntil: "load" });
-await page.waitForFunction(() => !!window.__sensme?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
+await page.waitForFunction(() => !!window.__moodwave?.engine.contract()?.algorithmVersion, null, { timeout: 20000 });
 
 // Fresh library: tone.mp3 with a long ID3v2.3 tag prepended.
 await page.evaluate(async () => {
-  const db = await new Promise((res, rej) => { const q = indexedDB.open("sensme", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const db = await new Promise((res, rej) => { const q = indexedDB.open("moodwave", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
   for (const s of ["tracks", "audio"]) await new Promise((res, rej) => { const t = db.transaction(s, "readwrite"); t.objectStore(s).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); });
 });
 await page.evaluate(async (meta) => {
@@ -46,7 +46,7 @@ await page.evaluate(async (meta) => {
   for (const f of frames) { tag.set(f, off); off += f.length; }
   const mp3 = new Uint8Array(await (await fetch("/tone.mp3")).arrayBuffer());
   const file = new File([tag, mp3], "long-title.mp3", { type: "audio/mpeg" });
-  await window.__sensme.importFiles([{ file, path: "long-title.mp3" }], () => {});
+  await window.__moodwave.importFiles([{ file, path: "long-title.mp3" }], () => {});
 }, META);
 await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => (document.querySelector(".np-title")?.textContent ?? "").length > 0, null, { timeout: 20000 });
@@ -81,7 +81,7 @@ ok("text position advances over time");
 
 // 3. A short title stays static (no marquee class, ellipsis path intact).
 await page.evaluate(async () => {
-  const db = await new Promise((res, rej) => { const q = indexedDB.open("sensme", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  const db = await new Promise((res, rej) => { const q = indexedDB.open("moodwave", 1); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
   const keys = await new Promise((res, rej) => { const t = db.transaction("tracks", "readonly"); const r = t.objectStore("tracks").getAllKeys(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
   if (keys.length === 0) throw new Error("no track in library");
   const rec = await new Promise((res, rej) => { const t = db.transaction("tracks", "readonly"); const r = t.objectStore("tracks").get(keys[0]); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });

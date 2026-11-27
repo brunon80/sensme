@@ -15,7 +15,7 @@ import "./styles.css";
 // (media gate, ADR-017) — OS media events cannot be dispatched from JS.
 declare global {
   interface Window {
-    __sensme?: {
+    __moodwave?: {
       engine: typeof engine;
       pickAudioFiles: typeof pickAudioFiles;
       importFiles: typeof importFiles;
@@ -31,7 +31,7 @@ declare global {
     };
   }
 }
-window.__sensme = {
+window.__moodwave = {
   engine,
   pickAudioFiles,
   importFiles,

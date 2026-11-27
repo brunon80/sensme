@@ -5,7 +5,7 @@ import type { Channel } from "../../../../contracts/generated/Channel";
 
 export type { FeatureVector, Classification, Channel };
 
-/** Shape of `contract_meta()` from sensme-wasm. */
+/** Shape of `contract_meta()` from moodwave-wasm. */
 export interface ContractMeta {
   algorithmVersion: string;
   featureVectorVersion: number;

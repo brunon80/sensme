@@ -1,7 +1,7 @@
-// Analysis worker: hosts the sensme-wasm core off the main thread so the
+// Analysis worker: hosts the moodwave-wasm core off the main thread so the
 // PSP-style UI stays at 60 fps while channels update (UI_SPEC §4).
-import init, { analyze_and_classify, psp_analyze_and_classify, contract_meta } from "sensme-wasm";
-import wasmUrl from "sensme-wasm/sensme_wasm_bg.wasm?url";
+import init, { analyze_and_classify, psp_analyze_and_classify, contract_meta } from "moodwave-wasm";
+import wasmUrl from "moodwave-wasm/moodwave_wasm_bg.wasm?url";
 
 type Req =
   | { type: "init" }

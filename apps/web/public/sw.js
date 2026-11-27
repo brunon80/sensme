@@ -1,8 +1,8 @@
-// SensMe service worker: makes the app installable and fully offline.
+// Moodwave service worker: makes the app installable and fully offline.
 // Shell is precached; same-origin assets are cache-first with background
 // revalidation, so a returning visit works without network (the music
 // library itself lives in IndexedDB, never in the HTTP cache).
-const CACHE = "sensme-v2";
+const CACHE = "moodwave-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (e) => {

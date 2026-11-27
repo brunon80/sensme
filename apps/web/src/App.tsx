@@ -68,7 +68,7 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => {
     const defaults: Settings = { showClock: true, showCaptions: true, dynamicNormalizer: true, allDayChannels: false };
     try {
-      const raw = localStorage.getItem("sensme.settings");
+      const raw = localStorage.getItem("moodwave.settings");
       return raw ? { ...defaults, ...(JSON.parse(raw) as Partial<Settings>) } : defaults;
     } catch {
       return defaults;
@@ -78,7 +78,7 @@ export default function App() {
   settingsRef.current = settings;
   useEffect(() => {
     try {
-      localStorage.setItem("sensme.settings", JSON.stringify(settings));
+      localStorage.setItem("moodwave.settings", JSON.stringify(settings));
     } catch {
       // Private-mode quota errors must not break the app.
     }
@@ -105,7 +105,7 @@ export default function App() {
   // and View Settings → All Day Channels restores all five.
   const grid = useMemo(() => carouselGrid(settings.allDayChannels, hour), [settings.allDayChannels, hour]);
   useEffect(() => {
-    if (window.__sensme) window.__sensme.grid = grid;
+    if (window.__moodwave) window.__moodwave.grid = grid;
   }, [grid]);
   const entry = grid[Math.min(entryIndex, grid.length - 1)]!.entry;
 
@@ -297,7 +297,7 @@ export default function App() {
     };
     // Automation seam (main.tsx): the media gate drives these directly —
     // Media Session action events cannot be dispatched from page JS.
-    if (window.__sensme) window.__sensme.media = ctl;
+    if (window.__moodwave) window.__moodwave.media = ctl;
     return registerMediaControls(ctl);
   }, [playAt]);
 
@@ -710,7 +710,7 @@ export default function App() {
 
       {screen === "empty" && (
         <div className="empty-card">
-          <div className="empty-logo">SensMe</div>
+          <div className="empty-logo">Moodwave</div>
           <div className="empty-sub">inspired by Sony's SensMe channels</div>
           <button className="empty-btn" onClick={() => void doImport()}>Import Music…</button>
           <div className="empty-hint">offline · local files only · nothing leaves your device</div>
@@ -727,7 +727,7 @@ export default function App() {
         <>
           <div className="update-scrim" />
           <div className="update-card">
-            <div className="update-card-logo">SensMe</div>
+            <div className="update-card-logo">Moodwave</div>
             <div className="update-card-label">
               Updating channels… {update.done}/{update.total}
               {update.skipped > 0 ? ` (${update.skipped} already in library)` : ""}

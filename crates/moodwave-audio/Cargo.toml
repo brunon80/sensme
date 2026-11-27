@@ -1,0 +1,19 @@
+[package]
+name = "moodwave-audio"
+description = "Audio decoding and feature extraction for Moodwave"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+rustfft.workspace = true
+rubato.workspace = true
+moodwave-core = { path = "../moodwave-core", default-features = false }
+serde.workspace = true
+symphonia.workspace = true
+thiserror.workspace = true
+moodwave-psp.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -50,7 +50,7 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
             {item("Block List Settings", onClearBlocked, "delete all")}
             {item("Database Settings", () => setPage("database"), "rebuild / wipe")}
             {item("Help", () => setPage("help"))}
-            {item("About SensMe channels", () => setPage("about"))}
+            {item("About Moodwave channels", () => setPage("about"))}
           </>
         )}
         {page === "view" && (
@@ -89,8 +89,14 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
         )}
         {page === "about" && (
           <div className="menu-text">
-            SensMe — an independent, offline reimplementation inspired by Sony's
-            SensMe channels. Not affiliated with Sony.
+            Moodwave — an independent, offline reimplementation inspired by
+            Sony's SensMe channels. Not affiliated with, or endorsed by, Sony.
+            <br />
+            The music analysis algorithm and the Dynamic Normalizer were
+            reverse-engineered from the original PSP SensMe Channels
+            application (NPIA00013) for interoperability — reverse engineering
+            for that purpose is legal. No Sony code, assets, or services are
+            used.
             <br />
             algorithm {meta?.pspAlgorithmVersion ?? meta?.algorithmVersion} · features v{meta?.featureVectorVersion} ·
             weights {meta?.axisWeightsVersion}
