@@ -22,6 +22,8 @@ declare global {
       allRecords: typeof allRecords;
       player: typeof player;
       media?: MediaControls;
+      /** Current channel grid (gates read the layout; UI_SPEC §1). */
+      grid?: { entry: string; col: number; row: 0 | 1 }[];
       mediaSession: {
         supported: typeof mediaSessionSupported;
         lastPositionState: typeof lastPositionState;

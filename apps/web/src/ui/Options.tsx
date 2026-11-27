@@ -7,6 +7,9 @@ export interface Settings {
   /** PSP Sound Settings → Dynamic Normalizer (default ON, per the original's
    * MenuParam8_DefaultCheck=1). Normalizes playback loudness per track. */
   dynamicNormalizer: boolean;
+  /** View Settings → All Day Channels (default OFF): OFF shows only the
+   * time-of-day channel matching the clock; ON restores all five. */
+  allDayChannels: boolean;
 }
 
 interface Props {
@@ -54,6 +57,8 @@ export function Options({ settings, onSettings, onClearFavourites, onClearBlocke
               () => onSettings({ ...settings, showClock: !settings.showClock }))}
             {item(`Button Caption: ${settings.showCaptions ? "ON" : "OFF"}`,
               () => onSettings({ ...settings, showCaptions: !settings.showCaptions }))}
+            {item(`All Day Channels: ${settings.allDayChannels ? "ON" : "OFF"}`,
+              () => onSettings({ ...settings, allDayChannels: !settings.allDayChannels }))}
             {item("Back", () => setPage("root"))}
           </>
         )}

@@ -14,7 +14,7 @@ import {
 import { mimeForName, player } from "./engine/player";
 import type { ContractMeta, LibraryRecord } from "./engine/types";
 import { Carousel } from "./ui/Carousel";
-import { CAROUSEL_ORDER, entryHues, entryTracks, shuffledQueue } from "./ui/channels";
+import { carouselGrid, entryHues, entryTracks, shuffledQueue, todForHour, type CarouselEntry } from "./ui/channels";
 import { captionsFor, detectPlatform, type ActionId } from "./ui/controls";
 import { NowPlaying } from "./ui/NowPlaying";
 import { Options, type Settings } from "./ui/Options";
@@ -47,7 +47,10 @@ export default function App() {
   // Channel backing now-playing. Browsing the carousel previews other
   // channels' backdrops, but cancelling (✕/Esc) restores this one: the
   // preview must not leak into the now-playing scene (UI_SPEC §1).
-  const [npEntryIndex, setNpEntryIndex] = useState(0);
+  // Stored as the entry itself: the grid is dynamic (time-of-day rollover),
+  // so an index into it would not survive a grid change.
+  const [npEntry, setNpEntry] = useState<CarouselEntry | null>(null);
+  const [hour, setHour] = useState(() => new Date().getHours());
   const [selection, setSelection] = useState(0);
   const [queue, setQueue] = useState<LibraryRecord[]>([]);
   const [queuePos, setQueuePos] = useState(0);
@@ -59,7 +62,7 @@ export default function App() {
   // property.xml; we use localStorage). Defaults match the PSP's
   // MenuParam*_DefaultCheck (all ON).
   const [settings, setSettings] = useState<Settings>(() => {
-    const defaults: Settings = { showClock: true, showCaptions: true, dynamicNormalizer: true };
+    const defaults: Settings = { showClock: true, showCaptions: true, dynamicNormalizer: true, allDayChannels: false };
     try {
       const raw = localStorage.getItem("sensme.settings");
       return raw ? { ...defaults, ...(JSON.parse(raw) as Partial<Settings>) } : defaults;
@@ -94,8 +97,50 @@ export default function App() {
   const queueRef = useRef<LibraryRecord[]>([]);
   queueRef.current = queue;
 
-  const entry = CAROUSEL_ORDER[entryIndex]!;
-  const npEntry = CAROUSEL_ORDER[npEntryIndex]!;
+  // The channel grid is dynamic: the time-of-day slot follows the clock,
+  // and View Settings → All Day Channels restores all five.
+  const grid = useMemo(() => carouselGrid(settings.allDayChannels, hour), [settings.allDayChannels, hour]);
+  useEffect(() => {
+    if (window.__sensme) window.__sensme.grid = grid;
+  }, [grid]);
+  const entry = grid[Math.min(entryIndex, grid.length - 1)]!.entry;
+
+  // Grid navigation: ←/→ step a column (keeping the row when that column
+  // has one), ↑/↓ toggle the row within the column.
+  function moveCol(d: number) {
+    setEntryIndex((i) => {
+      const cur = grid[Math.min(i, grid.length - 1)];
+      if (!cur) return i;
+      const target = cur.col + d;
+      const same = grid.findIndex((c) => c.col === target && c.row === cur.row);
+      if (same >= 0) return same;
+      const any = grid.findIndex((c) => c.col === target);
+      return any >= 0 ? any : i;
+    });
+  }
+  function moveRow(row: 0 | 1) {
+    setEntryIndex((i) => {
+      const cur = grid[Math.min(i, grid.length - 1)];
+      if (!cur) return i;
+      const idx = grid.findIndex((c) => c.col === cur.col && c.row === row);
+      return idx >= 0 ? idx : i;
+    });
+  }
+
+  // When the grid changes (time-of-day rollover, All Day Channels toggle)
+  // keep the same entry selected if it is still on the grid; otherwise
+  // clamp into the new grid.
+  const gridRef = useRef(grid);
+  const entryIndexRef = useRef(entryIndex);
+  entryIndexRef.current = entryIndex;
+  useEffect(() => {
+    const prev = gridRef.current;
+    if (prev === grid) return;
+    gridRef.current = grid;
+    const e = prev[Math.min(entryIndexRef.current, prev.length - 1)]?.entry;
+    const idx = e ? grid.findIndex((c) => c.entry === e) : -1;
+    setEntryIndex(idx >= 0 ? idx : Math.min(entryIndexRef.current, grid.length - 1));
+  }, [grid]);
 
   const reload = useCallback(async () => {
     const recs = await allRecords();
@@ -112,14 +157,20 @@ export default function App() {
         setScreen("empty");
         return;
       }
-      // Land on the first carousel entry that actually has tracks (the PSP
-      // opens on a populated channel; index 0 may be empty for a given library).
-      let idx = CAROUSEL_ORDER.findIndex((e) => entryTracks(e, recs).length > 0);
+      // The PSP opens on the channel of the moment: land on the current
+      // time-of-day channel; if it has no tracks, the first populated entry.
+      const hour0 = new Date().getHours();
+      const g = carouselGrid(settingsRef.current.allDayChannels, hour0);
+      let idx = g.findIndex((c) => c.entry === todForHour(hour0) && entryTracks(c.entry, recs).length > 0);
+      if (idx < 0) idx = g.findIndex((c) => entryTracks(c.entry, recs).length > 0);
       if (idx < 0) idx = 0;
       setEntryIndex(idx);
-      setNpEntryIndex(idx);
+      setNpEntry(g[idx]!.entry);
       setScreen("nowplaying");
-      rebuildQueue(idx, 0, recs);
+      const q = rebuildQueue(g[idx]!.entry, 0, recs);
+      // The PSP opens already playing; the autoplay policy may block it
+      // (playAt swallows the rejection — START retries).
+      if (q.length > 0) void playAt(0, q);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -129,6 +180,7 @@ export default function App() {
     const tick = () => {
       const d = new Date();
       setClock(`${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`);
+      setHour(d.getHours());
     };
     tick();
     const h = setInterval(tick, 5000);
@@ -155,8 +207,8 @@ export default function App() {
     return () => window.clearInterval(h);
   }, [playing]);
 
-  function rebuildQueue(idx: number, sel: number, recs: LibraryRecord[]): LibraryRecord[] {
-    const q = shuffledQueue(CAROUSEL_ORDER[idx]!, sel, recs);
+  function rebuildQueue(entry: CarouselEntry, sel: number, recs: LibraryRecord[]): LibraryRecord[] {
+    const q = shuffledQueue(entry, sel, recs);
     setQueue(q);
     setQueuePos(0);
     return q;
@@ -266,9 +318,9 @@ export default function App() {
     if (recs.length > 0 && screen === "empty") {
       setNpAnim("enter");
       setScreen("nowplaying");
-      rebuildQueue(npEntryIndex, selection, recs);
+      if (npEntry) rebuildQueue(npEntry, selection, recs);
     }
-  }, [update.active, reload, screen, npEntryIndex, selection]);
+  }, [update.active, reload, screen, npEntry, selection]);
 
   const doRebuild = useCallback(async () => {
     if (update.active) return;
@@ -285,8 +337,8 @@ export default function App() {
     );
     setUpdate((u) => ({ ...u, active: false }));
     const fresh = await reload();
-    if (fresh.length > 0) rebuildQueue(npEntryIndex, selection, fresh);
-  }, [update.active, reload, npEntryIndex, selection]);
+    if (fresh.length > 0 && npEntry) rebuildQueue(npEntry, selection, fresh);
+  }, [update.active, reload, npEntry, selection]);
 
   const doWipe = useCallback(async () => {
     if (update.active) return;
@@ -300,15 +352,17 @@ export default function App() {
   }, [update.active, reload, goScreen]);
 
   const enterChannel = useCallback((idx: number) => {
-    const q = rebuildQueue(idx, selection + 1, records);
+    const cell = grid[Math.min(idx, grid.length - 1)];
+    if (!cell) return;
+    const q = rebuildQueue(cell.entry, selection + 1, records);
     setEntryIndex(idx);
-    setNpEntryIndex(idx);
+    setNpEntry(cell.entry);
     setNpAnim("none"); // un-dim via transition, not the boot fadeUp
     setSelection((s) => s + 1);
     setPending(null);
     goScreen("nowplaying");
     if (q.length > 0) void playAt(0, q);
-  }, [records, selection, playAt, goScreen]);
+  }, [grid, records, selection, playAt, goScreen]);
 
   // ---- shared action dispatcher (UI_SPEC §9) ----
   // Keyboard bindings, caption buttons and touch gestures all resolve to the
@@ -353,17 +407,16 @@ export default function App() {
         next();
         break;
       case "colLeft":
-        if (screen === "carousel") setEntryIndex((i) => Math.max(0, i - 2)); // one column left
+        if (screen === "carousel") moveCol(-1);
         break;
       case "colRight":
-        if (screen === "carousel") setEntryIndex((i) => Math.min(CAROUSEL_ORDER.length - 1, i + 2));
+        if (screen === "carousel") moveCol(1);
         break;
       case "rowUp":
-        if (screen === "carousel")
-          setEntryIndex((i) => (i % 2 === 0 && i + 1 < CAROUSEL_ORDER.length ? i + 1 : i));
+        if (screen === "carousel") moveRow(1);
         break;
       case "rowDown":
-        if (screen === "carousel") setEntryIndex((i) => (i % 2 === 1 ? i - 1 : i));
+        if (screen === "carousel") moveRow(0);
         break;
       case "add":
         void doImport();
@@ -456,8 +509,10 @@ export default function App() {
     if (menuOpenRef.current) return; // menu items are buttons themselves
     if (g.type === "swipe") {
       if (screen === "carousel") {
-        if (g.dir === "left") runAction("colLeft");
-        else if (g.dir === "right") runAction("colRight");
+        // Flick semantics, like now-playing: swipe left moves the selection
+        // right (the grid slides left), matching the PSP L/R mapping.
+        if (g.dir === "left") runAction("colRight");
+        else if (g.dir === "right") runAction("colLeft");
         else if (g.dir === "up") runAction("rowUp");
         else runAction("rowDown");
       } else if (screen === "nowplaying") {
@@ -476,9 +531,9 @@ export default function App() {
       const tile = document.elementFromPoint(g.x, g.y)?.closest("[data-entry]");
       const name = tile?.getAttribute("data-entry");
       if (name) {
-        const idx = CAROUSEL_ORDER.indexOf(name as (typeof CAROUSEL_ORDER)[number]);
+        const idx = grid.findIndex((c) => c.entry === name);
         // Empty channels stay dimmed and unselectable (R-2 hint).
-        if (idx >= 0 && entryTracks(CAROUSEL_ORDER[idx]!, records).length > 0) {
+        if (idx >= 0 && entryTracks(grid[idx]!.entry, records).length > 0) {
           if (idx === entryIndex) runAction("select"); // tap the selected card = ◯
           else setEntryIndex(idx);
         }
@@ -519,7 +574,7 @@ export default function App() {
   // Backdrop identity: only ever the channel backing the queue. Browsing
   // the grid does NOT change the backdrop; it crossfades when (and only
   // when) the selected channel is entered (UI_SPEC §1).
-  const sceneEntry = npEntry;
+  const sceneEntry: CarouselEntry = npEntry ?? todForHour(hour);
   const hues = useMemo(() => entryHues(sceneEntry), [sceneEntry]);
   const showCarousel = screen === "carousel" || (transitioning && prevScreen === "carousel");
   // Now-playing elements stay mounted (dimmed) while the grid is open:
@@ -530,10 +585,10 @@ export default function App() {
   const npPhase: "enter" | "dim" | undefined =
     screen === "carousel" ? "dim" : npAnim === "enter" ? "enter" : undefined;
   const counts = useMemo(() => {
-    const c = {} as Record<string, number>;
-    for (const e of CAROUSEL_ORDER) c[e] = entryTracks(e, records).length;
-    return c as Record<(typeof CAROUSEL_ORDER)[number], number>;
-  }, [records]);
+    const out: Record<string, number> = {};
+    for (const cell of grid) out[cell.entry] = entryTracks(cell.entry, records).length;
+    return out;
+  }, [grid, records]);
 
   const platform = useMemo(detectPlatform, []);
   const captionSegs = menuOpen
@@ -546,8 +601,8 @@ export default function App() {
       <RotateHint />
 
       {showCarousel && <div className={`grid-scrim ${screen === "carousel" ? "on" : ""}`} />}
-      {showCarousel && <Carousel selected={entryIndex} counts={counts} phase={carPhase} />}
-      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={npEntry} playing={playing} phase={npPhase} />}
+      {showCarousel && <Carousel grid={grid} selected={entryIndex} counts={counts} phase={carPhase} />}
+      {showNow && <NowPlaying queue={queue} pos={pending ?? queuePos} pending={pending !== null} entry={sceneEntry} playing={playing} phase={npPhase} />}
 
       {screen === "empty" && (
         <div className="empty-card">

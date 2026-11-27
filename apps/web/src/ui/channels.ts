@@ -1,5 +1,5 @@
 // Channel entries for the carousel: 13 classifier channels + 3 utility
-// channels in the official PSP order (docs/UI_REFERENCES/interaction-model.md).
+// channels (docs/UI_REFERENCES/interaction-model.md).
 import { tokens } from "../../../../contracts/design-tokens/tokens";
 import type { Channel, LibraryRecord } from "../engine/types";
 import { memberChannels, topChannel } from "../engine/types";
@@ -7,14 +7,46 @@ import { memberChannels, topChannel } from "../engine/types";
 export type UtilityChannel = "shuffle" | "favourites" | "newly";
 export type CarouselEntry = Channel | UtilityChannel;
 
-/** Official PSP carousel order (manual order, R-2). */
-export const CAROUSEL_ORDER: CarouselEntry[] = [
-  "morning", "daytime", "evening", "night", "midnight",
-  "shuffle",
-  "energetic", "relax", "mellow", "upbeat", "emotional", "lounge",
-  "dance", "extreme",
-  "favourites", "newly",
-];
+/** Time-of-day channels, chronological. Only the one matching the clock is
+ * shown by default (UI_SPEC §1); the View Settings option restores all. */
+export const TOD_CHANNELS: Channel[] = ["morning", "daytime", "evening", "night", "midnight"];
+
+/** Active time-of-day channel for an hour (0–23). Boundaries as in the
+ * original SensMe Channels: Morning 05:00–09:59, Daytime 10:00–15:59,
+ * Evening 16:00–18:59, Night 19:00–23:59, Midnight 00:00–04:59. */
+export function todForHour(hour: number): Channel {
+  if (hour >= 5 && hour < 10) return "morning";
+  if (hour >= 10 && hour < 16) return "daytime";
+  if (hour >= 16 && hour < 19) return "evening";
+  if (hour >= 19) return "night";
+  return "midnight";
+}
+
+/** One card in the channel grid: column-major flat order (bottom cell then
+ * top cell per column), so ←/→ move ±1 column and ↑/↓ toggle the row. */
+export interface GridCell {
+  entry: CarouselEntry;
+  col: number;
+  row: 0 | 1; // 0 = bottom, 1 = top
+}
+
+/** The channel grid (UI_SPEC §1). Top row: the current time-of-day channel
+ * (or all five when View Settings → All Day Channels is ON), then
+ * Energetic, Mellow, Emotional, Dance, Favourites. Bottom row: Shuffle,
+ * Relax, Upbeat, Lounge, Extreme, Newly Added. */
+export function carouselGrid(allDayChannels: boolean, hour: number): GridCell[] {
+  const top: CarouselEntry[] = [
+    ...(allDayChannels ? TOD_CHANNELS : [todForHour(hour)]),
+    "energetic", "mellow", "emotional", "dance", "favourites",
+  ];
+  const bottom: CarouselEntry[] = ["shuffle", "relax", "upbeat", "lounge", "extreme", "newly"];
+  const cells: GridCell[] = [];
+  for (let c = 0; c < Math.max(top.length, bottom.length); c++) {
+    if (c < bottom.length) cells.push({ entry: bottom[c]!, col: c, row: 0 });
+    if (c < top.length) cells.push({ entry: top[c]!, col: c, row: 1 });
+  }
+  return cells;
+}
 
 export function entryName(e: CarouselEntry): string {
   switch (e) {

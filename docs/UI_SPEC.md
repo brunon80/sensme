@@ -48,6 +48,16 @@ Layout (rest state):
   holds entries 2c (bottom row) and 2c+1 (top row); the grid scrolls
   horizontally to keep the selected column centered and is vertically
   centered on `carousel.centerY` 0.5.
+- Grid composition (user-directed layout, 2026-11-26): top row = the
+  time-of-day channel(s), Energetic, Mellow, Emotional, Dance,
+  Favourites; bottom row = Shuffle, Relax, Upbeat, Lounge, Extreme,
+  Newly Added. By default only the time-of-day channel matching the
+  clock shows (Morning 05:00–09:59, Daytime 10:00–15:59, Evening
+  16:00–18:59, Night 19:00–23:59, Midnight 00:00–04:59); View Settings
+  → All Day Channels (default OFF) restores all five, chronological.
+  The app boots on the current time-of-day channel, already playing
+  (autoplay policy may block; START retries). Gate:
+  `apps/web/scripts/grid.mjs`.
 - Card size `carousel.card` (w 0.18 vw, h 0.26 vh), gaps `colGap`
   0.035 / `rowGap` 0.04 — sparse enough that the scaled selection
   never overlaps its neighbors.
@@ -72,11 +82,16 @@ Layout (rest state):
   chips on touch/console. `type.caption`.
 
 Interaction (R-2):
-- ←/→ move one column (±2 entries); ↑/↓ move within the column. Grid
+- ←/→ move one column; ↑/↓ move within the column (the grid is dynamic
+  — the time-of-day slot follows the clock; selection is preserved
+  across grid changes when the channel is still on the grid). Grid
   scroll animates `motion.carouselStep` 420 ms
   (`cubic-bezier 0.25,0.1,0.25,1`); tiles scrolled into view fade in
   (`motion.tileInMs` 300 ms) and the channel name crossfades.
 - ◯/Enter confirms → now-playing (`motion.enterNowPlaying` 240 ms).
+- Touch (UI_SPEC §9): horizontal flicks move the selection in the flick
+  direction (swipe left → one column right, matching now-playing's
+  swipe-left = next), vertical flicks move within the column.
 - ✕/Esc returns to now-playing.
 - Channel switch crossfades the backdrop photo (`motion.channelSwitch`
   320 ms) — e.g. day ↔ relax test photos. The backdrop does NOT change
@@ -167,7 +182,9 @@ Reference: R-6 photos 7520–7521; item list from R-2.
 - Items centered in panel, `type.body`, line pitch 0.088 H; selected
   item bold + brighter; ▼ scroll indicator when overflowed.
 - Items (PSP order per R-2, minus no-ops — AGENTS §3 forbids silent
-  placeholders): View Settings (Time and Battery, Button Caption),
+  placeholders): View Settings (Time and Battery, Button Caption, All
+  Day Channels ON/OFF, default OFF — OFF shows only the time-of-day
+  channel matching the clock),
   Sound Settings (Dynamic Normalizer ON/OFF, default ON — functional,
   ADR-018), Music Scan, Favourites Setting, Block List Settings,
   Database Settings (rebuild/wipe), Help, About. Check for Updates and

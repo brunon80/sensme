@@ -35,9 +35,15 @@ if (!(rec.loudness && rec.loudness.peak > 0 && rec.loudness.rms > 0)) throw new 
 if (!(rec.normalizerGain > 0)) throw new Error(`bad gain: ${rec.normalizerGain}`);
 ok(`loudness peak=${rec.loudness.peak.toFixed(3)} rms=${rec.loudness.rms.toFixed(3)} gain=${rec.normalizerGain.toFixed(3)}`);
 
-// 2. Playing with the default (ON) applies the record's gain.
-await page.keyboard.press(" ");
-await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+// 2. Playing with the default (ON) applies the record's gain. Boot
+// autoplays; wait for it, and only press START if the autoplay policy
+// left it stopped (pressing while autoplay lands would pause it).
+try {
+  await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 5000 });
+} catch {
+  await page.keyboard.press(" ");
+  await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+}
 const gainOn = await page.evaluate(() => window.__sensme.player.gainValue());
 if (Math.abs(gainOn - rec.normalizerGain) > 1e-6) throw new Error(`gain not applied: ${gainOn} vs ${rec.normalizerGain}`);
 ok("playback gain = record normalizerGain (setting ON)");
@@ -53,8 +59,12 @@ ok("toggle OFF restores unity gain live");
 // 4. Setting persists across reload (the original persists to property.xml).
 await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => (document.querySelector(".np-title")?.textContent ?? "").length > 0, null, { timeout: 20000 });
-await page.keyboard.press(" ");
-await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+try {
+  await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 5000 });
+} catch {
+  await page.keyboard.press(" ");
+  await page.waitForFunction(() => window.__sensme.player.state === "playing", null, { timeout: 10000 });
+}
 const gainAfter = await page.evaluate(() => window.__sensme.player.gainValue());
 if (gainAfter !== 1) throw new Error(`setting did not persist: gain ${gainAfter}`);
 ok("setting persists across reload (OFF stays OFF)");
