@@ -2,7 +2,7 @@
 // Shell is precached; same-origin assets are cache-first with background
 // revalidation, so a returning visit works without network (the music
 // library itself lives in IndexedDB, never in the HTTP cache).
-const CACHE = "moodwave-v2";
+const CACHE = "moodwave-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (e) => {
