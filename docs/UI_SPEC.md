@@ -175,6 +175,13 @@ Interaction (R-2):
   starts. ✕/Esc cancels the candidate (the current card returns).
 - START/Space with no candidate toggles play/pause; `F` favourites,
   `⇧F` removes.
+- Favourited state label (PSP reference IMG_7534.MOV, 2026-11-27): when
+  the current track is a favourite, the `[F] Favourites` chip is
+  replaced by a static label — the Moodwave mark + "Favourited" — and
+  the whole caption strip crossfades between the controls row and the
+  label row (`motion.npStepMs`, same fade whether the track was already
+  favourited on entry or was just added). The label stays clickable:
+  clicking it removes the favourite (row fades back to the chip).
 - △/`O` or right-click opens options menu (dim scrim, panel slides in
   from right, 220 ms).
 - Per-selection shuffle order (R-2 hint).

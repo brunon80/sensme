@@ -20,6 +20,10 @@ export interface CaptionState {
   playing: boolean;
   /** Two-step selection candidate staged (now-playing). */
   pending: boolean;
+  /** Current track is a favourite (now-playing): the favourite control
+   * chip becomes a static "Favourited" label (PSP behavior, product-owner
+   * reference IMG_7534.MOV 2026-11-27). */
+  favourite: boolean;
 }
 
 export interface CaptionSeg {
@@ -30,6 +34,9 @@ export interface CaptionSeg {
   /** Action fired when the chip is tapped (touch platforms render chips
    * as buttons; UI_SPEC §9). */
   action: ActionId;
+  /** Render as a state label (Moodwave mark + text) instead of a key
+   * chip; still clickable (toggles the state back). */
+  label?: boolean;
 }
 
 /** Shared action vocabulary: every keyboard binding, caption button and
@@ -70,7 +77,9 @@ export function captionsFor(screen: CaptionScreen, state: CaptionState, platform
           { key: "Space", desc: state.playing ? "Pause" : "Play", action: "play" },
           { key: "←", desc: "Prev", action: "prev" },
           { key: "→", desc: "Next", action: "next" },
-          { key: "F", desc: "Favourites", action: "favourite" },
+          state.favourite
+            ? { key: "", desc: "Favourited", action: "favourite", label: true }
+            : { key: "F", desc: "Favourites", action: "favourite" },
           { key: "C", desc: "Add Music", action: "add" },
           { key: "O", desc: "Options", action: "menu" },
         ];
@@ -97,7 +106,9 @@ export function captionsFor(screen: CaptionScreen, state: CaptionState, platform
         { key: "START", desc: state.playing ? "Pause" : "Play", action: "play" },
         { key: "L", desc: "Prev", action: "prev" },
         { key: "R", desc: "Next", action: "next" },
-        { key: "♥", desc: "Favourites", action: "favourite" },
+        state.favourite
+          ? { key: "", desc: "Favourited", action: "favourite", label: true }
+          : { key: "♥", desc: "Favourites", action: "favourite" },
         { key: "OPTIONS", desc: "Add Music", action: "add" },
         { key: "⚙", desc: "Settings", action: "menu" },
       ];

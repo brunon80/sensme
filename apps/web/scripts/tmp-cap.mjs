@@ -1,0 +1,14 @@
+import { build } from "esbuild";
+const r = await build({ entryPoints: ["src/ui/controls.ts"], bundle: true, format: "esm", write: false, platform: "neutral" });
+const mod = await import("data:text/javascript," + encodeURIComponent(r.outputFiles[0].text));
+const desktop = mod.captionsFor("nowplaying", { playing: true, pending: false, favourite: false }, "desktop");
+const fav = mod.captionsFor("nowplaying", { playing: true, pending: false, favourite: true }, "desktop");
+const touchFav = mod.captionsFor("nowplaying", { playing: true, pending: false, favourite: true }, "touch");
+const d = (s) => s.find((x) => x.action === "favourite");
+console.log("not-fav:", JSON.stringify(d(desktop)));
+console.log("fav:", JSON.stringify(d(fav)));
+console.log("touch fav:", JSON.stringify(d(touchFav)));
+if (!d(fav).label || d(fav).desc !== "Favourited") throw new Error("fav label missing");
+if (d(desktop).label) throw new Error("chip should not be a label");
+if (!d(touchFav).label) throw new Error("touch fav label missing");
+console.log("OK");
