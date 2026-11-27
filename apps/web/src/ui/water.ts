@@ -92,10 +92,7 @@ void main() {
   vec3 n = normalize(vec3(-grad.x * ns, -grad.y * ns, 1.0));
   vec3 hv = normalize(normalize(vec3(0.15, -0.5, 0.85)) + vec3(0.0, 0.0, 1.0));
   float spec = pow(max(dot(n, hv), 0.0), uSpecPow) * uSpecAmp * (1.0 - 0.6 * d);
-  // Crest/trough shading: makes the wavefronts themselves visible as
-  // moving light bands even over smooth backdrops (the PSP's bright
-  // streaks on green water, product-owner photo 2026-11-27).
-  c *= 0.80 + 0.34 * n.z;
+  c *= 0.90 + 0.16 * n.z;                    // gentle crest/trough shading
 
   float alpha = mix(uOpacNear, uOpacFar, d);
   c += vec3(0.06) * pow(1.0 - d, 2.5);       // faint sheen near the waterline

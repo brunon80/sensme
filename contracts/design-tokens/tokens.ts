@@ -300,10 +300,10 @@ export const tokens = {
         "amp": 0
       }
     ],
-    "normalNear": 10,
-    "normalFar": 22,
+    "normalNear": 4,
+    "normalFar": 8,
     "specPow": 40,
-    "specAmp": 0.15,
+    "specAmp": 0.05,
     "blurNear": 2,
     "blurFar": 3.5
   }
