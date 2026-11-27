@@ -230,7 +230,11 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
 }
 
 /** One track card in the now-playing carousel (artwork + reflection).
- * Vertically centered on `centerY`, aligned with the current (big) card. */
+ * Horizontally on its slot; vertically anchored to the water surface:
+ * the card's bottom edge sits at `waterlineY + (npBottom − waterlineY)
+ * · scale^floorExp`, so receding cards stand ON the water (bottom edges
+ * converge to the waterline) while the big foreground card dips below
+ * it — PSP reference IMG_7535 photo, product owner 2026-11-27. */
 function TrackCard({
   record,
   entry,
@@ -264,6 +268,14 @@ function TrackCard({
     return () => URL.revokeObjectURL(url);
   }, [record.id, record.artwork]);
 
+  // Perspective floor: bottom edge from the waterline up as cards recede.
+  // At scale 1 this reproduces the token centerY exactly.
+  const np = tokens.layout.np;
+  const s = slot.scale;
+  const bottomNear = centerY + size / 2;
+  const bottom = tokens.layout.waterlineY + (bottomNear - tokens.layout.waterlineY) * Math.pow(s, np.floorExp);
+  const cardCenterY = bottom - (size * s) / 2;
+
   return (
     <div
       className="np-track"
@@ -276,7 +288,7 @@ function TrackCard({
         // changes animate; transitioning `left` would teleport the card.
         // X is in vh (the unit card sizes live in) so the stack overlap
         // is aspect-independent.
-        transform: `translate(${slot.centerX * 100}dvh, ${centerY * 100}dvh) translate(-50%, -50%) scale(${slot.scale})`,
+        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale})`,
         opacity: slot.opacity,
         zIndex: z,
       }}

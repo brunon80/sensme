@@ -131,8 +131,12 @@ Layout:
   (e.g. Favourites heart).
 - Next tracks: smaller cards (`np.slots` 1–5: scale 0.55→0.24, NO opacity
   fade — every card is fully opaque) stacked behind and immediately after
-  the previous (overlapping, nearer on top), all vertically centered on
-  the current card; the chain continues geometrically (ratio of the last
+  the previous (overlapping, nearer on top), standing ON the water
+  surface: each card's bottom edge sits at `waterlineY + (npBottom −
+  waterlineY) · scale^np.floorExp` (floorExp 2), so bottom edges
+  converge to the waterline as cards recede while the big foreground
+  card dips below it (PSP reference photo, product owner 2026-11-27);
+  the chain continues geometrically (ratio of the last
   two token scales) until cards run fully past the RIGHT EDGE — the
   stack always reaches the screen edge at any aspect. The previous card
   glides out left. Non-cyclic: clamped at both ends — a one-track

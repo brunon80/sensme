@@ -181,7 +181,8 @@ export const tokens = {
       "dim": {
         "scale": 0.78,
         "opacity": 0.3
-      }
+      },
+      "floorExp": 2
     },
     "carousel": {
       "centerY": 0.5,
