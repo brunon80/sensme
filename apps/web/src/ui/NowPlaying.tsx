@@ -311,14 +311,6 @@ function TrackCard({
     : fk <= 0
       ? np.tiltDeg * np.tiltFront
       : -np.tiltDeg * Math.min(1, fk / np.tiltRamp);
-  // The yaw foreshortens the projected width (×cos tilt), so the playing
-  // card measured as a rectangle (product-owner ruler check 2026-11-27:
-  // "it is rectangle but shouldn't, it should show the square aspect
-  // with angled yaw"). Counter-scale X on the front card so its
-  // projected silhouette is square again (art stretched by 1/cos ~ 7%,
-  // imperceptible); receding cards keep natural foreshortening - the
-  // PSP's far cards read as narrow slabs.
-  const xFix = fk <= 0 ? 1 / Math.cos((tilt * Math.PI) / 180) : 1;
 
   return (
     <div
@@ -332,7 +324,7 @@ function TrackCard({
         // changes animate; transitioning `left` would teleport the card.
         // X is in vh (the unit card sizes live in) so the stack overlap
         // is aspect-independent.
-        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale}) rotateY(${tilt}deg) scaleX(${xFix})`,
+        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale}) rotateY(${tilt}deg)`,
         opacity: slot.opacity,
         zIndex: z,
       }}
