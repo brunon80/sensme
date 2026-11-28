@@ -198,6 +198,7 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
               entry={entry}
               slot={slot}
               fk={fk}
+              staged={k === 0 && pending === true}
               size={np.size}
               centerY={np.centerY}
               z={10 - Math.abs(k)}
@@ -249,6 +250,7 @@ function TrackCard({
   entry,
   slot,
   fk,
+  staged,
   size,
   centerY,
   z,
@@ -261,6 +263,11 @@ function TrackCard({
   slot: Slot;
   /** Fractional slot offset (k − dragFrac): drives the 3D yaw blend. */
   fk: number;
+  /** True for the pre-selected (pending) candidate staged at slot 0: it
+   * keeps the stack-side yaw until confirmed, so it doesn't flash the
+   * mirrored front tilt while still staged (product-owner note
+   * 2026-11-27: "the pre-selected is too angled in opposite"). */
+  staged: boolean;
   size: number;
   centerY: number;
   z: number;
@@ -295,8 +302,14 @@ function TrackCard({
   // to the full -tiltDeg at slot np.tiltRamp and beyond (right edges
   // toward the viewer - direction approved in f729f7e; product-owner
   // note 2026-11-27: tail angle right, top/intermediate too angled).
-  const tilt =
-    fk <= 0
+  // The pre-selected (staged) candidate keeps the stack-side angle of
+  // slot 1 until confirmed - it must not flash the mirrored front tilt
+  // while still staged, and the smaller angle keeps it near-square
+  // (projected width = width·cos(yaw); product-owner note 2026-11-27:
+  // "the pre-selected is too angled in opposite", "looks a rectangle").
+  const tilt = staged
+    ? -np.tiltDeg / np.tiltRamp
+    : fk <= 0
       ? np.tiltDeg * np.tiltFront
       : -np.tiltDeg * Math.min(1, fk / np.tiltRamp);
 
