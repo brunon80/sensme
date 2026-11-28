@@ -30,10 +30,6 @@ interface Props {
 interface Slot {
   centerX: number; // vh units (see slotChain)
   scale: number;
-  /** Unclamped geometric depth: drives the water-floor anchor so cards
-   * keep marching toward the waterline (serrated steps) even after the
-   * visual scale floors at np.minScale (PSP, product owner 2026-11-27). */
-  depth: number;
   opacity: number;
 }
 
@@ -59,25 +55,21 @@ export function slotChain(aspect: number): Slot[] {
   const np = tokens.layout.np;
   const rightEdge = aspect; // screen width in vh-fraction units (×100 at render)
   const ratio = np.slots[np.slots.length - 1]!.scale / np.slots[np.slots.length - 2]!.scale;
-  // Geometric decay clamped at np.minScale: like the PSP, far cards stop
-  // shrinking at a floor and keep stacking horizontally along the water
-  // (product-owner reference photo 2026-11-27). The unclamped value is
-  // kept as `depth` so the water-floor anchor keeps stepping (serrated
-  // bottom edges) while the visual size holds.
-  const rawOf = (k: number) =>
+  // Geometric decay with a low floor (np.minScale): far cards barely
+  // shrink and keep stacking horizontally, but the gentle decay makes
+  // their TOP edges serrate in steps while the bottom edges stay
+  // aligned along the water (PSP, product owner 2026-11-27).
+  const scaleOf = (k: number) =>
     k < np.slots.length
-      ? np.slots[k]!.scale
-      : np.slots[np.slots.length - 1]!.scale * Math.pow(ratio, k - np.slots.length + 1);
-  const scaleOf = (k: number) => Math.max(np.minScale, rawOf(k));
-  const out: Slot[] = [
-    { centerX: np.anchorX * aspect, scale: scaleOf(0), depth: rawOf(0), opacity: np.slots[0]!.opacity },
-  ];
+      ? Math.max(np.minScale, np.slots[k]!.scale)
+      : Math.max(np.minScale, np.slots[np.slots.length - 1]!.scale * Math.pow(ratio, k - np.slots.length + 1));
+  const out: Slot[] = [{ centerX: np.anchorX * aspect, scale: scaleOf(0), opacity: np.slots[0]!.opacity }];
   for (let k = 1; ; k++) {
     const scale = scaleOf(k);
     const w = np.size * scale;
     const prevW = np.size * scaleOf(k - 1);
     const centerX = out[k - 1]!.centerX + (prevW + w) / 2 - np.overlap * w;
-    out.push({ centerX, scale, depth: rawOf(k), opacity: k < np.slots.length ? np.slots[k]!.opacity : 1 });
+    out.push({ centerX, scale, opacity: k < np.slots.length ? np.slots[k]!.opacity : 1 });
     if (centerX - w / 2 >= rightEdge) break; // fully past the right edge
   }
   return out;
@@ -86,9 +78,9 @@ export function slotChain(aspect: number): Slot[] {
 function slotFor(k: number, pending: boolean, slots: Slot[], aspect: number): Slot | null {
   const np = tokens.layout.np;
   if (k === 0 && pending)
-    return { centerX: slots[0]!.centerX, scale: np.pendingScale, depth: np.pendingScale, opacity: 1 }; // staged candidate
+    return { centerX: slots[0]!.centerX, scale: np.pendingScale, opacity: 1 }; // staged candidate
   if (k >= 0 && k < slots.length) return slots[k]!;
-  if (k === -1) return { ...np.prev, depth: np.prev.scale, centerX: np.prev.centerX * aspect }; // glides out
+  if (k === -1) return { ...np.prev, centerX: np.prev.centerX * aspect }; // glides out
   return null;
 }
 
@@ -104,7 +96,6 @@ function slotForFrac(k: number, pending: boolean, slots: Slot[], aspect: number)
   return {
     centerX: lo.centerX + (hi.centerX - lo.centerX) * t,
     scale: lo.scale + (hi.scale - lo.scale) * t,
-    depth: lo.depth + (hi.depth - lo.depth) * t,
     opacity: lo.opacity + (hi.opacity - lo.opacity) * t,
   };
 }
@@ -289,14 +280,15 @@ function TrackCard({
     return () => URL.revokeObjectURL(url);
   }, [record.id, record.artwork]);
 
-  // Perspective floor: bottom edge from the waterline up as cards recede,
-  // driven by the unclamped `depth` so far cards keep stepping toward the
-  // water (serrated silhouette) even after the visual scale floors.
-  // At scale 1 this reproduces the token centerY exactly.
+  // Perspective floor: bottom edge from the waterline up as cards recede
+  // (clamped scale -> far bottoms stay aligned along the water; the
+  // gentle decay below minScale serrates the TOP edges - PSP, product
+  // owner correction 2026-11-27). At scale 1 this reproduces the token
+  // centerY exactly.
   const np = tokens.layout.np;
   const s = slot.scale;
   const bottomNear = centerY + size / 2;
-  const bottom = tokens.layout.waterlineY + (bottomNear - tokens.layout.waterlineY) * Math.pow(slot.depth, np.floorExp);
+  const bottom = tokens.layout.waterlineY + (bottomNear - tokens.layout.waterlineY) * Math.pow(s, np.floorExp);
   const cardCenterY = bottom - (size * s) / 2;
   // 3D yaw: current slot (fk<=0) tilts +tiltDeg, receding cards -tiltDeg
   // (their right edges toward the viewer, the fan wrapping away to the
