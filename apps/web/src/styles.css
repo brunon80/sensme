@@ -137,9 +137,12 @@
   position: absolute;
   inset: 0;
   touch-action: none;
-  /* 3D yaw on the cards (np.tiltDeg): the fan reads with this camera
-     distance; origin centered so the arc sits naturally on screen. */
-  perspective: 160dvh;
+  /* 3D yaw on the cards (np.tiltDeg): near-parallel projection (large
+     perspective distance) so far cards stay square - the PSP's rotation
+     has almost no keystone; the serrated steps come from the yaw +
+     scale decay, not from perspective distortion (product-owner note
+     2026-11-27). */
+  perspective: 600dvh;
   perspective-origin: 50% 45%;
   /* Layer order (UI_SPEC §1): now-playing sits behind the grid scrim. */
   z-index: 10;
