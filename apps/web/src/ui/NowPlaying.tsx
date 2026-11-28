@@ -2,7 +2,7 @@
 // left, next tracks receding to the right, morphing on next/prev. Artwork
 // stands on the water with reflection; right-aligned title block; channel
 // dot grid; captions.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { tokens } from "../../../../contracts/design-tokens/tokens";
 import type { LibraryRecord } from "../engine/types";
 import { entryHues, entryName, membershipDots, type CarouselEntry } from "./channels";
@@ -311,33 +311,39 @@ function TrackCard({
     : fk <= 0
       ? np.tiltDeg * np.tiltFront
       : -np.tiltDeg * Math.min(1, fk / np.tiltRamp);
-  // X compensation against yaw foreshortening: rotateY projects the
-  // card at width·cos(yaw), so covers read as rectangles. Apply a
-  // MODERATED fraction (np.tiltFix) of the full 1/cos correction in the
-  // card's local X (after rotateY, so it never touches the slot
-  // position or depth math), clamped so extreme angles cannot stretch
-  // the art absurdly. Full compensation reads as flat pasted paper;
-  // ~0.55 keeps the front card near-square (ratio ~0.94) while the
-  // tail keeps a believable slab depth (product-owner 2026-11-27).
-  const cos = Math.cos((tilt * Math.PI) / 180);
-  const xFix = Math.min(1 + (1 / cos - 1) * np.tiltFix, 1.35);
+  // The transform lives in styles.css, built from the registered custom
+  // properties set below. The X compensation against yaw foreshortening
+  // (rotateY projects the card at width·cos(yaw), so covers read as
+  // rectangles) is DERIVED IN CSS from the instantaneous --np-tilt
+  // (np.tiltFix fraction of 1/cos, clamped by np.tiltFixMax): a CSS
+  // transition interpolates transform functions independently, so a
+  // JS-computed scaleX would desync from the tilt mid-morph and the
+  // projected width would lead the height (product-owner 2026-11-28:
+  // "when selecting an album to play it first scales the width and
+  // later the height"). Sampling scaleX from the animated tilt keeps
+  // them locked together at every frame.
 
   return (
     <div
       className="np-track"
       data-np-idx={queueIdx}
       onClick={onClick ? () => onClick(queueIdx) : undefined}
-      style={{
-        width: `${size * 100}dvh`,
-        height: `${size * 100}dvh`,
-        // Position lives INSIDE the transform (left/top stay 0) so slot
-        // changes animate; transitioning `left` would teleport the card.
-        // X is in vh (the unit card sizes live in) so the stack overlap
-        // is aspect-independent.
-        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale}) rotateY(${tilt}deg) scaleX(${xFix})`,
-        opacity: slot.opacity,
-        zIndex: z,
-      }}
+      style={
+        {
+          width: `${size * 100}dvh`,
+          height: `${size * 100}dvh`,
+          // Position lives INSIDE the transform (left/top stay 0) so slot
+          // changes animate; transitioning `left` would teleport the card.
+          // X is in vh (the unit card sizes live in) so the stack overlap
+          // is aspect-independent.
+          "--np-x": `${slot.centerX * 100}dvh`,
+          "--np-y": `${cardCenterY * 100}dvh`,
+          "--np-scale": `${slot.scale}`,
+          "--np-tilt": `${tilt}deg`,
+          opacity: slot.opacity,
+          zIndex: z,
+        } as CSSProperties
+      }
     >
       {artUrl ? (
         <img src={artUrl} alt="" draggable={false} />

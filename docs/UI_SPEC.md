@@ -148,10 +148,15 @@ Layout:
   their right edges toward the viewer (fan wrapping away to the right),
   the current card carries the same angle mirrored (product-owner
   correction 2026-11-27); a moderated X compensation (`np.tiltFix`
-  0.55 of the full 1/cos(yaw), clamped at 1.35) keeps covers reading
-  near-square under the yaw without stretching the art at large angles
-  (front card projected ratio ~0.94; product-owner 2026-11-27:
-  "square aspect with angled yaw");
+  0.55 of the full 1/cos(yaw), clamped at `np.tiltFixMax` 1.35) keeps
+  covers reading near-square under the yaw without stretching the art
+  at large angles (front card projected ratio ~0.94; product-owner
+  2026-11-27: "square aspect with angled yaw"); the compensation is
+  derived in CSS from the animated `--np-tilt` (registered `@property`,
+  `cos()`), so yaw and X-stretch stay locked together mid-morph — the
+  projected width never leads the height (product-owner 2026-11-28:
+  "when selecting an album to play it first scales the width and later
+  the height");
   the chain continues geometrically (ratio of the last
   two token scales) but floors at `np.minScale` 0.09 — far cards barely
   shrink and keep stacking horizontally; the floor anchor keeps their
