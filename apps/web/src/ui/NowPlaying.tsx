@@ -290,14 +290,15 @@ function TrackCard({
   const bottomNear = centerY + size / 2;
   const bottom = tokens.layout.waterlineY + (bottomNear - tokens.layout.waterlineY) * Math.pow(s, np.floorExp);
   const cardCenterY = bottom - (size * s) / 2;
-  // 3D yaw: the current slot (fk<=0) carries +tiltDeg (mirrored); the
-  // receding stack ramps up from a gentle angle at the front to the
-  // full -tiltDeg at slot np.tiltRamp and beyond (right edges toward
-  // the viewer - direction approved in f729f7e; product-owner note
-  // 2026-11-27: "the top of the stack should be less angled than the
-  // last ones"). CSS transitions smooth the change on morphs.
+  // 3D yaw: the current slot (fk<=0) keeps only a gentle mirrored tilt
+  // (tiltFront fraction of tiltDeg); the receding stack ramps from that
+  // to the full -tiltDeg at slot np.tiltRamp and beyond (right edges
+  // toward the viewer - direction approved in f729f7e; product-owner
+  // note 2026-11-27: tail angle right, top/intermediate too angled).
   const tilt =
-    fk <= 0 ? np.tiltDeg : -np.tiltDeg * Math.min(1, fk / np.tiltRamp);
+    fk <= 0
+      ? np.tiltDeg * np.tiltFront
+      : -np.tiltDeg * Math.min(1, fk / np.tiltRamp);
 
   return (
     <div
