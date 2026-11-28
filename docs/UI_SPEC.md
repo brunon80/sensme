@@ -144,7 +144,10 @@ Layout:
   the chain continues geometrically (ratio of the last
   two token scales) but clamps at `np.minScale` 0.26 — like the PSP, far
   cards stop shrinking at that floor and keep stacking horizontally
-  along the waterline — until cards run fully past the RIGHT EDGE — the
+  along the waterline; the floor anchor keeps using the UNCLAMPED depth,
+  so their bottom edges keep stepping toward the water (serrated
+  silhouette, product-owner reference 2026-11-27) — until cards run
+  fully past the RIGHT EDGE — the
   stack always reaches the screen edge at any aspect. The previous card
   glides out left. Non-cyclic: clamped at both ends — a one-track
   channel shows a single card; next at the end stops.
