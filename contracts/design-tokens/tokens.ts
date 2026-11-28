@@ -186,7 +186,8 @@ export const tokens = {
       "minScale": 0.09,
       "tiltDeg": 42,
       "tiltRamp": 6,
-      "tiltFront": 0.75
+      "tiltFront": 0.75,
+      "tiltFix": 0.55
     },
     "carousel": {
       "centerY": 0.5,

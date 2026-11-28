@@ -311,6 +311,16 @@ function TrackCard({
     : fk <= 0
       ? np.tiltDeg * np.tiltFront
       : -np.tiltDeg * Math.min(1, fk / np.tiltRamp);
+  // X compensation against yaw foreshortening: rotateY projects the
+  // card at width·cos(yaw), so covers read as rectangles. Apply a
+  // MODERATED fraction (np.tiltFix) of the full 1/cos correction in the
+  // card's local X (after rotateY, so it never touches the slot
+  // position or depth math), clamped so extreme angles cannot stretch
+  // the art absurdly. Full compensation reads as flat pasted paper;
+  // ~0.55 keeps the front card near-square (ratio ~0.94) while the
+  // tail keeps a believable slab depth (product-owner 2026-11-27).
+  const cos = Math.cos((tilt * Math.PI) / 180);
+  const xFix = Math.min(1 + (1 / cos - 1) * np.tiltFix, 1.35);
 
   return (
     <div
@@ -324,7 +334,7 @@ function TrackCard({
         // changes animate; transitioning `left` would teleport the card.
         // X is in vh (the unit card sizes live in) so the stack overlap
         // is aspect-independent.
-        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale}) rotateY(${tilt}deg)`,
+        transform: `translate(${slot.centerX * 100}dvh, ${cardCenterY * 100}dvh) translate(-50%, -50%) scale(${slot.scale}) rotateY(${tilt}deg) scaleX(${xFix})`,
         opacity: slot.opacity,
         zIndex: z,
       }}
