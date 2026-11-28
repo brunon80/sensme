@@ -183,10 +183,10 @@ export const tokens = {
         "opacity": 0.3
       },
       "floorExp": 2,
-      "minScale": 0.16,
+      "minScale": 0.09,
       "tiltDeg": 42,
       "tiltRamp": 6,
-      "tiltFront": 0.25
+      "tiltFront": 0.45
     },
     "carousel": {
       "centerY": 0.5,

@@ -136,13 +136,13 @@ Layout:
   waterlineY) · scale^np.floorExp` (floorExp 2), so bottom edges
   converge to the waterline as cards recede while the big foreground
   card dips below it (PSP reference photo, product owner 2026-11-27);
-  cards are yawed in 3D (`np.tiltDeg` 42° ramped over `np.tiltRamp` 6 slots, current card at `np.tiltFront` 0.25 of it, `.nowplaying` perspective)
+  cards are yawed in 3D (`np.tiltDeg` 42° ramped over `np.tiltRamp` 6 slots, current card at `np.tiltFront` 0.45 of it, `.nowplaying` perspective)
   so the row reads as a fan, not flat paper: receding cards yaw with
   their right edges toward the viewer (fan wrapping away to the right),
   the current card carries the same angle mirrored (product-owner
   correction 2026-11-27);
   the chain continues geometrically (ratio of the last
-  two token scales) but floors at `np.minScale` 0.16 — far cards barely
+  two token scales) but floors at `np.minScale` 0.09 — far cards barely
   shrink and keep stacking horizontally; the floor anchor keeps their
   BOTTOM edges aligned along the water while the gentle decay serrates
   the TOP edges in steps (product-owner correction 2026-11-27) — until
