@@ -20,6 +20,7 @@ void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 const FRAG = `
 precision highp float;
 uniform sampler2D uTex;
+uniform sampler2D uCards;      // album cards composited above the waterline
 uniform float uW, uH, uWaterY, uT;
 uniform vec4 uWaves[6];        // kx, ky, speed, amp (amps sum to 1)
 uniform float uAmpNear, uAmpFar;
@@ -28,6 +29,15 @@ uniform float uOpacNear, uOpacFar;
 uniform float uNormalNear, uNormalFar;
 uniform float uSpecPow, uSpecAmp;
 uniform float uBlurNear, uBlurFar;
+
+// Card reflection layer: each card's copy is pre-flipped about its OWN
+// bottom edge (where it touches the water) and squashed by
+// water.cardReflect in renderCardLayer, then sampled DIRECTLY at the
+// displaced water pixel - the PSP mirrors cards about their base, not
+// about the global waterline (product-owner note 2026-11-27: "the
+// reflection is reflecting the top of the album, not the bottom" and
+// "refraction stretch the image so it is very short/distorted").
+vec4 cardAt(vec2 uv) { return texture2D(uCards, uv); }
 
 float waveH(vec2 p) {
   float s = 0.0;
@@ -87,6 +97,17 @@ void main() {
   c += texture2D(uTex, base + vec2(0.0, bly)).rgb * 0.15;
   c += texture2D(uTex, base - vec2(0.0, bly)).rgb * 0.15;
 
+  // Card reflections: sampled at the water pixel itself (the layer is
+  // pre-flipped about each card's base), sharing the same wave
+  // displacement and blur, composited over the backdrop mirror.
+  vec2 q = vec2((gl_FragCoord.x + grad.x * slope) / uW, (sy + grad.y * slope * 0.6) / uH);
+  vec4 cd = cardAt(q) * 0.4;
+  cd += cardAt(q + vec2(blx, 0.0)) * 0.15;
+  cd += cardAt(q - vec2(blx, 0.0)) * 0.15;
+  cd += cardAt(q + vec2(0.0, bly)) * 0.15;
+  cd += cardAt(q - vec2(0.0, bly)) * 0.15;
+  c = cd.a * cd.rgb + (1.0 - cd.a) * c;
+
   // Specular glints from the wave normal (light from above/behind viewer).
   float ns = mix(uNormalNear, uNormalFar, d);
   vec3 n = normalize(vec3(-grad.x * ns, -grad.y * ns, 1.0));
@@ -121,20 +142,22 @@ export class WaterRenderer {
   private gl: WebGLRenderingContext;
   private prog: WebGLProgram;
   private tex: WebGLTexture;
+  private texCards: WebGLTexture;
   private u = {} as Record<
-    | "uTex" | "uW" | "uH" | "uWaterY" | "uT" | "uWaves"
+    | "uTex" | "uCards" | "uW" | "uH" | "uWaterY" | "uT" | "uWaves"
     | "uAmpNear" | "uAmpFar" | "uCompress" | "uFreqGrow" | "uOpacNear" | "uOpacFar"
     | "uNormalNear" | "uNormalFar" | "uSpecPow" | "uSpecAmp" | "uBlurNear" | "uBlurFar",
     WebGLUniformLocation | null
   >;
   private lastSource: HTMLCanvasElement | null = null;
 
-  private constructor(gl: WebGLRenderingContext, prog: WebGLProgram, tex: WebGLTexture) {
+  private constructor(gl: WebGLRenderingContext, prog: WebGLProgram, tex: WebGLTexture, texCards: WebGLTexture) {
     this.gl = gl;
     this.prog = prog;
     this.tex = tex;
+    this.texCards = texCards;
     const names = [
-      "uTex", "uW", "uH", "uWaterY", "uT", "uWaves",
+      "uTex", "uCards", "uW", "uH", "uWaterY", "uT", "uWaves",
       "uAmpNear", "uAmpFar", "uCompress", "uFreqGrow", "uOpacNear", "uOpacFar",
       "uNormalNear", "uNormalFar", "uSpecPow", "uSpecAmp", "uBlurNear", "uBlurFar",
     ] as const;
@@ -176,25 +199,48 @@ export class WaterRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // Card layer texture (unit 1): starts fully transparent so the mirror
+    // is backdrop-only until the first card layer upload.
+    const texCards = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, texCards);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied
-    return new WaterRenderer(gl, prog, tex);
+    return new WaterRenderer(gl, prog, tex, texCards);
   }
 
   /** Draw one frame. `dirty` re-uploads the backdrop texture (only needed
-   * when it changed — e.g. during a crossfade — to keep uploads cheap). */
-  draw(backdrop: HTMLCanvasElement, w: number, h: number, t: number, dirty: boolean): void {
+   * when it changed — e.g. during a crossfade — to keep uploads cheap);
+   * `cards` + `cardsDirty` carry the album-card layer mirrored by the
+   * water (see sceneAt in the shader). */
+  draw(backdrop: HTMLCanvasElement, cards: HTMLCanvasElement | null, w: number, h: number, t: number, dirty: boolean, cardsDirty: boolean): void {
     const gl = this.gl;
     gl.viewport(0, 0, w, h);
     if (dirty || backdrop !== this.lastSource || backdrop.width !== w || backdrop.height !== h) {
+      gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, backdrop);
       this.lastSource = backdrop;
     }
+    if (cards && cardsDirty) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.texCards);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cards);
+    }
     const W = tokens.water;
     gl.useProgram(this.prog);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.tex);
     gl.uniform1i(this.u.uTex, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.texCards);
+    gl.uniform1i(this.u.uCards, 1);
+    gl.activeTexture(gl.TEXTURE0);
     gl.uniform1f(this.u.uW, w);
     gl.uniform1f(this.u.uH, h);
     gl.uniform1f(this.u.uWaterY, h * tokens.layout.waterlineY);

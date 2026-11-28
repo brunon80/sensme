@@ -202,7 +202,6 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
               size={np.size}
               centerY={np.centerY}
               z={10 - Math.abs(k)}
-              reflect={k >= 0}
               queueIdx={idx}
               onClick={onCardClick}
             />
@@ -236,7 +235,9 @@ export function NowPlaying({ queue, pos, pending, entry, playing, phase, onCardC
   );
 }
 
-/** One track card in the now-playing carousel (artwork + reflection).
+/** One track card in the now-playing carousel. Its water reflection is
+ * rendered by the scene shader (renderCardLayer composites the card into
+ * the mirror source), not as a DOM element.
  * Horizontally on its slot; vertically anchored to the water surface:
  * the card's bottom edge sits at `waterlineY + (npBottom − waterlineY)
  * · scale^floorExp`, so receding cards stand ON the water (bottom edges
@@ -254,7 +255,6 @@ function TrackCard({
   size,
   centerY,
   z,
-  reflect,
   queueIdx,
   onClick,
 }: {
@@ -271,7 +271,6 @@ function TrackCard({
   size: number;
   centerY: number;
   z: number;
-  reflect: boolean;
   /** Position in the queue, reported on click (UI_SPEC §9 mouse input). */
   queueIdx: number;
   onClick?: (queueIndex: number) => void;
@@ -335,7 +334,6 @@ function TrackCard({
       ) : (
         <Placeholder entry={entry} />
       )}
-      {artUrl && reflect && <div className="np-track-reflect" style={{ backgroundImage: `url(${artUrl})` }} />}
     </div>
   );
 }

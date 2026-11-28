@@ -310,7 +310,8 @@ export const tokens = {
     "specPow": 40,
     "specAmp": 0.05,
     "blurNear": 3,
-    "blurFar": 5
+    "blurFar": 5,
+    "cardReflect": 0.55
   }
 } as const;
 

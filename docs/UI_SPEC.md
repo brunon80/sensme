@@ -39,7 +39,14 @@ The whole app is one continuous scene:
   divider line. Motion is continuous (no loop seam); all parameters
   in `tokens.water`.
 - **Floating content**: channel tiles and album artwork float above the
-  water, casting their own reflection downward from their bottom edge.
+  water. Each album card casts its own reflection: the card artwork is
+  mirrored about its OWN bottom edge (where it touches the water — not
+  the global waterline, so the bottom of the album is what reflects),
+  squashed vertically to `water.cardReflect` (0.55 — the PSP's
+  refraction makes reflections short/stretched/distorted), then sampled
+  by the water shader at the displaced pixel so reflections get the same
+  waves, blur and depth fade as the backdrop mirror; near reflections
+  occlude far ones (product-owner references 2026-11-27).
 - **Text**: white, humanist sans (clean-room stand-in for Sony's
   proprietary PSP font: Source Sans 3 / system-ui), medium weight.
 - **Furniture**: clock+battery top-right; button captions bottom;

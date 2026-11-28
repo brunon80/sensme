@@ -3,7 +3,7 @@
 // (UI_SPEC §1: "channel switch crossfades backdrop").
 import { useEffect, useRef } from "react";
 import { tokens } from "../../../../contracts/design-tokens/tokens";
-import { crossfade, DEFAULT_PHOTO, drawScene, loadPhoto, PHOTO_MAP, photoUrlFor, renderBackdrop, renderBackdropPhoto } from "./scene";
+import { crossfade, DEFAULT_PHOTO, drawScene, loadPhoto, PHOTO_MAP, photoUrlFor, renderBackdrop, renderBackdropPhoto, renderCardLayer } from "./scene";
 import { WaterRenderer } from "./water";
 
 interface Props {
@@ -21,6 +21,10 @@ export function Scene({ sceneKey, hues }: Props) {
   const fadeStartRef = useRef<number>(-1);
   const dimsRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
   const photosRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  // Album-card layer mirrored by the water (see renderCardLayer) + its
+  // change signature, so the texture is only re-uploaded when cards move.
+  const cardsRef = useRef<HTMLCanvasElement | null>(null);
+  const cardSigRef = useRef({ v: "" });
   const keyRef = useRef({ sceneKey, hues });
   keyRef.current = { sceneKey, hues };
 
@@ -71,6 +75,10 @@ export function Scene({ sceneKey, hues }: Props) {
       mixRef.current = document.createElement("canvas");
       mixRef.current.width = w;
       mixRef.current.height = h;
+      cardsRef.current = document.createElement("canvas");
+      cardsRef.current.width = w;
+      cardsRef.current.height = h;
+      cardSigRef.current.v = "";
       prevRef.current = null;
       fadeStartRef.current = -1;
       make();
@@ -98,8 +106,10 @@ export function Scene({ sceneKey, hues }: Props) {
           }
         }
         const t = (performance.now() - t0) / 1000;
-        if (water) water.draw(backdrop, canvas.width, canvas.height, t, fading);
-        else if (ctx) drawScene(ctx, backdrop, canvas.width, canvas.height, t);
+        const cards = cardsRef.current;
+        const cardsDirty = cards ? renderCardLayer(cards, canvas.width, canvas.height, cardSigRef.current) : false;
+        if (water) water.draw(backdrop, cards, canvas.width, canvas.height, t, fading, cardsDirty);
+        else if (ctx) drawScene(ctx, backdrop, cards, canvas.width, canvas.height, t);
       }
       raf = requestAnimationFrame(frame);
     };

@@ -187,6 +187,58 @@ export function renderBackdrop(
 }
 
 /**
+ * Build the card reflection layer for the water: each visible card's
+ * artwork is drawn FLIPPED about its own bottom edge (where it touches
+ * the water) and squashed vertically by `water.cardReflect` — the PSP
+ * mirrors cards about their base, strongly compressed, not about the
+ * global waterline (product-owner note 2026-11-27: "the reflection is
+ * reflecting the top of the album, not the bottom" + "refraction
+ * stretch the image so it is very short/distorted"). Far cards draw
+ * first so near cards occlude their reflections, and the shader samples
+ * this layer at the displaced water pixel, so reflections get the wave
+ * distortion for free.
+ *
+ * Yaw is approximated by the projected bounding box (Canvas-2D has no
+ * perspective) — acceptable under the reflection's blur + displacement.
+ * Returns true when the layer changed (caller re-uploads the texture);
+ * `sig` carries the change signature across frames.
+ */
+export function renderCardLayer(out: HTMLCanvasElement, w: number, h: number, sig: { v: string }): boolean {
+  const dpr = w / window.innerWidth;
+  const items: { img: HTMLImageElement; x: number; y: number; iw: number; ih: number; z: number; op: number }[] = [];
+  const parts: string[] = [];
+  for (const t of document.querySelectorAll<HTMLElement>(".nowplaying .np-track")) {
+    const img = t.querySelector("img");
+    if (!img || !img.complete || !img.naturalWidth) continue;
+    const r = img.getBoundingClientRect();
+    if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
+    const z = Number(t.style.zIndex) || 0;
+    const op = t.style.opacity === "" ? 1 : Number(t.style.opacity);
+    parts.push(`${t.dataset.npIdx}:${Math.round(r.x)}:${Math.round(r.y)}:${Math.round(r.width)}:${Math.round(r.height)}:${z}:${op}`);
+    items.push({ img, x: r.x * dpr, y: r.y * dpr, iw: r.width * dpr, ih: r.height * dpr, z, op });
+  }
+  const next = parts.join("|");
+  if (next === sig.v) return false;
+  sig.v = next;
+  const ctx = out.getContext("2d")!;
+  ctx.clearRect(0, 0, w, h);
+  const s = tokens.water.cardReflect;
+  items.sort((a, b) => a.z - b.z); // far first: near reflections occlude far ones
+  for (const it of items) {
+    ctx.globalAlpha = Number.isFinite(it.op) ? it.op : 1;
+    // Flip about the card's bottom edge (y = it.y + it.ih), squash by s:
+    // the card's bottom row lands at its base, the top row at base + s*H.
+    ctx.save();
+    ctx.translate(it.x + it.iw / 2, it.y + it.ih);
+    ctx.scale(1, -s);
+    ctx.drawImage(it.img, -it.iw / 2, -it.ih, it.iw, it.ih);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  return true;
+}
+
+/**
  * Canvas-2D fallback for the WebGL water renderer (water.ts): same token
  * set, coarser model — per-band displacement from the wave trains with
  * depth-scaled amplitude and frequency warp, continuous time (no loop
@@ -195,6 +247,7 @@ export function renderBackdrop(
 export function drawScene(
   ctx: CanvasRenderingContext2D,
   backdrop: HTMLCanvasElement,
+  cards: HTMLCanvasElement | null,
   w: number,
   h: number,
   t: number,
@@ -229,6 +282,9 @@ export function drawScene(
     ctx.globalAlpha = W.opacityNear + (W.opacityFar - W.opacityNear) * depth;
     ctx.filter = `blur(${(W.blurNear + (W.blurFar - W.blurNear) * depth).toFixed(1)}px)`;
     ctx.drawImage(backdrop, 0, srcY, w, band, dx, waterY + y, w, band);
+    // Card reflections: sampled at the water row itself (the layer is
+    // pre-flipped about each card's base - see renderCardLayer).
+    if (cards) ctx.drawImage(cards, 0, waterY + y, w, band, dx, waterY + y, w, band);
     ctx.filter = "none";
   }
   ctx.restore();
