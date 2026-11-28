@@ -137,12 +137,12 @@
   position: absolute;
   inset: 0;
   touch-action: none;
-  /* 3D yaw on the cards (np.tiltDeg): near-parallel projection (large
-     perspective distance) so far cards stay square - the PSP's rotation
-     has almost no keystone; the serrated steps come from the yaw +
-     scale decay, not from perspective distortion (product-owner note
-     2026-11-27). */
-  perspective: 600dvh;
+  /* 3D yaw on the cards (np.tiltDeg): near-orthographic projection -
+     at 600dvh the far cards (far from the perspective origin, yawed
+     42 degrees) still keystone: near edge taller than far edge, so
+     the art reads stretched. 2000dvh keeps the projected shape a
+     clean foreshortened square (width*cos(tilt), no vertical skew). */
+  perspective: 2000dvh;
   perspective-origin: 50% 45%;
   /* Layer order (UI_SPEC §1): now-playing sits behind the grid scrim. */
   z-index: 10;
