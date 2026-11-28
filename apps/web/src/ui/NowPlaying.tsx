@@ -286,9 +286,11 @@ function TrackCard({
   const bottomNear = centerY + size / 2;
   const bottom = tokens.layout.waterlineY + (bottomNear - tokens.layout.waterlineY) * Math.pow(s, np.floorExp);
   const cardCenterY = bottom - (size * s) / 2;
-  // 3D yaw: current slot (fk<=0) tilts -tiltDeg, receding cards +tiltDeg,
-  // blended across fk so morphs/drag pass smoothly through 0.
-  const tilt = np.tiltDeg * (2 * Math.min(Math.max(fk, 0), 1) - 1);
+  // 3D yaw: current slot (fk<=0) tilts +tiltDeg, receding cards -tiltDeg
+  // (their right edges toward the viewer, the fan wrapping away to the
+  // right - PSP reference, product owner correction 2026-11-27), blended
+  // across fk so morphs/drag pass smoothly through 0.
+  const tilt = -np.tiltDeg * (2 * Math.min(Math.max(fk, 0), 1) - 1);
 
   return (
     <div
