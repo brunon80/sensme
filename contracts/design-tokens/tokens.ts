@@ -184,7 +184,7 @@ export const tokens = {
       },
       "floorExp": 2,
       "minScale": 0.16,
-      "tiltDeg": 12
+      "tiltDeg": 28
     },
     "carousel": {
       "centerY": 0.5,

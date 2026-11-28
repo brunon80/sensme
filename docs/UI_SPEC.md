@@ -136,7 +136,7 @@ Layout:
   waterlineY) · scale^np.floorExp` (floorExp 2), so bottom edges
   converge to the waterline as cards recede while the big foreground
   card dips below it (PSP reference photo, product owner 2026-11-27);
-  cards are yawed in 3D (`np.tiltDeg` 12°, `.nowplaying` perspective)
+  cards are yawed in 3D (`np.tiltDeg` 28°, `.nowplaying` perspective)
   so the row reads as a fan, not flat paper: receding cards yaw with
   their right edges toward the viewer (fan wrapping away to the right),
   the current card carries the same angle mirrored (product-owner
